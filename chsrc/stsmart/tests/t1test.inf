@@ -1,0 +1,176 @@
+[Normal erase binary]
+Command: 00,0e,01,00,02,00
+I: 21,00,06,00,0e,01,00,02,00
+C: 21,c3,01,11
+I: 21,e3,01,11
+C: 21,00,02,90,00
+
+[Reading and changing IFSC]
+Command: 00,b0,01,00,05
+I: 21,40,05,00,B0,01,00,05
+C: 21,c1,01,8
+I: 21,e1,01,8
+C: 21,60,07,01,02,03,04,05
+I: 21,80,00
+C: 21,00,05,80,02,FE,90,00
+
+[Normal IFD writing]
+Command: 00,D0,01,00,02,01,02
+I: 21,00,07,00,D0,01,00,02,01,02
+C: 21,40,02,90,00
+
+[Normal IFD writing and chaining]
+Command: 00,D0,01,00,0C,01,02,03,04,05,06,07,08,09,0a,0b,0c
+I: 21,60,08,00,D0,01,00,0C,01,02,03
+C: 21,80,00
+I: 21,20,08,04,05,06,07,08,09,0A,0B
+C: 21,90,00
+I: 21,40,01,0C
+C: 21,00,02,90,00
+
+[Normal IFD reading]
+Command: 00,b0,01,00,23
+I: 21,00,05,00,B0,01,00,23
+C: 21,60,20,01,02,03,04,05,06,07,08,09,0A,0B,0C,00,FF,DF,FF,00,00,FF,FF,00,00,00 ,00,FF,FF,01,00,7F,FF,FF,FF
+I: 21,80,00
+C: 21,00,05,80,02,FE,90,00
+
+[Testing IFS adjustment during write]
+Command: 00,D0,01,00,0C,01,02,03,04,05,06,07,08,09,0a,0b,0c
+I: 21,60,08,00,D0,01,00,0C,01,02,03
+C: 21,c1,01,10
+I: 21,e1,01,10
+C: 21,80,00
+I: 21,00,09,04,05,06,07,08,09,0A,0B,0C
+C: 21,40,02,90,00
+
+[Scenario 6 - Card chaining]
+Command: 00,b0,01,00,0a
+I: 21,40,05,00,B0,01,00,0a
+C: 21,20,05,01,02,03,04,05
+I: 21,90,00
+C: 21,40,05,06,07,08,09,0a
+
+[Cause block-retries failure]
+Command: 00,0e,01,00,02,00,FAIL
+I: 21,40,06,00,0e,01,00,02,00
+C: 21,c3,01,11
+
+[Scenario 8 - error during initial block]
+Command: 00,D0,01,00,03,01,02,03
+I: 21,00,08,00,D0,01,00,03,01,02,03
+# nak
+C: 21,81,00
+I: 21,00,08,00,D0,01,00,03,01,02,03
+C: 21,00,02,90,00
+
+[Scenario 9 - error during ICC I(0,0)]
+Command: 00,D0,01,00,03,01,02,03
+I: 21,40,08,00,D0,01,00,03,01,02,03
+C: 21,40,02,90,00,01,NOLRC
+I: 21,91,00
+C: 21,40,02,90,00
+
+[Scenario 10 - error in IFD I(0,0) and R(0)]
+Command: 00,D0,01,00,03,01,02,03
+I: 21,00,08,00,D0,01,00,03,01,02,03
+C: 21,80,00,01,NOLRC
+I: 21,81,00
+C: 21,80,00
+I: 21,00,08,00,D0,01,00,03,01,02,03
+C: 21,00,02,90,00
+
+[Scenario 11 - error in ICC I(0,0) and R(0)]
+Command: 00,D0,01,00,03,01,02,03
+I: 21,40,08,00,D0,01,00,03,01,02,03
+C: 21,40,02,90,00,01,NOLRC
+I: 21,91,00
+C: 21,81,00
+I: 21,91,00
+C: 21,40,02,90,00
+
+[Scenario 12 - see ISO doc]
+Command: 00,D0,01,00,03,01,02,03
+I: 21,00,08,00,D0,01,00,03,01,02,03
+C: 21,00,02,90,00,01,NOLRC
+I: 21,81,00
+C: 21,91,00,01,NOLRC
+I: 21,81,00
+C: 21,00,02,90,00
+
+[Scenario 13 - see ISO doc]
+Command: 00,D0,01,00,03,01,02,03
+I: 21,40,08,00,D0,01,00,03,01,02,03
+C: 21,40,02,90,00,01,NOLRC
+I: 21,91,00
+C: 21,81,00,01,NOLRC
+I: 21,91,00
+C: 21,81,00,01,NOLRC
+I: 21,91,00
+C: 21,40,02,90,00
+
+[Scenario 14 - see ISO doc]
+Command: 00,0e,01,00,02,00
+I: 21,00,06,00,0e,01,00,02,00
+C: 21,c3,01,11,01,NOLRC
+I: 21,81,00
+C: 21,c3,01,11
+I: 21,e3,01,11
+C: 21,00,02,90,00
+
+[Scenario 16 - see ISO doc]
+Command: 00,D0,01,00,0C,01,02,03,04,05,06,07,08,09,0a,0b,0c
+I: 21,60,10,00,D0,01,00,0C,01,02,03,04,05,06,07,08,09,0a,0b
+C: 21,c1,01,10,01,NOLRC
+I: 21,81,00
+C: 21,c1,01,10
+I: 21,e1,01,10
+C: 21,80,00
+I: 21,00,01,0C
+C: 21,40,02,90,00
+
+[Scenario 26 - try one]
+Command: 00,b0,01,00,23
+I: 21,40,05,00,B0,01,00,23
+C: 21,20,20,01,02,03,04,05,06,07,08,09,0A,0B,0C,00,FF,DF,FF,00,00,FF,FF,00,00,00,00,FF,FF,01,00,7F,FF,FF,FF
+I: 21,90,00
+C: 21,c2,00
+I: 21,e2,00
+# ISO rule says should be R-block; scenarios show I-block. 
+C: 21,40,03,90,00
+
+[Scenario 26 - try two]
+Command: 00,b0,01,00,23
+I: 21,00,05,00,B0,01,00,23
+C: 21,60,20,01,02,03,04,05,06,07,08,09,0A,0B,0C,00,FF,DF,FF,00,00,FF,FF,00,00,00,00,FF,FF,01,00,7F,FF,FF,FF
+I: 21,80,00
+C: 21,c2,00
+I: 21,e2,00
+# ISO rule says should be R-block; scenarios show I-block. 
+C: 21,90,00
+
+[Scenario 21]
+Command: 00,D0,01,00,0C,01,02,03,04,05,06,07,08,09,0a,0b,0c
+I: 21,60,10,00,D0,01,00,0C,01,02,03,04,05,06,07,08,09,0a,0b
+C: 21,90,00,01,NOLRC
+I: 21,91,00
+C: 21,80,00
+I: 21,00,01,0C
+C: 21,00,02,90,00
+
+# i-block
+# no chain -  N(S) 0 = 0x00, N(S) 1 = 0x40
+# more data - N(S) 0 = 0x20, N(S) 1 = 0x60,
+#
+# format:
+# [description of test]
+# Command: Command for testharness to give the driver
+# I: command expected from IFD (device driver) - eg 21,00,01
+# C: response to be sent by card (faked) - eg 00,01,02
+# I, C pairs repeated, up to MAXCARDRESPONSE (see smart_test.h)
+# I, C *MUST* be in pairs. Tests are separated by a blank line.
+# If an I or C line ends with NOLRC it's assumed to be within the line,
+#   else it's calculated and added.
+# If a command line ends with FAIL, the test succeeds if the result is
+#   not ST_NO_ERROR
+# ALL VALUES ARE IN HEX, DESPITE LACK OF PREFIX.

@@ -1,0 +1,8 @@
+*mb411stb7109p1:
+--defsym _start=0x84401000 --defsym _stack=0x86BFFFFC
+
+*board_link:
+%{mboard=mb411stb7109p1:%(mb411stb7109p1)}
+
+*lib_os21bsp_base:
+%{mboard=mb411stb7109p1:mb411stb7109}

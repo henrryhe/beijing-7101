@@ -1,0 +1,42 @@
+#  (C) Copyright changhong 2006.
+# MODULE: STi5105 DVB-C project
+#
+# FILE	: makefile
+#
+# NAME	: zxg changhong 
+#
+include	$(DVD_MAKE)/generic.mak
+
+EXPORTS	= ch_pic.lib
+
+# local	objects	which comprise this component
+
+vpath %.h $(DVD_ROOT)/main
+
+OBJS = ckconfig.tco draw_gif.tco drawjpeg.tco jcapimin.tco jcapistd.tco jccoefct.tco jccolor.tco jcdctmgr.tco jchuff.tco jcinit.tco jcmainct.tco jcmarker.tco\
+jcmaster.tco jcomapi.tco jcparam.tco jcphuff.tco jcprepct.tco jcsample.tco jctrans.tco\
+jdapimin.tco jdapistd.tco jdatadst.tco jdatasrc.tco jdcoefct.tco jdcolor.tco jddctmgr.tco\
+jdhuff.tco jdinput.tco jdmainct.tco jdmarker.tco jdmaster.tco jdmerge.tco jdphuff.tco\
+jdpostct.tco jdsample.tco jdtrans.tco jerror.tco jfdctflt.tco jfdctfst.tco jfdctint.tco\
+jidctflt.tco jidctfst.tco jidctint.tco jidctred.tco jmemmgr.tco jmemnobs.tco jquant1.tco\
+jquant2.tco jutils.tco rdbmp.tco rdcolmap.tco rdgif.tco rdppm.tco rdrle.tco rdswitch.tco\
+rdtarga.tco transupp.tco wrbmp.tco graphcom.tco drawbmp.tco br_file.tco j_osd.tco
+
+
+
+# Default build	targets
+TARGETS	= ch_pic.lib
+
+
+include	$(DVD_MAKE)/defrules.mak
+
+ch_pic.lib:  $(OBJS)
+ifeq ($(strip $(SILENT)),)
+	@echo Linking $@
+  endif
+	$(AR) $^ -o $@
+
+clean:
+	@echo Cleaning CH_PIC
+	$(RM) *.tco
+	$(RM) *.lib

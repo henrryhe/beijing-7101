@@ -1,0 +1,85 @@
+#  (C) Copyright changhong 2004.
+# MODULE: QAM5516 DVB-C project
+#
+# FILE	: makefile
+#
+# NAME	: zhx changhong 
+#
+include	$(DVD_MAKE)/generic.mak
+
+EXPORTS= ysharp_usb.lib
+## zhx
+ OSPLUS_CPU := st20c2
+   	
+## vpath %.h $(DVD_ROOT)/main
+
+# zhx del osplus_r1_0 start  
+ vpath %.h $(OSPLUS_ROOT)/include
+vpath %.h $(OSPLUS_ROOT)/include/osplus
+vpath %.h $(OSPLUS_ROOT)/include/ioctls
+# zhx del osplus_r1_0 end
+
+##zx add for osplus_R1_1 start 
+ #vpath %.h $(OSPLUS_ROOT)/stm-osplus.11-1.1.st20-MSWin32-x86/include
+ #vpath %.h $(OSPLUS_ROOT)/stm-osplus.11-1.1.st20-MSWin32-x86/include/osplus
+ #vpath %.h $(OSPLUS_ROOT)/stm-osplus.11-1.1.st20-MSWin32-x86/include/ioctls
+#vpath %.h $(OSPLUS_ROOT)/stm-osplus.11-1.1.st20-usblink-MSWin32-x86/include
+ #vpath %.h $(OSPLUS_ROOT)/stm-osplus.11-1.1.st20-usblink-MSWin32-x86/include/osplus
+ #vpath %.h $(OSPLUS_ROOT)/stm-osplus.11-1.1.st20-usblink-MSWin32-x86/include/ioctls
+##zx add for osplus_R1_1 end
+
+
+## include path for shared objects
+ INCLUDES += -I $(subst $(BAD_SLASH),$(GOOD_SLASH),../../../ch_usb)
+## INCLUDES += -I $(subst $(BAD_SLASH),$(GOOD_SLASH),../../../ch_usb/include)
+
+# zhx del osplus_r1_0 start  
+INCLUDES += -I$(subst $(BAD_SLASH),$(GOOD_SLASH),$(OSPLUS_ROOT)/include)
+INCLUDES += -I$(subst $(BAD_SLASH),$(GOOD_SLASH),$(OSPLUS_ROOT)/include)
+INCLUDES += -I$(subst $(BAD_SLASH),$(GOOD_SLASH),$(OSPLUS_ROOT)/USB/include)
+# zhx del osplus_1_0 end  
+
+##zx add for osplus_R1_1 start 
+#INCLUDES += -I$(subst $(BAD_SLASH),$(GOOD_SLASH),$(OSPLUS_ROOT)/stm-osplus.11-1.1.st20-MSWin32-x86/include)
+#INCLUDES += -I$(subst $(BAD_SLASH),$(GOOD_SLASH),$(OSPLUS_ROOT)/stm-osplus.11-1.1.st20-MSWin32-x86/include)
+#INCLUDES += -I$(subst $(BAD_SLASH),$(GOOD_SLASH),$(OSPLUS_ROOT)/stm-osplus.11-1.1.st20-MSWin32-x86/USB/include)
+
+#INCLUDES += -I$(subst $(BAD_SLASH),$(GOOD_SLASH),$(OSPLUS_ROOT)/stm-osplus.11-1.1.st20-usblink-MSWin32-x86/include)
+#INCLUDES += -I$(subst $(BAD_SLASH),$(GOOD_SLASH),$(OSPLUS_ROOT)/stm-osplus.11-1.1.st20-usblink-MSWin32-x86/include)
+#INCLUDES += -I$(subst $(BAD_SLASH),$(GOOD_SLASH),$(OSPLUS_ROOT)/stm-osplus.11-1.1.st20-usblink-MSWin32-x86/USB/include)
+##zx add for osplus_R1_1 end 
+
+
+
+
+OBJS =  ch_usb.tco
+
+##usbusif.tco
+
+##zlm 050921 add
+INCLUDES += -I$(DVD_APP_ROOT)\main\5100
+
+##zlm add 
+CFLAGS += -cpp -DDVD_EXCLUDE_OS20TO21_MACROS
+
+# Default build	targets
+TARGETS	= ysharp_usb.lib
+
+
+include	$(DVD_MAKE)/defrules.mak
+
+ysharp_usb.lib:  $(OBJS)
+ifeq ($(strip $(SILENT)),)
+	@echo Linking $@
+  endif
+	$(AR) $^ -o $@
+
+clean:
+#	@echo Cleaning USIF
+	$(RM) *.tco
+	$(RM) *.lib
+	
+
+
+
+

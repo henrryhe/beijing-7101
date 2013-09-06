@@ -1,0 +1,40 @@
+	st20cc symbol.c -c2 -c -g -O0  -DSTI2C_SW_START_STOP -DCODE_ON_EMI -Dmaly -DST_5518 -DST_DVB -DSTLINK -DDCACHE_ENABLED -DINTEGRATE_FRONT_PANEL_KEYBOARD -DINTEGRATE_TUNER_MODULE -DSINGAPPL    -I z:\5518\include -o symbol.tco
+Warning-st20icc-symbol.c(24)- File 'stlite.h' is empty
+Warning-st20icc-symbol.c(29)- File 'sttbx.h' is empty
+Error-st20icc-symbol.c(42)- Expected ';' or ',' - inserted ';' before 'symbol_lock'
+Error-st20icc-symbol.c(42)- Type specifier/qualifier or storage class needed - 'int' assumed
+Error-st20icc-symbol.c(50)- Type specifier/qualifier or storage class needed - 'int' assumed
+Error-st20icc-symbol.c(50)- Expected ';' or ',' - inserted ';' before 'symbol_init'
+Warning-st20icc-symbol.c(51)- 'int symbol_init()' assumed - 'void' intended?
+Warning-st20icc-symbol.c(52)- Inventing 'extern int semaphore_init_priority();'
+Error-st20icc-symbol.c(53)- Undeclared name, inventing 'extern int false'
+Warning-st20icc-symbol.c(65)- Inventing 'extern int STTBX_Report();'
+Error-st20icc-symbol.c(65)- Undeclared name, inventing 'extern int STTBX_REPORT_LEVEL_INFO'
+Warning-st20icc-symbol.c(65)- No side effect in void context: <variable>
+Warning-st20icc-symbol.c(65)- No side effect in void context: <string constant>
+Warning-st20icc-symbol.c(74)- Inventing 'extern int STTBX_Report();'
+Error-st20icc-symbol.c(74)- Undeclared name, inventing 'extern int STTBX_REPORT_LEVEL_INFO'
+Warning-st20icc-symbol.c(74)- No side effect in void context: <variable>
+Error-st20icc-symbol.c(86)- Type specifier/qualifier or storage class needed - 'int' assumed
+Error-st20icc-symbol.c(86)- Expected ';' or ',' - inserted ';' before 'symbol_enquire_symbol'
+Warning-st20icc-symbol.c(88)- 'int symbol_enquire_symbol()' assumed - 'void' intended?
+Error-st20icc-symbol.c(94)- Undeclared name, inventing 'extern int true'
+Error-st20icc-symbol.c(98)- Undeclared name, inventing 'extern int false'
+Error-st20icc-symbol.c(105)- Type specifier/qualifier or storage class needed - 'int' assumed
+Error-st20icc-symbol.c(105)- Expected ';' or ',' - inserted ';' before 'symbol_enquire_value_inexact'
+Warning-st20icc-symbol.c(107)- 'int symbol_enquire_value_inexact()' assumed - 'void' intended?
+Error-st20icc-symbol.c(113)- Undeclared name, inventing 'extern int true'
+Error-st20icc-symbol.c(117)- Undeclared name, inventing 'extern int false'
+Error-st20icc-symbol.c(124)- Type specifier/qualifier or storage class needed - 'int' assumed
+Error-st20icc-symbol.c(124)- Expected ';' or ',' - inserted ';' before 'symbol_enquire_value'
+Warning-st20icc-symbol.c(126)- 'int symbol_enquire_value()' assumed - 'void' intended?
+Error-st20icc-symbol.c(132)- Undeclared name, inventing 'extern int true'
+Error-st20icc-symbol.c(136)- Undeclared name, inventing 'extern int false'
+Warning-st20icc-symbol.c(147)- Inventing 'extern int semaphore_wait();'
+Warning-st20icc-symbol.c(152)- Inventing 'extern int semaphore_signal();'
+Warning-st20icc-symbol.c(163)- Inventing 'extern int semaphore_wait();'
+Warning-st20icc-symbol.c(167)- Inventing 'extern int semaphore_signal();'
+Warning-st20icc-symbol.c(178)- Inventing 'extern int semaphore_wait();'
+Warning-st20icc-symbol.c(182)- Inventing 'extern int semaphore_signal();'
+Warning-st20icc-symbol.c(189)- Static 'semaphore_t' declared but not used
+st20cc: Error: in attempting to run st20icc

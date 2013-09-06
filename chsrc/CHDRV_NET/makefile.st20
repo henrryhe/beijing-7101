@@ -1,0 +1,109 @@
+#----------------------------------------------------------------------
+#
+#           Makefile for SINGAPPL TUNER
+#
+# Build options:
+#
+# Make options:
+#   'make'              builds lib file.
+#
+#   'make clean'        remove lib build files.
+#
+#----------------------------------------------------------------------
+DVD_MAKE_VERSION := 2
+ifdef IN_OBJECT_DIR
+
+include $(DVD_MAKE)/generic.mak
+
+##DIR_SINGAPPL = $(STiDevROOT)/singappl
+DIR_SINGAPPL = $(DVD_BUILD_DIR)\..
+DIR_SHARED = $(DIR_SINGAPPL)/shared/ST_$(DVD_FRONTEND)
+DIR_SHARED_FRONTEND = $(DIR_SINGAPPL)/shared/ST_$(DVD_FRONTEND)/$(DVD_FRONTEND)
+
+
+#TMTM Forced options
+USE_STBLAST := 1
+DEMO_STBLAST := 1
+##DVD_DISPLAY := PAL
+
+COMPONENT_NAME := CHDRV_NET
+# Other components this component is dependant upon
+HEADER_IMPORTS := 
+ST20_IMPORTS :=
+EXPORTS := $(COMPONENT_NAME).lib
+ST20_EXPORTS := $(COMPONENT_NAME).lib
+ST20_TARGETS := $(COMPONENT_NAME).lib
+
+# include path for shared objects
+INCLUDES := $(INCLUDES) -I$(DIR_SINGAPPL) -I$(DIR_SHARED) -I$(DIR_SHARED_FRONTEND) -I$(DIR_SINGAPPL)/srinclude
+
+##INCLUDES += -I C:/Work/CAB5119Eth/singappl/Ethernet/lwip/src/include
+INCLUDE_PATH += ../../../main/
+#----------------------------------------------------------------------
+# set virtual paths to objects (as path from test application ./objs/ST20 subdirectory)
+
+vpath %.c 	../../DAVICOM
+vpath %.c    	../../SMSC
+vpath %.c     	../../STMAC110
+vpath %.c     	../../Platform
+
+vpath %.h 	../../include
+
+
+# Compiler options common for USIF C source files
+## KCY Temporary work around to fix autosearch hang problem. We have a problem to optimize the tuner code somehow...
+CFLAGS += -cpp -falign 1
+##CFLAGS += -cpp -O0
+## For debug
+## CFLAGS := $(CFLAGS) -DSTTBX_REPORT -DSTTBX_PRINT -DSTTBX_INPUT
+
+
+
+ST20_OBJS := CHDRV_NET_os.tco ether_dm9003.tco
+
+
+# Pick up standard rules
+#-----------------------
+include $(DVD_MAKE)/defrules.mak
+
+
+# Build the lib         
+#---------------
+$(ST20_TARGETS): $(ST20_OBJS)
+	@$(ECHO) Building $@
+	$(BUILD_LIBRARY)
+
+# Clean .lib and obj    
+#-------------------
+clean:
+	@$(ECHO) Cleaning $($(ARCHITECTURE)_TARGETS)
+	-$(RM) $($(ARCHITECTURE)_TARGETS)
+	-$(RM) $($(ARCHITECTURE)_OBJS)
+	-$(RM) *.tco
+
+###################################
+# Dependency Generator Target
+# by Louie
+# run "gmake dep"
+# to auto create a dependency check
+# file for this module
+###################################
+-include ../../depends.mak
+OBJS:=$(ST20_OBJS)
+dep: 
+	@$(ECHO) Generating dependencies file depends.mak
+	-$(RM) $(OBJS)	
+	$(MAKE) -C ../.. $(OBJS) CFLAGS="$(CFLAGS) -v -C" > compile.log
+	depends $(@D)/compile.log $(@D)/../../depends.mak
+	-$(RM) $(OBJS) compile.log
+####### DEPENDS.MAK ###############
+
+# Add for make system version 2 support
+#---------------------------------------
+else
+
+include $(DVD_MAKE)/builddir.mak
+
+endif
+
+# end

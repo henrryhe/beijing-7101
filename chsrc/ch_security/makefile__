@@ -1,0 +1,40 @@
+#
+# make script to build DBASE.LIB and its components
+# AUTHOR       : THT, ST Application Lab
+#
+
+#
+# Pick up default rules	and variables
+#
+include	$(DVD_MAKE)/generic.mak
+EXPORTS = ch_security.lib
+
+INCLUDES += -I $(subst $(BAD_SLASH),$(GOOD_SLASH),$(STi5100ROOT)/srcch/Network_Stack/source/interfaces)
+INCLUDES += -I $(subst $(BAD_SLASH),$(GOOD_SLASH),$(STi5100ROOT)/srcch/Network_Stack/source/protocols)
+INCLUDES += -I $(subst $(BAD_SLASH),$(GOOD_SLASH),$(STi5100ROOT)/srcch/Network_Stack/source/utilities)
+INCLUDES += -I $(subst $(BAD_SLASH),$(GOOD_SLASH),$(STi5100ROOT)/srcch/Network_Stack/Projects/EXAMPLE)
+
+
+
+# local	objects	which comprise this component
+OBJS =  stb_tsm.tco ch_security.tco  skb.tco  tsm_stb.tco keyinterface.tco skb2.tco
+TARGETS	=  ch_security.lib
+include	$(DVD_MAKE)/defrules.mak
+
+
+
+
+ch_security.lib: $(OBJS)
+ ifeq ($(strip $(SILENT)),)
+	@echo Linking $@
+  endif
+	$(AR) $^ -o $@
+   
+clean:
+	@echo *** Cleaning: ch_security ...
+	$(RM) *.tco
+	$(RM) *.lib
+
+
+
+

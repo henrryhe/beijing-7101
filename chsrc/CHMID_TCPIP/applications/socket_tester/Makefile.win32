@@ -1,0 +1,39 @@
+#Windows Makefile for socktest.c 
+
+# Compile using nmake (change the paths accoring to the visual studio path)
+# >set PATH=%PATH%;C:\Program Files\Microsoft Visual Studio 8\VC\bin;C:\Program Files\Microsoft Visual Studio 8\Common7\IDE;c:\program files\microsoft visual studio 8;
+# >nmake /f Makefile.win32
+
+## Visual C++
+CC = cl
+LIB = wsock32.lib
+OBJEXT = obj
+LINK = link
+
+#Library paths (change the paths if you have installed visual studio in other directory)
+WINSOCK_LIB_PATH = "C:\Program Files\Microsoft Visual Studio 8\VC\PlatformSDK\Lib"
+CMT_LIB_PATH = "C:\Program Files\Microsoft Visual Studio 8\VC\lib"
+
+#include paths (change the paths if you have installed visual studio in other directory)
+VC_INCLUDE_PATH = "C:\Program Files\Microsoft Visual Studio 8\VC\include"
+PALTFORM_INCLUDE_PATH = "C:\Program Files\Microsoft Visual Studio 8\VC\PlatformSDK\Include"
+
+PROGRAM = socktest.exe
+CFLAGS= -DWIN32 -I $(VC_INCLUDE_PATH) -I $(PALTFORM_INCLUDE_PATH)
+
+OBJS = socktest.obj getopt.obj
+
+.c.$(OBJEXT):
+	$(CC) -c $(CFLAGS) $<
+
+all: $(PROGRAM)
+
+$(PROGRAM):		$(OBJS)
+	$(LINK) $(OBJS) -out:socktest.exe -LIBPATH:$(WINSOCK_LIB_PATH) -LIBPATH:$(CMT_LIB_PATH) $(LIB)
+
+clean:
+	del *.obj $(PROGRAM)
+
+
+
+

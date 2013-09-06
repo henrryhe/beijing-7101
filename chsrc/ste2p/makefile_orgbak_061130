@@ -1,0 +1,26 @@
+DVD_MAKE_VERSION := 2
+ifdef IN_OBJECT_DIR
+
+include $(DVD_MAKE)/generic.mak
+
+IMPORTS := sti2c stpio
+EXPORTS := ste2p.h ste2p.lib 
+TARGETS := ste2p.lib
+
+# objects we depend on.
+OBJS    := ste2p.tco
+
+include $(DVD_MAKE)/defrules.mak
+
+ste2p.lib: $(OBJS)
+	@$(ECHO) Building $@
+	$(BUILD_LIBRARY)
+
+clean:
+	@$(ECHO) Cleaning $(TARGETS)
+	-$(RM) $(OBJS)
+	-$(RM) $(TARGETS)
+
+else
+include $(DVD_MAKE)/builddir.mak
+endif
