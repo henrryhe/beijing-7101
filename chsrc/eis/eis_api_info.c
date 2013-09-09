@@ -459,7 +459,7 @@ BOOL ChangeCharToValue(char* c_string,int* rpi_val)
 
 
 }
-#if 0 	/*sqzow20100624*/
+#if 1 	/*sqzow20100624*/
 INT32_T ipanel_start_other_app(const CHAR_T *name)
 {
 	char* startpos = NULL;

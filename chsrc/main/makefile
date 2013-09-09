@@ -115,9 +115,9 @@ endif
 ifeq "$(USE_IPANEL)" "1"
 INCLIB +=$(CURR_DIR)\chlib\eis.lib
 ##INCLIB +=$(CURR_DIR)\chlib\eis_7100.lib
-#INCLIB +=$(CURR_DIR)\chlib\lib_ipanel_ST7100.lib
-INCLIB +=$(CURR_DIR)\chlib\debug_lib_ipanel_ST7101.lib
-INCLIB +=$(CURR_DIR)\chlib\libcloud.a
+INCLIB +=$(CURR_DIR)\chlib\lib_ipanel_ST7100.lib
+#INCLIB +=$(CURR_DIR)\chlib\debug_lib_ipanel_ST7101.lib
+#INCLIB +=$(CURR_DIR)\chlib\libcloud.a
 
 INCLIB +=$(CURR_DIR)\chlib\st_ch_stock.lib
 endif
