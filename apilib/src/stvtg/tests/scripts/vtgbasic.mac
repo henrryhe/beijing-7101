@@ -1,0 +1,51 @@
+; ****************************************************************************
+; File          : VTGBASIC.MAC
+; Requirements  :
+; Author        : HSM - BS January 2001
+; Last modified : BS - 17 Jan 2003
+; ****************************************************************************
+
+; Test to check basic features.
+define M_01_BASICS
+    api_report "M_01_BASICS"
+    ERRORCOUNT=0
+    vtg_rev
+    if VTG_TYPE=="TYPE_DENC"
+        denc_init
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    vtg_init
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_capa
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_open
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if (API_CHIPID=="7200")
+        vtg_setmode , "MODE_1080I60000_74250"
+    end
+    else
+        vtg_setmode
+    end
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")&&(API_CHIPID!="7200")
+        vtg_ssmparams
+        M_CHECK_RETCODE ERR_NO_ERROR
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vtg_gsmparams
+        M_CHECK_RETCODE ERR_NO_ERROR
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+
+    vtg_getmode
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_close
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_term
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if (VTG_TYPE=="TYPE_DENC")
+        denc_term
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    api_report "M_01_BASICS" ERRORCOUNT
+end
+

@@ -1,0 +1,34 @@
+# Sample ST40 makefile
+
+DVD_MAKE_VERSION := 2
+ifdef IN_OBJECT_DIR
+
+include $(DVD_MAKE)/generic.mak
+
+HEADER_IMPORTS := <components with header files only>
+ST40_IMPORTS := <imported components>
+ST40_EXPORTS := <exported library and header>
+ST40_TARGETS := <exported library>
+
+OBJS := <objects in exported library>
+
+include $(DVD_MAKE)/defrules.mak
+
+<exported library>: $(OBJS)
+	@$(ECHO) Building $@
+	$(BUILD_LIBRARY)
+
+clean:
+	@$(ECHO) Cleaning $(ST40_TARGETS)
+	-$(RM) $(OBJS)
+	-$(RM) $(ST40_TARGETS)
+
+# Local header dependencies
+
+else
+
+include $(DVD_MAKE)/builddir.mak
+
+endif
+
+# End of sample ST40 makefile

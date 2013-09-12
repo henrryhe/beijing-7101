@@ -1,0 +1,27 @@
+#!/bin/sh
+status=0
+
+if [ "$GNUROOT" = "" ]
+then
+    echo No GNUROOT set, assuming toolchain is unavailable
+    exit 1
+fi
+
+if [ $# -ne 2 ]
+then
+    echo Usage $0 board target
+    exit 1
+fi
+
+for i in framework_*
+do
+    echo Running $i tests
+    sh4xrun -c $1 -t $2 -e $i/obj/os21/st40/$i.out
+    if [ $? -ne 0 ]
+    then
+        echo $i Failed
+        status=1
+    fi
+done
+
+exit $status

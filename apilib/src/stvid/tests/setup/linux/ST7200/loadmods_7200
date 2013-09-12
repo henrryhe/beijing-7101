@@ -1,0 +1,162 @@
+#!/bin/sh
+
+#echo 8 > /proc/sys/kernel/printk
+
+#STVIDTEST_DIR=exports/share/bin
+MOD_DIR=exports/lib/modules
+STAPIGAT_DIR=exports/share/lib/modules
+LXLOAD_DIR=exports/lib/modules
+MME_DIR=exports/lib/modules
+COMPANION_DIR=scripts/vid
+SCRIPT_DIR=scripts/utils
+
+echo
+echo "-- UTILITIES modules --"
+echo "Loading stos module..."
+insmod $MOD_DIR/stos_core.ko
+echo "Loading common modules..."
+insmod $MOD_DIR/stcommon_core.ko
+echo "Loading stevt modules ..."
+insmod $MOD_DIR/stevt_core.ko
+insmod $MOD_DIR/stevt_ioctl.ko
+echo "Loading avmem module..."
+insmod $MOD_DIR/stavmem_core.ko MAX_BLOCKS=100 PART_0=0xAAA00000:0x055F0000:"LMI_SYS" PART_1=0xB8000000:0x03FF0000:"LMI_VID"
+echo "Loading stapigat module..."
+insmod $STAPIGAT_DIR/stapigat.ko
+
+echo
+echo "-- PIO modules --"
+insmod $MOD_DIR/stpio_core.ko
+insmod $MOD_DIR/stpio_ioctl.ko
+
+echo
+echo "-- PTI modules --"
+echo "Loading pti modules..."
+$SCRIPT_DIR/stpti4_load.sh
+#insmod $MOD_DIR/stpti4_core.ko
+#insmod $MOD_DIR/stpti4_ioctl.ko
+
+echo
+echo "-- CLKRV modules --"
+echo "Loading clkrv modules ..."
+$SCRIPT_DIR/stclkrv_load.sh
+#insmod $MOD_DIR/stclkrv_core.ko
+#insmod $MOD_DIR/stclkrv_ioctl.ko
+
+echo
+echo "-- MME modules --"
+use_stslave=0
+
+
+COMPANION=$COMPANION_DIR/VideoLX_7200A0V1_H264_VC1_MPEG2_MPEG4P2_V1_0x08000000.bin   # <TBD> must be video companion
+#if test "-$use_stslave" == "-0"; then
+echo "loading video main companion: $COMPANION"
+insmod $LXLOAD_DIR/mlxload.ko LxToInitialize=2
+echo "loading video main companion done"
+major=`cat /proc/devices | awk "\\$2==\"lxload\" {print \\$1}"`
+rm -f /dev/stapi/lxload
+mknod /dev/stapi/lxload c $major 0
+cat $COMPANION > /dev/stapi/lxload
+rmmod mlxload
+#else
+# echo "Loadin video with stslave $COMPANION"
+# stslave -t stb7100.0 -Z
+# cat $COMPANION > /dev/st231-0
+# stslave -t stb7100.0 -X 0x04000000
+
+#fi
+
+COMPANION=$COMPANION_DIR/VideoLX_7200A0V2_H264_VC1_MPEG2_MPEG4P2_V2_0x08300000.bin   # <TBD> must be video companion
+if test "-$use_stslave" == "-0"; then
+echo "loading video main companion: $COMPANION"
+insmod $LXLOAD_DIR/mlxload.ko LxToInitialize=4
+major=`cat /proc/devices | awk "\\$2==\"lxload\" {print \\$1}"`
+rm -f /dev/stapi/lxload
+mknod /dev/stapi/lxload c $major 0
+cat $COMPANION > /dev/stapi/lxload
+rmmod mlxload
+#else
+# echo "Loadin video with stslave $COMPANION"
+# stslave -t stb7100.0 -Z
+# cat $COMPANION > /dev/st231-0
+# stslave -t stb7100.0 -X 0x04000000
+
+fi
+
+echo "inserting multicom modules ..."
+echo "Load embxshell module..."
+insmod $MME_DIR/embxshell.ko
+echo "Load embxloopback module..."
+insmod $MME_DIR/embxloopback.ko
+echo "Load embxmailbox module..."
+insmod $MME_DIR/embxmailbox.ko 	mailbox0=0xFD800000:20:set2 mailbox1=0xFD801000:22:set2 mailbox2=0xFD802000:21:set2 mailbox3=0xFD803000:23:set2
+echo "Load embxshm module..."
+insmod $MME_DIR/embxshm.ko      mailbox1=TransportVideo1:0:0x5:0x60000000:0:16:16:0:128:0xAAA00000:0x20000000 mailbox3=TransportVideo2:0:0x11:0x60000000:0:16:16:0:128:0xAAA00000:0x20000000
+echo "Load mme_host module..."
+insmod $MME_DIR/mme_host.ko     transport1=TransportVideo1 transport3=TransportVideo2
+
+echo
+echo "-- OUTPUTSTAGE modules --"
+echo "Loading denc modules ..."
+insmod $MOD_DIR/stdenc_core.ko
+insmod $MOD_DIR/stdenc_ioctl.ko
+echo "Loading vtg modules ..."
+insmod $MOD_DIR/stvtg_core.ko
+insmod $MOD_DIR/stvtg_ioctl.ko
+
+echo "Loading sti2c modules ..."
+insmod $MOD_DIR/sti2c_core.ko
+insmod $MOD_DIR/sti2c_ioctl.ko
+
+echo "Loading vout modules ..."
+insmod $MOD_DIR/hdmi_i2c_core.ko
+insmod $MOD_DIR/stvout_core.ko
+insmod $MOD_DIR/stvout_ioctl.ko
+echo "Loading layer modules ..."
+insmod $MOD_DIR/stlayer_core.ko
+insmod $MOD_DIR/stlayer_ioctl.ko
+echo "Loading vmix modules ..."
+insmod $MOD_DIR/stvmix_core.ko
+insmod $MOD_DIR/stvmix_ioctl.ko
+
+echo
+echo "-- FDMA module --"
+echo "Loading fdma module..."
+insmod $MOD_DIR/stfdma_core.ko
+
+#echo
+#echo "-- STAUDLX modules --"
+#echo "Loading staudlx module..."
+#$SCRIPT_DIR/staudlx_load.sh
+
+echo
+echo "-- VIDEO modules --"
+echo "Loading vid modules ..."
+insmod $MOD_DIR/stvid_core.ko
+insmod $MOD_DIR/stvid_ioctl.ko
+echo "Loading vidtest modules ..."
+#insmod $STVIDTEST_DIR/stvidtest_core.ko
+#insmod $STVIDTEST_DIR/stvidtest_ioctl.ko
+insmod $MOD_DIR/stvidtest_core.ko
+insmod $MOD_DIR/stvidtest_ioctl.ko
+
+echo
+echo "-----------------"
+for i in sti2c_ioctl stvidtest_ioctl stvid_ioctl stlayer_ioctl stapigat stevt_ioctl stvout_ioctl stvtg_ioctl stdenc_ioctl stvmix_ioctl stpio_ioctl
+
+do
+  major=`cat /proc/devices | awk "\\$2==\"$i\" {print \\$1}"`
+
+  echo "Creating device entry: /dev/stapi/$i     major:$major"
+
+  rm -f /dev/stapi/$i
+  mknod /dev/stapi/$i c $major 0
+done
+
+
+
+
+
+echo
+echo "-----------------"
+lsmod

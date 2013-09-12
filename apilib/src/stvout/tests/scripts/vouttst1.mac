@@ -1,0 +1,222 @@
+; ****************************************************************************
+; File         : VOUTTST1.MAC
+; Requirements :
+; Author       : Jacques GAMON - November 2000
+; ****************************************************************************
+; Test
+
+; general behavior :
+; driver is assumed to be not initialized before starting these file tests
+
+define M_TEST1_OUTPUTS ALL_TEST1
+  loop=0
+  sdchoice=""
+  while loop==0
+    if ALL_TEST1==1
+      sdchoice="all"
+    end
+    else
+      print "-----------------------------------------"
+      print "Test VOUT API routines "
+      sdchoice=""
+      if (API_CHIPID=="7710")
+      print " 1  - test case M_TEST_RGB on HD_DACS "
+      print " 2  - test case M_TEST_YUV  on HD_DACS "
+      end
+      else
+       print " 1  - test case M_TEST_RGB"
+        if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+            print " 2  - test case M_TEST_YUV  on HD_DACS "
+        end
+        else
+            print " 2  - test case M_TEST_YUV "
+        end
+      end
+      print " 3  - test case M_TEST_YC"
+      print " 4  - test case M_TEST_CVBS"
+      print " 5  - test case M_TEST_DAC_ON_TV"
+      print " 6  - test case M_TEST_BRIGHTNESS"
+      print " 7  - test case M_TEST_CONTRAST"
+      print " 8  - test case M_TEST_SATURATION"
+      print " 9  - test case M_TEST_BCS_ON_TV"
+      print " 10 - test case M_TEST_DAC_INVERTED_OUTPUT"
+      print " 11 - test case M_TEST_CHROMA"
+      print " 12 - test case M_TEST_LUMA"
+      ;-----DENCVERSION>11-----
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_4629)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)||(DEVICETYPE==VOUT_DEVICE_TYPE_5525)
+           print " 13 - test case M_TEST_DENC_OPT"
+      end
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100)||(DEVICETYPE==VOUT_DEVICE_TYPE_7200)
+           print " 13 - test case M_TEST_DENC_OPT"
+      end
+      print " 14 - test case M_TEST_CLDELAY"
+
+      ;------------------------
+      print " g1 - thread cases  1 to  4"
+      print " g2 - thread cases  6 to  8"
+      print " g3 - thread cases 11 to 12"
+      print " all - all tests"
+      if (ST_OS=="LINUX")
+        print " x - to Quit this menu"
+      end
+      elif (API_CHIPID=="5301")||(API_CHIPID=="5525")
+      print " hit Spacebar to Quit this menu"
+      end
+      else
+      print " hit return to Quit this menu"
+      end
+      print " Enter your choice :"
+      sdchoice=getstring
+    end
+
+    if (ST_OS=="LINUX")
+        if sdchoice=="x"
+                print "exit"
+                loop=1
+        end
+    end
+
+    if (API_CHIPID=="5301")||(API_CHIPID=="5525")
+     if sdchoice==" "
+        loop=1
+     end
+     else
+        if sdchoice!=""
+           M_DENC_INIT
+        end
+     end
+    end
+    else
+      if sdchoice==""
+        loop=1
+     end
+     else
+        M_DENC_INIT
+     end
+    end
+    if sdchoice=="1"
+        if (API_CHIPID=="7710")
+             HDDACS=1
+             M_TEST_RGB
+             HDDACS=0
+        end
+        else
+            M_TEST_RGB
+        end
+    end
+    if sdchoice=="2"
+        if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+             HDDACS=1
+             M_TEST_YUV
+             HDDACS=0
+        end
+        else
+            M_TEST_YUV
+        end
+    end
+    if sdchoice=="3"
+        M_TEST_YC
+    end
+    if sdchoice=="4"
+        M_TEST_CVBS
+    end
+    if sdchoice=="5"
+        M_TEST_DAC_ON_TV
+    end
+    if sdchoice=="6"
+        M_TEST_BRIGHTNESS
+    end
+    if sdchoice=="7"
+        M_TEST_CONTRAST
+    end
+    if sdchoice=="8"
+        M_TEST_SATURATION
+    end
+    if sdchoice=="9"
+        M_TEST_BCS_ON_TV
+    end
+    if sdchoice=="10"
+        M_TEST_DAC_INVERTED_OUTPUT
+    end
+    if sdchoice=="11"
+        M_TEST_CHROMA
+    end
+    if sdchoice=="12"
+        M_TEST_LUMA
+    end
+    if DENCVERSION>11
+         if sdchoice=="13"
+                source OSPATH+DRV_PATH_VOUT+"voutopt.mac"
+                M_TEST_DENC_OPT
+         end
+    end
+    if sdchoice=="14"
+        M_TEST_CLDELAY
+    end
+    if sdchoice=="g1"
+        if (API_CHIPID=="7710")
+             HDDACS=1
+             M_TEST_RGB
+             M_TEST_YUV
+             HDDACS=0
+        end
+        else
+        M_TEST_RGB
+        M_TEST_YUV
+        end
+        M_TEST_YC
+        M_TEST_CVBS
+     end
+    if sdchoice=="g2"
+        M_TEST_BRIGHTNESS
+        M_TEST_CONTRAST
+        M_TEST_SATURATION
+    end
+    if sdchoice=="g3"
+        M_TEST_CHROMA
+        M_TEST_LUMA
+    end
+    if sdchoice=="all"
+        ERR_T100=FALSE_
+        ERR_T101=FALSE_
+        ERR_T102=FALSE_
+        ERR_T103=FALSE_
+        ERR_T104=FALSE_
+        ERR_T105=FALSE_
+        ERR_T106=FALSE_
+        ERR_T107=FALSE_
+        ERR_T108=FALSE_
+        ERR_T109=FALSE_
+        ERR_T110=FALSE_
+        ERR_T111=FALSE_
+        M_TEST_RGB
+        M_TEST_YUV
+        M_TEST_YC
+        M_TEST_CVBS
+        M_TEST_DAC_ON_TV
+        M_TEST_BRIGHTNESS
+        M_TEST_CONTRAST
+        M_TEST_SATURATION
+        M_TEST_BCS_ON_TV
+        M_TEST_DAC_INVERTED_OUTPUT
+        M_TEST_CHROMA
+        M_TEST_LUMA
+        if DENCVERSION>11
+         source OSPATH+DRV_PATH_VOUT+"voutopt.mac"
+         M_TEST_DENC_OPT
+        end
+        if ALL_TEST1!=1
+          M_CHECK_TEST1_ERR ERR_T100 ERR_T101 ERR_T102 ERR_T103 ERR_T104 ERR_T105 ERR_T106 ERR_T107 ERR_T108 ERR_T109 ERR_T110 ERR_T111
+        end
+        loop=1
+    end
+    if sdchoice!=""
+        M_DENC_TERM
+    end
+  end
+end
+
+
+
+
+

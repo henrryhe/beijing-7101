@@ -1,0 +1,1288 @@
+ 
+Running STEVT complete test suite
+Start: Mon May 24 12:00:03 MET DST 1999
+User : ielo
+ 
+TComp_5_1: ^^^Passed
+TComp_5_2: ^^^Passed
+TComp_4_1: ^^^Passed
+TComp_1_1: ^^^Passed
+TComp_1_2: ^^^Passed
+TComp_2_1: ^^^Passed
+TComp_2_2: ^^^Passed
+TComp_2_3: ^^^Passed
+TComp_3_1: ^^^Passed
+TComp_3_2: ^^^Passed
+TComp_3_3: ^^^Passed
+ 
+End  : Mon May 24 12:03:28 MET DST 1999
+ 
+Running STEVT complete test suite
+Start: Fri Jun 11 15:03:36 MET DST 1999
+User : ielo
+ 
+TComp_5_1: ^^^Passed
+TComp_5_2: ^^^Passed
+TComp_4_1: ^^^Passed
+TComp_1_1: ^^^Passed
+TComp_1_2: ^^^Passed
+TComp_2_1: ^^^Passed
+TComp_2_2: ^^^Passed
+TComp_2_3: ^^^Passed
+TComp_3_1: ^^^Passed
+TComp_3_2: ^^^Passed
+TComp_3_3: ^^^Passed
+ 
+End  : Fri Jun 11 15:09:28 MET DST 1999
+make[1]: Entering directory `/dvd-vob/dvdca-prj-stevt/tests/objs/ST20'
+st20run -l /dvd-vob/dvdbr-prj-chip -l /dvd-vob/dvdbr-prj-board -l /dvd-vob/dvdbr-prj-platform -l /u/spilotro/CC_tools/ -i mb231.cfg -t jei3 evt_test.lku
+
+TComp_1_1: STEVT_Open interface test
+^^^Passed Test Case 1
+^^^Removed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_1_2: STEVT_Close interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_2_1: STEVT_Register (without subscription) interface test
+^^^Removed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_2_2: STEVT_Register (with subscription) interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Removed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+			RegDevCall   : Null device name
+			NotifyDevCall: Null device name
+			Event data   : TEST 7 Notify Event data
+			UnregDevCall : Null device name
+^^^Passed Test Case 7
+			RegDevCall   : Null device name
+^^^Passed Test Case 8
+			RegDevCall   : Null device name
+^^^Passed Test Case 9
+
+TComp_2_3: STEVT_Unregister interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_3_1: STEVT_Subscribe (to registered events) interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Removed Test Case 5
+^^^Passed Test Case 6
+
+TComp_3_2: STEVT_Subscribe (to unregistered events)interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Removed Test Case 4
+^^^Removed Test Case 5
+^^^Passed Test Case 6
+
+TComp_3_3: STEVT_Unsubscribe interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_4_1: STEVT_Notify interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+^^^Passed Test Case 7
+
+TComp_4_2: STEVT_NotifySubscriber interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_5_1: STEVT_Init interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_5_2: STEVT_Term interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_6_1: STEVT_Notify/NotifySubscribers performance
+^^^Passed Test Case 1
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of events      = 10
+	Number of subscribers = 100
+	Elapsed time 192 us
+----------------------------------------
+^^^Passed Test Case 2
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of events      = 10
+	Number of subscribers = 100
+	Elapsed time 128 us
+----------------------------------------
+^^^Passed Test Case 3
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of the event      = 0
+	Number of the subscriber = 49
+	Elapsed time 0 us
+----------------------------------------
+^^^Passed Test Case 4
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of the event      = 9
+	Number of the subscriber = 99
+	Elapsed time 0 us
+----------------------------------------
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of the event      = 0
+	Number of the subscriber = 99
+	Elapsed time 0 us
+----------------------------------------
+
+TESTEVT_MultiInstance: Multi instance drivers STEVT interface test
+^^^Passed Test Case 1 == RegisterDevice by R1
+^^^Passed Test Case 2 == RegisterDevice by R2
+^^^Passed Test Case 3 == RegisterDevice by R3
+^^^Passed Test Case 4 == RegisterDevice by R4
+^^^Passed Test Case 5 == UnregisterDevice by R2
+^^^Passed Test Case 6 == UnregisterDevice by R3
+^^^Passed Test Case 7 == UnregisterDevice by R4
+^^^Passed Test Case 8 == UnregisterDevice by R1
+^^^Passed Test Case 9 == Unregister an unsubscribed and unregistered event
+^^^Passed Test Case 10 == Unregister a subscribed but unregistered event
+^^^Passed Test Case 11 == Unregister a subscribed and registered event
+^^^Passed Test Case 12 == Unsubscribe a subscribed and registered event
+^^^Passed Test Case 13 == Unsubscribe an unsubscribed but registered event
+^^^Passed Test Case 14 == Unsubscribe an unsubscribed and unregistered event
+^^^Passed Test Case 15 == Multiple RegisterDevice of the same event
+^^^Passed Test Case 16 == Multiple SubscribeDevice to the same event
+^^^Passed Test Case 17 == Notify by a registrant not required by any subscriber
+^^^Passed Test Case 18 == Notify by a registrant required by a subscriber
+^^^Passed Test Case 19 == NotifySubscriber with a valid SubscriberID
+^^^Passed Test Case 20 == NotifySubscriber with an invalid SubscriberID
+^^^Passed Test Case 21 == BComp. Multi/Single Instance Registration
+^^^Passed Test Case 22 == BComp. SI Register and MI Subscribe
+^^^Passed Test Case 23 == BComp. SI Subscribe and MI Register
+
+************************************************************
+PASSED :14
+FAILED :0
+************************************************************
+make[1]: Leaving directory `/dvd-vob/dvdca-prj-stevt/tests/objs/ST20'
+make[1]: Entering directory `/dvd-vob/dvdca-prj-stevt/tests/objs/ST20'
+st20run -l /dvd-vob/dvdbr-prj-chip -l /dvd-vob/dvdbr-prj-board -l /dvd-vob/dvdbr-prj-platform -l /u/spilotro/CC_tools -i mb282b.cfg -t jei1 evt_test.lku
+
+----- Chip and board used --------------------
+
+Board       : mb282b
+DVD_BACKEND : STi5512
+DVD_FRONTEND: STi5512
+
+----- Components revision strings ------------
+
+STBOOT      : STBOOT-REL_2.4.4A4
+STTBX       : STTBX-REL_2.0.1
+STEVT       : STEVT-REL_1.4.2
+STPIO       : STPIO-REL_1.2.4
+STUART      : STUART-REL_1.4.1
+STSYS       : STSYS-REL_1.2.3
+
+----------------------------------------------
+
+
+TComp_1_1: STEVT_Open interface test
+^^^Passed Test Case 1
+^^^Removed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_1_2: STEVT_Close interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_2_1: STEVT_Register (without subscription) interface test
+^^^Removed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_2_2: STEVT_Register (with subscription) interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Removed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+			RegDevCall   : Null device name
+			NotifyDevCall: Null device name
+			Event data   : TEST 7 Notify Event data
+			UnregDevCall : Null device name
+^^^Passed Test Case 7
+			RegDevCall   : Null device name
+^^^Passed Test Case 8
+			RegDevCall   : Null device name
+^^^Passed Test Case 9
+			RegDevCall   : Device name TC_10
+			NotifyDevCall: Device name TC_10
+			Event data   : TEST 10 DDTS GNBvd05383
+			UnregDevCall : Device name TC_10
+^^^Passed Test Case 10
+
+TComp_2_3: STEVT_Unregister interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_3_1: STEVT_Subscribe (to registered events) interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Removed Test Case 5
+^^^Passed Test Case 6
+
+TComp_3_2: STEVT_Subscribe (to unregistered events)interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Removed Test Case 4
+^^^Removed Test Case 5
+^^^Passed Test Case 6
+
+TComp_3_3: STEVT_Unsubscribe interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_4_1: STEVT_Notify interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+^^^Passed Test Case 7
+
+TComp_4_2: STEVT_NotifySubscriber interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_5_1: STEVT_Init interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_5_2: STEVT_Term interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_6_1: STEVT_Notify/NotifySubscribers performance
+^^^Passed Test Case 1
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of events      = 2
+	Number of subscribers = 400
+	Elapsed time 2112 us
+----------------------------------------
+^^^Passed Test Case 2
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of events      = 2
+	Number of subscribers = 400
+	Elapsed time 1152 us
+----------------------------------------
+^^^Passed Test Case 3
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of the event      = 0
+	Number of the subscriber = 199
+	Elapsed time 0 us
+----------------------------------------
+^^^Passed Test Case 4
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of the event      = 1
+	Number of the subscriber = 399
+	Elapsed time 64 us
+----------------------------------------
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of the event      = 0
+	Number of the subscriber = 399
+	Elapsed time 0 us
+----------------------------------------
+
+TComp_7_1: Memory allocation test
+Requested memory is 2096
+^^^Passed Test Case 1
+
+TESTEVT_MultiInstance: Multi instance drivers STEVT interface test
+^^^Passed Test Case 1 == RegisterDevice by R1
+^^^Passed Test Case 2 == RegisterDevice by R2
+^^^Passed Test Case 3 == RegisterDevice by R3
+^^^Passed Test Case 4 == RegisterDevice by R4
+^^^Passed Test Case 5 == UnregisterDevice by R2
+^^^Passed Test Case 6 == UnregisterDevice by R3
+^^^Passed Test Case 7 == UnregisterDevice by R4
+^^^Passed Test Case 8 == UnregisterDevice by R1
+^^^Passed Test Case 9 == Unregister an unsubscribed and unregistered event
+^^^Passed Test Case 10 == Unregister a subscribed but unregistered event
+^^^Passed Test Case 11 == Unregister a subscribed and registered event
+^^^Passed Test Case 12 == Unsubscribe a subscribed and registered event
+^^^Passed Test Case 13 == Unsubscribe an unsubscribed but registered event
+^^^Passed Test Case 14 == Unsubscribe an unsubscribed and unregistered event
+^^^Passed Test Case 15 == Multiple RegisterDevice of the same event
+^^^Passed Test Case 16 == Multiple SubscribeDevice to the same event
+^^^Passed Test Case 17 == Notify by a registrant not required by any subscriber
+^^^Passed Test Case 18 == Notify by a registrant required by a subscriber
+^^^Passed Test Case 19 == NotifySubscriber with a valid SubscriberID
+^^^Passed Test Case 20 == NotifySubscriber with an invalid SubscriberID
+^^^Passed Test Case 21 == BComp. Multi/Single Instance Registration
+^^^Passed Test Case 22 == BComp. SI Register and MI Subscribe
+^^^Passed Test Case 23 == BComp. SI Subscribe and MI Register
+
+************************************************************
+PASSED :15
+FAILED :0
+************************************************************
+make[1]: Leaving directory `/dvd-vob/dvdca-prj-stevt/tests/objs/ST20'
+make[1]: Entering directory `/dvd-vob/dvdca-prj-stevt/tests/objs/ST20'
+st20run -l /dvd-vob/dvdbr-prj-chip -l /dvd-vob/dvdbr-prj-board -l /dvd-vob/dvdbr-prj-platform -l /u/spilotro/CC_tools -i mb295.cfg -t jei10 evt_test.lku
+
+----- Chip and board used --------------------
+
+Board       : mb295
+DVD_BACKEND : STi7015
+DVD_FRONTEND: ST20TP3
+
+----- Components revision strings ------------
+
+STBOOT      : STBOOT-REL_2.4.4A4
+STTBX       : STTBX-REL_2.0.1
+STEVT       : STEVT-REL_1.5.0
+STPIO       : STPIO-REL_1.2.4
+STUART      : STUART-REL_1.4.1
+STSYS       : STSYS-REL_1.2.3
+
+----------------------------------------------
+
+
+TComp_1_1: STEVT_Open interface test
+^^^Passed Test Case 1
+^^^Removed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_1_2: STEVT_Close interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_2_1: STEVT_Register (without subscription) interface test
+^^^Removed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_2_2: STEVT_Register (with subscription) interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Removed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+			RegDevCall   : Null device name
+			NotifyDevCall: Null device name
+			Event data   : TEST 7 Notify Event data
+			UnregDevCall : Null device name
+^^^Passed Test Case 7
+			RegDevCall   : Null device name
+^^^Passed Test Case 8
+			RegDevCall   : Null device name
+^^^Passed Test Case 9
+			RegDevCall   : Device name TC_10
+			NotifyDevCall: Device name TC_10
+			Event data   : TEST 10 DDTS GNBvd05383
+			UnregDevCall : Device name TC_10
+^^^Passed Test Case 10
+
+TComp_2_3: STEVT_Unregister interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_3_1: STEVT_Subscribe (to registered events) interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Removed Test Case 5
+^^^Passed Test Case 6
+
+TComp_3_2: STEVT_Subscribe (to unregistered events)interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Removed Test Case 4
+^^^Removed Test Case 5
+^^^Passed Test Case 6
+
+TComp_3_3: STEVT_Unsubscribe interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_4_1: STEVT_Notify interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+^^^Passed Test Case 7
+
+TComp_4_2: STEVT_NotifySubscriber interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_5_1: STEVT_Init interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_5_2: STEVT_Term interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_6_1: STEVT_Notify/NotifySubscribers performance
+^^^Passed Test Case 1
+----------------------------------------
+	Chip  board 	CPU Clock Speed = 49875000
+	Number of events      = 2
+	Number of subscribers = 400
+	Elapsed time 3143 us
+----------------------------------------
+^^^Passed Test Case 2
+----------------------------------------
+	Chip  board 	CPU Clock Speed = 49875000
+	Number of events      = 2
+	Number of subscribers = 400
+	Elapsed time 1732 us
+----------------------------------------
+^^^Passed Test Case 3
+----------------------------------------
+	Chip  board 	CPU Clock Speed = 49875000
+	Number of the event      = 0
+	Number of the subscriber = 199
+	Elapsed time 64 us
+----------------------------------------
+^^^Passed Test Case 4
+----------------------------------------
+	Chip  board 	CPU Clock Speed = 49875000
+	Number of the event      = 1
+	Number of the subscriber = 399
+	Elapsed time 64 us
+----------------------------------------
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+----------------------------------------
+	Chip  board 	CPU Clock Speed = 49875000
+	Number of the event      = 0
+	Number of the subscriber = 399
+	Elapsed time 64 us
+----------------------------------------
+
+TComp_7_1: Memory allocation test
+Requested memory is 2096
+^^^Passed Test Case 1
+
+TESTEVT_MultiInstance: Multi instance drivers STEVT interface test
+^^^Passed Test Case 1 == RegisterDevice by R1
+^^^Passed Test Case 2 == RegisterDevice by R2
+^^^Passed Test Case 3 == RegisterDevice by R3
+^^^Passed Test Case 4 == RegisterDevice by R4
+^^^Passed Test Case 5 == UnregisterDevice by R2
+^^^Passed Test Case 6 == UnregisterDevice by R3
+^^^Passed Test Case 7 == UnregisterDevice by R4
+^^^Passed Test Case 8 == UnregisterDevice by R1
+^^^Passed Test Case 9 == Unregister an unsubscribed and unregistered event
+^^^Passed Test Case 10 == Unregister a subscribed but unregistered event
+^^^Passed Test Case 11 == Unregister a subscribed and registered event
+^^^Passed Test Case 12 == Unsubscribe a subscribed and registered event
+^^^Passed Test Case 13 == Unsubscribe an unsubscribed but registered event
+^^^Passed Test Case 14 == Unsubscribe an unsubscribed and unregistered event
+^^^Passed Test Case 15 == Multiple RegisterDevice of the same event
+^^^Passed Test Case 16 == Multiple SubscribeDevice to the same event
+^^^Passed Test Case 17 == Notify by a registrant not required by any subscriber
+^^^Passed Test Case 18 == Notify by a registrant required by a subscriber
+^^^Passed Test Case 19 == NotifySubscriber with a valid SubscriberID
+^^^Passed Test Case 20 == NotifySubscriber with an invalid SubscriberID
+^^^Passed Test Case 21 == BComp. Multi/Single Instance Registration
+^^^Passed Test Case 22 == BComp. SI Register and MI Subscribe
+^^^Passed Test Case 23 == BComp. SI Subscribe and MI Register
+
+************************************************************
+PASSED :15
+FAILED :0
+************************************************************
+make[1]: Leaving directory `/dvd-vob/dvdca-prj-stevt/tests/objs/ST20'
+make[1]: Entering directory `/dvd-vob/dvdca-prj-stevt/tests/objs/ST20'
+st20run -l /dvd-vob/dvdbr-prj-chip -l /dvd-vob/dvdbr-prj-board -l /dvd-vob/dvdbr-prj-platform -l /u/spilotro/CC_tools -i mb295.cfg -t jei10 evt_test.lku
+
+----- Chip and board used --------------------
+
+Board       : mb295
+DVD_BACKEND : STi7015
+DVD_FRONTEND: ST20TP3
+
+----- Components revision strings ------------
+
+STBOOT      : STBOOT-REL_2.4.4A4
+STTBX       : STTBX-REL_2.0.1
+STEVT       : STEVT-REL_1.5.1
+STPIO       : STPIO-REL_1.2.4
+STUART      : STUART-REL_1.4.1
+STSYS       : STSYS-REL_1.2.3
+
+----------------------------------------------
+
+
+TComp_1_1: STEVT_Open interface test
+^^^Passed Test Case 1
+^^^Removed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_1_2: STEVT_Close interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_2_1: STEVT_Register (without subscription) interface test
+^^^Removed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_2_2: STEVT_Register (with subscription) interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Removed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+			RegDevCall   : Null device name
+			NotifyDevCall: Null device name
+			Event data   : TEST 7 Notify Event data
+			UnregDevCall : Null device name
+^^^Passed Test Case 7
+			RegDevCall   : Null device name
+^^^Passed Test Case 8
+			RegDevCall   : Null device name
+^^^Passed Test Case 9
+			RegDevCall   : Device name TC_10
+			NotifyDevCall: Device name TC_10
+			Event data   : TEST 10 DDTS GNBvd05383
+			UnregDevCall : Device name TC_10
+^^^Passed Test Case 10
+
+TComp_2_3: STEVT_Unregister interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_3_1: STEVT_Subscribe (to registered events) interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Removed Test Case 5
+^^^Passed Test Case 6
+
+TComp_3_2: STEVT_Subscribe (to unregistered events)interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Removed Test Case 4
+^^^Removed Test Case 5
+^^^Passed Test Case 6
+
+TComp_3_3: STEVT_Unsubscribe interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_4_1: STEVT_Notify interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+^^^Passed Test Case 7
+
+TComp_4_2: STEVT_NotifySubscriber interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_5_1: STEVT_Init interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_5_2: STEVT_Term interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_6_1: STEVT_Notify/NotifySubscribers performance
+^^^Passed Test Case 1
+----------------------------------------
+	Chip  board 	CPU Clock Speed = 49875000
+	Number of events      = 2
+	Number of subscribers = 400
+	Elapsed time 3143 us
+----------------------------------------
+^^^Passed Test Case 2
+----------------------------------------
+	Chip  board 	CPU Clock Speed = 49875000
+	Number of events      = 2
+	Number of subscribers = 400
+	Elapsed time 1732 us
+----------------------------------------
+^^^Passed Test Case 3
+----------------------------------------
+	Chip  board 	CPU Clock Speed = 49875000
+	Number of the event      = 0
+	Number of the subscriber = 199
+	Elapsed time 64 us
+----------------------------------------
+^^^Passed Test Case 4
+----------------------------------------
+	Chip  board 	CPU Clock Speed = 49875000
+	Number of the event      = 1
+	Number of the subscriber = 399
+	Elapsed time 64 us
+----------------------------------------
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+----------------------------------------
+	Chip  board 	CPU Clock Speed = 49875000
+	Number of the event      = 0
+	Number of the subscriber = 399
+	Elapsed time 64 us
+----------------------------------------
+
+TComp_7_1: Memory allocation test
+Requested memory is 2096
+^^^Passed Test Case 1
+
+TESTEVT_MultiInstance: Multi instance drivers STEVT interface test
+^^^Passed Test Case 1 == RegisterDevice by R1
+^^^Passed Test Case 2 == RegisterDevice by R2
+^^^Passed Test Case 3 == RegisterDevice by R3
+^^^Passed Test Case 4 == RegisterDevice by R4
+^^^Passed Test Case 5 == UnregisterDevice by R2
+^^^Passed Test Case 6 == UnregisterDevice by R3
+^^^Passed Test Case 7 == UnregisterDevice by R4
+^^^Passed Test Case 8 == UnregisterDevice by R1
+^^^Passed Test Case 9 == Unregister an unsubscribed and unregistered event
+^^^Passed Test Case 10 == Unregister a subscribed but unregistered event
+^^^Passed Test Case 11 == Unregister a subscribed and registered event
+^^^Passed Test Case 12 == Unsubscribe a subscribed and registered event
+^^^Passed Test Case 13 == Unsubscribe an unsubscribed but registered event
+^^^Passed Test Case 14 == Unsubscribe an unsubscribed and unregistered event
+^^^Passed Test Case 15 == Multiple RegisterDevice of the same event
+^^^Passed Test Case 16 == Multiple SubscribeDevice to the same event
+^^^Passed Test Case 17 == Notify by a registrant not required by any subscriber
+^^^Passed Test Case 18 == Notify by a registrant required by a subscriber
+^^^Passed Test Case 19 == NotifySubscriber with a valid SubscriberID
+^^^Passed Test Case 20 == NotifySubscriber with an invalid SubscriberID
+^^^Passed Test Case 21 == BComp. Multi/Single Instance Registration
+^^^Passed Test Case 22 == BComp. SI Register and MI Subscribe
+^^^Passed Test Case 23 == BComp. SI Subscribe and MI Register
+
+************************************************************
+PASSED :15
+FAILED :0
+************************************************************
+make[1]: Leaving directory `/dvd-vob/dvdca-prj-stevt/tests/objs/ST20'
+make[1]: Entering directory `/dvd-vob/dvdca-prj-stevt/tests/objs/ST20'
+st20run -l /dvd-vob/dvdbr-prj-chip -l /dvd-vob/dvdbr-prj-board -l /dvd-vob/dvdbr-prj-platform -l /u/spilotro/CC_tools -i mb282b.cfg -t jei1 evt_test.lku
+
+----- Chip and board used --------------------
+
+Board       : mb282b
+DVD_BACKEND : STi5512
+DVD_FRONTEND: STi5512
+
+----- Components revision strings ------------
+
+STBOOT      : STBOOT-REL_2.4.4A4
+STTBX       : STTBX-REL_2.0.1
+STEVT       : STEVT-REL_1.5.3
+STPIO       : STPIO-REL_1.2.4
+STUART      : STUART-REL_1.4.1
+STSYS       : STSYS-REL_1.2.3
+
+----------------------------------------------
+
+
+TComp_1_1: STEVT_Open interface test
+^^^Passed Test Case 1
+^^^Removed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_1_2: STEVT_Close interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_2_1: STEVT_Register (without subscription) interface test
+^^^Removed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_2_2: STEVT_Register (with subscription) interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Removed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+			RegDevCall   : Null device name
+			NotifyDevCall: Null device name
+			Event data   : TEST 7 Notify Event data
+			UnregDevCall : Null device name
+^^^Passed Test Case 7
+			RegDevCall   : Null device name
+^^^Passed Test Case 8
+			RegDevCall   : Null device name
+^^^Passed Test Case 9
+			RegDevCall   : Device name TC_10
+			NotifyDevCall: Device name TC_10
+			Event data   : TEST 10 DDTS GNBvd05383
+			UnregDevCall : Device name TC_10
+^^^Passed Test Case 10
+
+TComp_2_3: STEVT_Unregister interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_3_1: STEVT_Subscribe (to registered events) interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Removed Test Case 5
+^^^Passed Test Case 6
+
+TComp_3_2: STEVT_Subscribe (to unregistered events)interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Removed Test Case 4
+^^^Removed Test Case 5
+^^^Passed Test Case 6
+
+TComp_3_3: STEVT_Unsubscribe interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+
+TComp_4_1: STEVT_Notify interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+^^^Passed Test Case 7
+^^^Passed Test Case 8
+
+TComp_4_2: STEVT_NotifySubscriber interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_5_1: STEVT_Init interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_5_2: STEVT_Term interface test
+^^^Passed Test Case 1
+^^^Passed Test Case 2
+^^^Passed Test Case 3
+^^^Passed Test Case 4
+
+TComp_6_1: STEVT_Notify/NotifySubscribers performance
+^^^Passed Test Case 1
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of events      = 2
+	Number of subscribers = 400
+	Elapsed time 2176 us
+----------------------------------------
+^^^Passed Test Case 2
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of events      = 2
+	Number of subscribers = 400
+	Elapsed time 1280 us
+----------------------------------------
+^^^Passed Test Case 3
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of the event      = 0
+	Number of the subscriber = 199
+	Elapsed time 0 us
+----------------------------------------
+^^^Passed Test Case 4
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of the event      = 1
+	Number of the subscriber = 399
+	Elapsed time 0 us
+----------------------------------------
+^^^Passed Test Case 5
+^^^Passed Test Case 6
+----------------------------------------
+	Chip STi5512 board MB282B
+	CPU Clock Speed = 60000000
+	Number of the event      = 0
+	Number of the subscriber = 399
+	Elapsed time 0 us
+----------------------------------------
+
+TComp_7_1: Memory allocation test
+Requested memory is 2096
+^^^Passed Test Case 1
+
+TComp_8_1: Memory stress test
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+Allocated memory is 2160
+^^^Passed Test Case 1
+
+TESTEVT_MultiInstance: Multi instance drivers STEVT interface test
+^^^Passed Test Case 1 == RegisterDevice by R1
+^^^Passed Test Case 2 == RegisterDevice by R2
+^^^Passed Test Case 3 == RegisterDevice by R3
+^^^Passed Test Case 4 == RegisterDevice by R4
+^^^Passed Test Case 5 == UnregisterDevice by R2
+^^^Passed Test Case 6 == UnregisterDevice by R3
+^^^Passed Test Case 7 == UnregisterDevice by R4
+^^^Passed Test Case 8 == UnregisterDevice by R1
+^^^Passed Test Case 9 == Unregister an unsubscribed and unregistered event
+^^^Passed Test Case 10 == Unregister a subscribed but unregistered event
+^^^Passed Test Case 11 == Unregister a subscribed and registered event
+^^^Passed Test Case 12 == Unsubscribe a subscribed and registered event
+^^^Passed Test Case 13 == Unsubscribe an unsubscribed but registered event
+^^^Passed Test Case 14 == Unsubscribe an unsubscribed and unregistered event
+^^^Passed Test Case 15 == Multiple RegisterDevice of the same event
+^^^Passed Test Case 16 == Multiple SubscribeDevice to the same event
+^^^Passed Test Case 17 == Notify by a registrant not required by any subscriber
+^^^Passed Test Case 18 == Notify by a registrant required by a subscriber
+^^^Passed Test Case 19 == NotifySubscriber with a valid SubscriberID
+^^^Passed Test Case 20 == NotifySubscriber with an invalid SubscriberID
+^^^Passed Test Case 21 == BComp. Multi/Single Instance Registration
+^^^Passed Test Case 22 == BComp. SI Register and MI Subscribe
+^^^Passed Test Case 23 == BComp. SI Subscribe and MI Register
+
+************************************************************
+PASSED :16
+FAILED :0
+************************************************************
+make[1]: Leaving directory `/dvd-vob/dvdca-prj-stevt/tests/objs/ST20'

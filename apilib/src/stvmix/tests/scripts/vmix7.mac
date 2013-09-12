@@ -1,0 +1,1173 @@
+;*****************************************************************************
+; File   :  VMIX7.MAC
+;           Dynamic timings on mixer(s)
+;           See STVMIX component test specification document for use
+; Author :  BS - New december 2001
+;*****************************************************************************
+
+;*******************************************************************************
+;
+;*******************************************************************************
+
+
+;*******************************************************************************
+;Name        : M_VMIX7_55XX
+;Description : Submacro for M_VMIX7 targetting 55XX chips
+;*******************************************************************************
+define M_VMIX7_55XX DEVICE_TYPE BASE_ADDRESS
+    api_report " M_VMIX7_55XX: Dynamic timings test"
+
+    api_checkerr
+
+    ; Init DENC, VTG & VOUT
+    M_COMMON_BEIO "ON"
+
+    ; Init Cursor, OSD & Still (without an vid_init => without VSync)
+    M_55XX_LAYER "START" h07
+
+    ; Init mixer without VTG
+    vmix_init ,,, "" ,, VOUT_NAME
+    HDLVMIX1=vmix_open
+    vmix_enable
+
+    print ""
+    print "1) Layer Cursor, OSD & (Still) without VTG on mixer 1 & no Vsync"
+    print ""
+
+    M_COMMON_SETMODE "PAL"
+    if API_CHIPID=="5518"
+        vmix_connect , "OSD" "CURSOR"
+        api_quest "Are OSD & Cursor displayed on screen ?"
+    end
+    elif API_CHIPID=="5508"
+        vmix_connect , "OSD" "CURSOR"
+        api_quest "Are OSD & Cursor displayed on screen ?"
+    end
+    else
+        vmix_connect , "STILL" "OSD" "CURSOR"
+        api_quest "Are Still, OSD & Cursor displayed on screen ?"
+    end
+
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon
+    wait 1000
+    if API_CHIPID=="5518"
+        vmix_connect , "OSD" "CURSOR"
+        api_quest "Are OSD & Cursor displayed on screen ?"
+    end
+    elif API_CHIPID=="5508"
+        vmix_connect , "OSD" "CURSOR"
+        api_quest "Are OSD & Cursor displayed on screen ?"
+    end
+    else
+        vmix_connect , "STILL" "OSD" "CURSOR"
+        api_quest "Are both  OSD, Still & cursor displayed on screen ?"
+    end
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable
+    wait 1000
+    vmix_enable
+    api_quest "Are Still, OSD & Cursor displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "2) Layer Cursor, OSD & Still with VTG on mixer 1 & Vsync"
+    print ""
+
+    vmix_stime
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    T_STR = vmix_gtime
+    if T_STR!=VTG_NAME
+        ERRORCOUNT=ERRORCOUNT+1
+    end
+
+    ; Init Video  (vid_init => VSync generated)
+    M_55XX_LAYER "START" h08
+
+    M_55XX_LAYER "CONNECT_ALL"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    ;M_55XX_VIDEO "START"
+    ;M_55XX_VIDEO "PLAY"
+
+    api_quest "Are Still, Video, OSD & Cursor displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect
+    api_quest "Are all layer been disconnected ? (black screen)"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Term mixer
+    vmix_disable
+    vmix_dconnect
+    vmix_close
+    vmix_term
+
+    ; Stop video
+    ;M_55XX_VIDEO "STOP"
+
+    ; Term all possible layer
+    M_55XX_LAYER "STOP" h0F
+
+    ; Term DENC, VTG & VOUT
+    M_COMMON_BEIO "OFF"
+
+    api_report " M_VMIX7_55XX" ERRORCOUNT
+
+end  ;M_VMIX7_55XX
+
+
+;*******************************************************************************
+;Name        : M_VMIX7_5100
+;Description : Submacro for M_VMIX7 targetting 5100/5105/5301/5188/5107/5162 chips
+;*******************************************************************************
+define M_VMIX7_5100 DEVICE_TYPE BASE_ADDRESS
+    api_report " M_VMIX7_5100: Dynamic timings test"
+
+    api_checkerr
+
+    ; Init DENC, VTG & VOUT
+    M_COMMON_BEIO "ON"
+
+    ; Init Video, OSD & Still
+    M_5100_LAYER "START" 7
+
+    ; Init mixer without VTG
+    vmix_init ,,, "" ,, VOUT_NAME
+    HDLVMIX1=vmix_open
+    vmix_enable
+
+    print ""
+    print "1) Layer Video, OSD & Still without VTG on mixer 1 & no Vsync"
+    print ""
+
+
+    M_5100_LAYER "CONNECT_ALL"
+    api_quest "Connect All layers without VSync. Is black screen ?"
+
+
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon
+    wait 1000
+
+    vmix_stime
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    T_STR = vmix_gtime
+    if T_STR!=VTG_NAME
+        ERRORCOUNT=ERRORCOUNT+1
+    end
+
+    M_5100_LAYER "CONNECT_ALL"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    api_quest "Are Still, Video, OSD & Cursor displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect
+    api_quest "Are all layer been disconnected ? (black screen)"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable
+
+    ; Term all possible layer
+    M_5100_LAYER "STOP" 7
+
+    ; Term mixer
+    vmix_close
+    vmix_term
+
+    ; Term DENC, VTG & VOUT
+    M_COMMON_BEIO "OFF"
+
+    api_report " M_VMIX7_5100" ERRORCOUNT
+
+end  ;M_VMIX7_5100
+
+
+;*******************************************************************************
+;Name        : M_VMIX7_7015
+;Description : Submacro for M_VMIX7 targetting 7015 chips
+;*******************************************************************************
+define M_VMIX7_7015
+    api_report " M_VMIX7_7015: Dynamic timings test"
+
+    ; Private variable
+    HDLDIGVOUT=0
+    HDLANAVOUT=0
+    HDLVTG119=0
+    HDLVOUT119=0
+    HDLDENC119=0
+    HDLVOUTRGB119=0
+
+    ; Init DENC, VOUT, VTG1
+    M_COMMON_BEIO "ON"
+
+    ; Init HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "ON"
+
+    ; Start layers  GFX1 & GFX2
+    M_7015_LAYER "START" h0C 720 480
+
+    ; MIXER1 Init
+    vmix_init ,,, "" ,, "HDANA"
+    HDLVMIX1=vmix_open
+
+    ; Set HD mode for VTG1, mixer1
+    M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+
+    ; MIXER2 Init
+    vmix_init "VMIX2" , hA800 "" ,, VOUT_NAME
+    HDLVMIX2=vmix_open "VMIX2"
+
+    ; Set NTSC mode for VTG2, mixer2 & internal denc
+    M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+    print ""
+    print "1) Both layers (GFX1 & GFX2) without VTG on mixer 1"
+    print ""
+
+    vmix_con HDLVMIX1 LAYER_NAME "GFX1"
+    vmix_enable
+    api_quest "Are both merou & susie displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon
+    wait 1000
+    vmix_con , LAYER_NAME "GFX1"
+    api_quest "Are both merou & susie still displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable
+    wait 1000
+    vmix_enable
+    api_quest "Are both merou & susie still displayed on HD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_dcon
+
+    print ""
+    print "2) Layer GFX2 without VTG on mixer 2"
+    print ""
+
+    vmix_con HDLVMIX2 LAYER_NAME
+    vmix_enable
+    api_quest "Is susie displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon
+    wait 1000
+    vmix_con , LAYER_NAME
+    api_quest "Is susie still displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable
+    wait 1000
+    vmix_enable
+    api_quest "Is susie still displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "2) Layer GFX1 on HD & layer GFX2 on SD without VTG on both mixer"
+    print ""
+    vmix_con HDLVMIX1 "GFX1"
+
+    api_quest "Are merou on HD & susie GFX2 on SD?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable HDLVMIX1
+    vmix_disable HDLVMIX2
+    wait 1000
+    vmix_enable HDLVMIX1
+    vmix_enable HDLVMIX2
+
+    api_quest "Are still merou on HD & susie GFX2 on SD?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "3) Layer GFX1 on HD & layer GFX2 on SD wit VTG on both mixer"
+    print ""
+    vmix_stime HDLVMIX1
+    T_STR = vmix_gtime
+    if T_STR!=VTG_NAME
+        ERRORCOUNT=ERRORCOUNT+1
+    end
+
+    vmix_stime HDLVMIX2 "VTG2"
+    T_STR = vmix_gtime HDLVMIX2
+    if T_STR!="VTG2"
+        ERRORCOUNT=ERRORCOUNT+1
+    end
+
+    api_quest "Are still merou on HD & susie GFX2 on SD?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Term mixer1/2
+    vmix_dcon HDLVMIX1
+    vmix_dcon HDLVMIX2
+    vmix_close HDLVMIX1
+    vmix_close HDLVMIX2
+    vmix_term "VMIX2"
+    vmix_term
+
+    ; Stop layers GFX1 & GFX2
+    M_7015_LAYER "STOP" h0C
+
+    ; For STV0119
+    vtg_setmode HDLVTGMAIN "NTSC"
+
+    ; Term HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "OFF"
+
+    ; Init DENC, VOUT, VTG1
+    M_COMMON_BEIO "OFF"
+
+    api_report " M_VMIX7_7015" ERRORCOUNT
+
+end  ;M_VMIX7_7015
+
+
+;*******************************************************************************
+;Name        : M_VMIX7_GX1
+;Description : Submacro for M_VMIX7 targetting GX1 chips
+;*******************************************************************************
+define M_VMIX7_GX1
+    api_report " M_VMIX7_GX1: Dynamic timings test"
+
+    ; Private variable
+    LAYVPHDL = 0
+    T_GDP1HDL = 0
+    T_GDP1VPHDL = 0
+    T_GDP3HDL = 0
+    T_GDP3VPHDL = 0
+
+    M_COMMON_BEIO "ON"
+
+    T_GDP1HDL = M_GX1_GDP_ON "GDP1" h100 2 20 20
+    T_GDP1VPHDL = LAYVPHDL
+    T_GDP3HDL = M_GX1_GDP_ON "GDP3" h300 3 250 20
+    T_GDP3VPHDL = LAYVPHDL
+
+    vmix_init ,,, "" ,, VOUT_NAME
+    HDLVMIX1 = vmix_open
+    HDLVMIX1 = HDLVMIX1
+    vmix_enable
+
+    print ""
+    print "1) Both layers (GDP1 & GDP3) without VTG on mixer 1"
+    print ""
+    print "Important Note:"
+    print "      The layers could flick when not connected with a VTG"
+    print "      This comes from the GX1 hardware"
+    print ""
+    vmix_connect , "GDP1" "GDP3"
+
+    M_COMMON_SETMODE "PAL"
+
+    api_quest "Are both merou & susie displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon
+    wait 1000
+    vmix_connect , "GDP1" "GDP3"
+    api_quest "Are both merou & susie still displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable
+    wait 1000
+    vmix_enable
+    api_quest "Are both merou & susie still displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "2) Both layers (GDP1 & GDP3) with VTG on mixer 1 & No VSync"
+    print ""
+
+    vmix_stime
+    T_STR = vmix_gtime
+    if T_STR!=VTG_NAME
+        ERRORCOUNT=ERRORCOUNT+1
+    end
+
+    ; Term VTG
+    vtg_close
+    vtg_term
+
+    vmix_disable
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    api_quest "Are both merou & susie no displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_enable
+    MC_CHECK_RETCODE ERR_VMIX_NO_VSYNC
+
+    vmix_dcon
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect , "GDP1" "GDP3"
+    MC_CHECK_RETCODE ERR_VMIX_NO_VSYNC
+
+    ; No more layer connected. Background could be &
+    ; don't need any synchronisation.
+    vmix_sback , 1 0 0 200
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_enable
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    api_quest "Are bleu background displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vtg_init
+    vtg_open
+    vtg_setmode , "PAL"
+
+    vmix_enable
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect , "GDP1" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    api_quest "Are both merou, susie & blue background displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect
+
+    M_GX1_GDP_OFF "GDP1" T_GDP1HDL T_GDP1VPHDL
+    M_GX1_GDP_OFF "GDP3" T_GDP3HDL T_GDP3VPHDL
+
+    vmix_close
+    vmix_term
+
+    M_COMMON_BEIO "OFF"
+
+    api_report " M_VMIX7_GX1" ERRORCOUNT
+
+end ;M_VMIX7_GX1
+
+;*******************************************************************************
+;Name        : M_VMIX7_7020
+;Description : Submacro for M_VMIX7 targetting 7020/7710 chips
+;*******************************************************************************
+define M_VMIX7_7020
+    api_report " M_VMIX7_7020 or 7710: Dynamic timings test"
+
+    ; Private variable
+    HDLDIGVOUT=0
+    HDLANAVOUT=0
+    HDLVTG119=0
+    HDLVOUT119=0
+    HDLDENC119=0
+    HDLVOUTRGB119=0
+
+    ; Init DENC, VOUT, VTG1
+    M_COMMON_BEIO "ON"
+
+    ; Init HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "ON"
+
+    ; Start layers  GDP1 & GDP2
+    M_GAMMA_LAYER "START" h0C 720 480
+
+    ; MIXER1 Init
+    vmix_init ,,, "" ,, "HDANA"
+    HDLVMIX1=vmix_open
+
+    ; Set HD mode for VTG1, mixer1
+    M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+
+    ; MIXER2 Init
+    if (API_CHIPID=="7710")
+        vmix_init "VMIX2" , h38215D00 "" ,, VOUT_NAME
+    end
+    else
+        vmix_init "VMIX2" , hAD00 "" ,, VOUT_NAME
+    end
+    HDLVMIX2=vmix_open "VMIX2"
+
+    ; Set NTSC mode for VTG2, mixer2 & internal denc
+    M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+    print ""
+    print "1) Both layers (GDP1 & GDP2) without VTG on mixer 1"
+    print ""
+
+    vmix_con HDLVMIX1 "GDP1" "GDP2"
+    vmix_enable
+    api_quest "Are both merou & susie displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon
+    wait 1000
+    vmix_con , "GDP1" "GDP2"
+    api_quest "Are both merou & susie still displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable
+    wait 1000
+    vmix_enable
+    api_quest "Are both merou & susie still displayed on HD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_dcon
+
+    print ""
+    print "2) Layer GDP2 without VTG on mixer 2"
+    print ""
+
+    vmix_con HDLVMIX2 "GDP2"
+    vmix_enable
+    api_quest "Is susie displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon
+    wait 1000
+    vmix_con , "GDP2"
+    api_quest "Is susie still displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable
+    wait 1000
+    vmix_enable
+    api_quest "Is susie still displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "3) Layer GDP1 on HD & layer GDP2 on SD without VTG on both mixer"
+    print ""
+    vmix_con HDLVMIX1 "GDP1"
+
+    api_quest "Are merou on HD & susie GDP2 on SD?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable HDLVMIX1
+    vmix_disable HDLVMIX2
+    wait 1000
+    vmix_enable HDLVMIX1
+    vmix_enable HDLVMIX2
+
+    api_quest "Are still merou on HD & susie GDP2 on SD?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "4) Layer GDP1 on HD & layer GDP2 on SD with VTG on both mixer"
+    print ""
+    vmix_stime HDLVMIX1
+    T_STR = vmix_gtime
+    if T_STR!=VTG_NAME
+        ERRORCOUNT=ERRORCOUNT+1
+    end
+
+    vmix_stime HDLVMIX2 "VTG2"
+    T_STR = vmix_gtime HDLVMIX2
+    if T_STR!="VTG2"
+        ERRORCOUNT=ERRORCOUNT+1
+    end
+
+    api_quest "Are still merou on HD & susie GDP2 on SD?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon HDLVMIX2
+
+    print ""
+    print "5) Both layers (GDP1 & GDP2) with VTG on mixer 1"
+    print ""
+
+    vmix_con HDLVMIX1 "GDP1" "GDP2"
+    vmix_enable
+    api_quest "Are both merou & susie displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon
+    wait 1000
+    vmix_con , "GDP1" "GDP2"
+    api_quest "Are both merou & susie still displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable
+    wait 1000
+    vmix_enable
+    api_quest "Are both merou & susie still displayed on HD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_dcon
+
+    print ""
+    print "6) Layer GDP2 without VTG on mixer 2"
+    print ""
+
+    vmix_con HDLVMIX2 "GDP2"
+    vmix_enable
+    api_quest "Is susie displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon
+    wait 1000
+    vmix_con , "GDP2"
+    api_quest "Is susie still displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable
+    wait 1000
+    vmix_enable
+    api_quest "Is susie still displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "7) Layer GDP1 with VTG without VSync on mixer 1"
+    print ""
+
+    ; Term VTG
+    vmix_disable HDLVMIX1
+    vmix_con HDLVMIX1 "GDP1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vtg_close HDLVTGMAIN
+    vtg_term
+
+    vmix_disable HDLVMIX1
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    api_quest "Are merou no displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_enable HDLVMIX1
+    MC_CHECK_RETCODE ERR_VMIX_NO_VSYNC
+
+    vmix_dcon HDLVMIX1
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX1 "GDP1"
+    MC_CHECK_RETCODE ERR_VMIX_NO_VSYNC
+
+    ; No more layer connected. Background could be &
+    ; don't need any synchronisation.
+    vmix_sback HDLVMIX1 1 0 0 200
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_enable HDLVMIX1
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    api_quest "Are bleu background displayed on HD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vtg_init
+    HDLVTGMAIN = vtg_open
+
+    ; Term mixer1/2
+    vmix_dcon HDLVMIX1
+    vmix_dcon HDLVMIX2
+    vmix_close HDLVMIX1
+    vmix_close HDLVMIX2
+    vmix_term "VMIX2"
+    vmix_term
+
+    ; Stop layers GDP1 & GDP2
+    M_GAMMA_LAYER "STOP" h0C
+
+    ; For STV0119
+    vtg_setmode HDLVTGMAIN "NTSC"
+
+    ; Term HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "OFF"
+
+    ; Init DENC, VOUT, VTG1
+    M_COMMON_BEIO "OFF"
+
+    api_report " M_VMIX7_7020" ERRORCOUNT
+
+end  ;M_VMIX7_7020
+
+;*******************************************************************************
+;Name        : M_VMIX7_7710
+;Description : Submacro for M_VMIX7 targetting 7710 chips
+;*******************************************************************************
+define M_VMIX7_7710
+    api_report " M_VMIX7_7710 : Dynamic timings test"
+
+    ; Private variable
+    HDLDIGVOUT=0
+    HDLANAVOUT=0
+
+    ; Init DENC, VOUT, VTG1
+    M_COMMON_BEIO "ON"
+
+    vout_init "HDANA" , "HD_RGB"
+    HDLANAVOUT = vout_open "HDANA"
+    vout_enable
+
+    ; Start layers  GDP1 & GDP2
+    M_GAMMA_LAYER "START" h0C 720 480
+
+    ; MIXER1 Init
+    vmix_init ,,, "" ,, "HDANA"
+    HDLVMIX1=vmix_open
+
+    ; Set HD mode for VTG1, mixer1
+    M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+
+
+
+    print ""
+    print "1) Both layers (GDP1 & GDP2) without VTG on mixer 1"
+    print ""
+
+    vmix_con HDLVMIX1 "GDP1" "GDP2"
+    vmix_enable
+    api_quest "Are both merou & susie displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon
+    wait 1000
+    vmix_con , "GDP1" "GDP2"
+    api_quest "Are both merou & susie still displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable
+    wait 1000
+    vmix_enable
+    api_quest "Are both merou & susie still displayed on HD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_dcon
+
+
+    vmix_disable HDLVMIX1
+
+    wait 1000
+    vmix_enable HDLVMIX1
+
+
+    vmix_stime HDLVMIX1
+    T_STR = vmix_gtime
+    if T_STR!=VTG_NAME
+        ERRORCOUNT=ERRORCOUNT+1
+    end
+
+    vmix_stime HDLVMIX2 "VTG2"
+    T_STR = vmix_gtime HDLVMIX2
+    if T_STR!="VTG2"
+        ERRORCOUNT=ERRORCOUNT+1
+    end
+
+    api_quest "Are still merou on HD & susie GDP2 on SD?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon HDLVMIX2
+
+    print ""
+    print "5) Both layers (GDP1 & GDP2) with VTG on mixer 1"
+    print ""
+
+    vmix_con HDLVMIX1 "GDP1" "GDP2"
+    vmix_enable
+    api_quest "Are both merou & susie displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon
+    wait 1000
+    vmix_con , "GDP1" "GDP2"
+    api_quest "Are both merou & susie still displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable
+    wait 1000
+    vmix_enable
+    api_quest "Are both merou & susie still displayed on HD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_dcon
+
+
+    print ""
+    print "7) Layer GDP1 with VTG without VSync on mixer 1"
+    print ""
+
+    ; Term VTG
+    vmix_disable HDLVMIX1
+    vmix_con HDLVMIX1 "GDP1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vtg_close HDLVTGMAIN
+    vtg_term
+
+    vmix_disable HDLVMIX1
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    api_quest "Are merou no displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_enable HDLVMIX1
+    MC_CHECK_RETCODE ERR_VMIX_NO_VSYNC
+
+    vmix_dcon HDLVMIX1
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX1 "GDP1"
+    MC_CHECK_RETCODE ERR_VMIX_NO_VSYNC
+
+    ; No more layer connected. Background could be &
+    ; don't need any synchronisation.
+    vmix_sback HDLVMIX1 1 0 0 200
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_enable HDLVMIX1
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    api_quest "Are bleu background displayed on HD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vtg_init
+    HDLVTGMAIN = vtg_open
+
+    ; Term mixer1/2
+    vmix_dcon HDLVMIX1
+    vmix_close HDLVMIX1
+    vmix_term
+
+    print ""
+    print "2) Layer Test on mixer 2"
+    print ""
+
+    ; Init HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "ON"
+
+    ; MIXER2 Init
+    if (API_CHIPID=="7710")
+    vmix_init "VMIX2" , h38215D00 "" ,, VOUT_NAME
+    end
+    else
+    vmix_init "VMIX2" , hB920AD00 "" ,, VOUT_NAME
+    end
+
+    HDLVMIX2=vmix_open "VMIX2"
+
+    ; Set NTSC mode for VTG2, mixer2 & internal denc
+    M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+
+    print ""
+    print "2) Layer GDP2 without VTG on mixer 2"
+    print ""
+
+    vmix_con HDLVMIX2 "GDP2"
+    vmix_enable
+    api_quest "Is susie displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon
+    wait 1000
+    vmix_con , "GDP2"
+    api_quest "Is susie still displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable
+    wait 1000
+    vmix_enable
+    api_quest "Is susie still displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "3) Layer GDP1 on HD & layer GDP2 on SD without VTG on both mixer"
+    print ""
+    vmix_con HDLVMIX1 "GDP1"
+
+    api_quest "Are merou on HD & susie GDP2 on SD?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable HDLVMIX2
+    vmix_enable HDLVMIX2
+    print ""
+    print "6) Layer GDP2 without VTG on mixer 2"
+    print ""
+
+    vmix_con HDLVMIX2 "GDP2"
+    vmix_enable
+    api_quest "Is susie displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon
+    wait 1000
+    vmix_con , "GDP2"
+    api_quest "Is susie still displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable
+    wait 1000
+    vmix_enable
+    api_quest "Is susie still displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon HDLVMIX2
+    vmix_close HDLVMIX2
+    vmix_term "VMIX2"
+
+
+    ; Stop layers GDP1 & GDP2
+    M_GAMMA_LAYER "STOP" h0C
+
+    ; For STV0119
+    vtg_setmode HDLVTGMAIN "NTSC"
+
+    ; Term HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "OFF"
+
+    ; Init DENC, VOUT, VTG1
+    M_COMMON_BEIO "OFF"
+
+    api_report " M_VMIX7_7020" ERRORCOUNT
+
+end  ;M_VMIX7_7710
+
+;*******************************************************************************
+;Name        : M_VMIX1_5528
+;Description : Submacro for M_VMIX7 targetting 5528 chips
+;*******************************************************************************
+define M_VMIX7_5528
+    api_report " M_VMIX7_5528: Dynamic timings test"
+
+
+    ; Init DENC, VOUT, VTG1
+    M_MB376_BEIO "ON" "BOTH"
+
+    ; Start GDP1, GDP2 on SD
+    M_GAMMA_LAYER "START" hC
+
+    ; Start VID1, VID2 on SD
+    ; M_GAMMA_LAYER "WA_SVPARAMS" h03 720 576
+
+    ; MIXER1 and MIXER2 Init, Open
+    vmix_init "VMIX1" , G_MIX1_BA VTG_NAME ,,  "MAIN_VOUT"
+    vmix_init "VMIX2" , G_MIX2_BA  VTG_NAME ,, "AUX_VOUT"
+
+    HDLVMIX1 = vmix_open "VMIX1"
+    HDLVMIX2 = vmix_open "VMIX2"
+
+    ; Set NTSC mode for VTG1, MIX1 & internal DENC
+    M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1 MAIN_DENC_HDL AUX_VOUT_HDL
+
+    ; Set NTSC mode for VTG1, MIX2 & external DENC
+    M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 AUX_DENC_HDL AUX_VOUT_HDL "4629"
+
+    print ""
+    print "1) Both layers (GDP1 & GDP2) without VTG on mixer 1"
+    print ""
+
+    vmix_connect HDLVMIX1 "GDP1" "GDP2"
+    vmix_enable HDLVMIX1
+    api_quest "Are both merou & suzie displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX1
+    wait 1000
+    vmix_connect HDLVMIX1 "GDP1" "GDP2"
+    api_quest "Are both merou & suzie still displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable HDLVMIX1
+    wait 1000
+    vmix_enable HDLVMIX1
+    api_quest "Are both merou & suzie still displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_dconnect HDLVMIX1
+
+    print ""
+    print "2) Layer GDP2 without VTG on mixer 2"
+    print ""
+
+    vmix_connect HDLVMIX2 "GDP1"
+    vmix_enable HDLVMIX2
+    api_quest "Is merou displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX2
+    wait 1000
+    vmix_connect HDLVMIX2 "GDP1"
+    api_quest "Is merou still displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable HDLVMIX2
+    wait 1000
+    vmix_enable HDLVMIX2
+    api_quest "Is merou still displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "3) Layer GDP2 on mixer1 & layer GDP1 on mixer2 without VTG on both mixer"
+    print ""
+    vmix_connect HDLVMIX1 "GDP2"
+
+    api_quest "Are merou on mixer1 & merou  on mixer2?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable HDLVMIX1
+    vmix_disable HDLVMIX2
+    wait 1000
+    vmix_enable HDLVMIX1
+    vmix_enable HDLVMIX2
+
+    api_quest "Are still merou on SD(5528) & suzie GDP1 on SD(4629)?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "4) Layer GDP2 on mixer1 & layer GDP1 on mixer2 with VTG on both mixer"
+    print ""
+    vmix_stime HDLVMIX1
+    T_STR = vmix_gtime
+    if T_STR!=VTG_NAME
+        ERRORCOUNT=ERRORCOUNT+1
+    end
+
+    vmix_stime HDLVMIX2 "VTG"
+    T_STR = vmix_gtime HDLVMIX2
+    if T_STR!="VTG"
+        ERRORCOUNT=ERRORCOUNT+1
+    end
+
+    api_quest "Are still merou on mixer1 & suzie GDP1 on mixer2?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX2
+
+    print ""
+    print "5) Both layers (GDP1 & GDP2) with VTG on mixer 1"
+    print ""
+
+    vmix_connect HDLVMIX1 "GDP1" "GDP2"
+    vmix_enable HDLVMIX1
+    api_quest "Are both merou & suzie displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX1
+    wait 1000
+    vmix_connect HDLVMIX1 "GDP1" "GDP2"
+    api_quest "Are both merou & suzie still displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable HDLVMIX1
+    wait 1000
+    vmix_enable HDLVMIX1
+    api_quest "Are both merou & suzie still displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_dconnect HDLVMIX1
+
+    print ""
+    print "6) Layer GDP2 without VTG on mixer 2"
+    print ""
+
+    vmix_connect HDLVMIX2 "GDP2"
+    vmix_enable HDLVMIX2
+    api_quest "Is merou displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX2
+    wait 1000
+    vmix_connect HDLVMIX2 "GDP2"
+    api_quest "Is merou still displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable HDLVMIX2
+    wait 1000
+    vmix_enable HDLVMIX2
+    api_quest "Is merou still displayed on SD screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "7) Layer GDP1 with VTG without VSync on mixer 1"
+    print ""
+    ; Term VTG
+    vmix_disable HDLVMIX1
+    vmix_connect HDLVMIX1 "GDP1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vtg_close HDLVTGMAIN
+    vtg_term
+
+    vmix_enable HDLVMIX1
+    MC_CHECK_RETCODE ERR_VMIX_NO_VSYNC
+
+    api_quest "Is merou no displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_disable HDLVMIX1
+    vmix_dcon HDLVMIX1
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX1 "GDP1"
+    MC_CHECK_RETCODE ERR_VMIX_NO_VSYNC
+
+    ; No more layer connected. Background could be &
+    ; don't need any synchronisation.
+    vmix_sback HDLVMIX1 1 0 0 200
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_enable HDLVMIX1
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    api_quest "Is bleu background displayed on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vtg_init
+    HDLVTGMAIN = vtg_open
+
+    ; Term mixer1/2
+    vmix_dcon HDLVMIX1
+    vmix_dcon HDLVMIX2
+    vmix_close HDLVMIX1
+    vmix_close HDLVMIX2
+    vmix_term "VMIX2"
+    vmix_term "VMIX1"
+
+    ; Stop layers GDP1 & GDP2
+    M_GAMMA_LAYER "STOP" hC
+    ; Stop layers VID1 & VID2
+    ;M_GAMMA_LAYER "STOP" h03 720 576
+
+    ; Init DENC, VOUT, VTG1
+    M_MB376_BEIO "OFF" "BOTH"
+
+    api_report " M_VMIX7_5528" ERRORCOUNT
+
+end  ;M_VMIX7_5528
+
+
+;*******************************************************************************
+;Name        : M_VMIX7_MAIN
+;Description : Main function redirect to specific targetting sub macros
+;*******************************************************************************
+define M_VMIX7_MAIN
+    ERRORCOUNT = 0
+    print ""
+    print "Starting M_VMIX7..."
+
+    RET=MC_CHECK_TYPE
+    if RET&1
+        M_VMIX7_55XX
+    end
+    if RET&2
+        M_VMIX7_7015
+    end
+    if RET&4
+        M_VMIX7_GX1
+    end
+    if RET&8
+        if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+            M_VMIX7_7710
+        end
+        else
+            M_VMIX7_7020
+        end
+    end
+    if RET&16
+        M_VMIX7_5528
+    end
+    if RET&32 ;5100/5105/5301/5188/5107/5162
+        M_VMIX7_5100
+    end
+    MC_CHECK_ERROR
+    ERR_VMIX7=GLOBERR
+end  ;M_VMIX7_MAIN
+
+
+
+
+
+

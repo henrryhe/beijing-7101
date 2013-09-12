@@ -1,0 +1,34 @@
+# Sample ST20 makefile
+
+DVD_MAKE_VERSION := 2
+ifdef IN_OBJECT_DIR
+
+include $(DVD_MAKE)/generic.mak
+
+HEADER_IMPORTS := <components with header files only>
+IMPORTS := <imported components>
+EXPORTS := <exported library and header>
+TARGETS := <exported library>
+
+OBJS := <objects in exported library>
+
+include $(DVD_MAKE)/defrules.mak
+
+<exported library>: $(OBJS)
+	@$(ECHO) Building $@
+	$(BUILD_LIBRARY)
+
+clean:
+	@$(ECHO) Cleaning $(TARGETS)
+	-$(RM) $(OBJS)
+	-$(RM) $(TARGETS)
+
+# Local header dependencies
+
+else
+
+include $(DVD_MAKE)/builddir.mak
+
+endif
+
+# End of sample ST20 makefile

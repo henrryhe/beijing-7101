@@ -1,0 +1,66 @@
+;*****************************************************************************
+; File         : WSS.MAC
+; Requirements :
+; Author       : BS - NOVEMBER 2000
+;*****************************************************************************
+
+; general behavior :
+; driver is assumed to be in a virgin state (no init, no open)
+
+define M_WSS_TESTS
+     if CAPAVBI&WSS
+        ; api_report "4.0 WSS MANUAL TESTS"
+        api_report "4.1 WSS_AUTOMATIC TESTS"
+        M_ENC_INIT "PAL"
+        ; Init/Open/Config VBI for WSS
+        vbi_init , ,DENC_NAME
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_open VBI_DEVICE_NAME WSS
+        M_CHECK_RETCODE ERR_NO_ERROR
+        ; Start Tests
+        M_WSS_REGISTERS
+        vbi_close
+        vbi_term
+        M_ENC_TERM
+    end
+end
+
+;;;;;;;;;;;;;;;;; AUTOMATIC TESTS ;;;;;;;;;;;;;;;;;;
+
+; WSS REGISTERS TEST
+define M_WSS_REGISTERS
+    api_report "4.1.0 WSS_REGISTERS TEST"
+    ERRORCOUNT=0
+    vbi_enable
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_writedata , 2 h08 h0                     ; All to zero except parity bit
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck WSS EXT_CHIP h08 h0
+    M_CHECK_RETCODE 0
+    vbi_writedata , 2 h17 h14                    ; All to one except reserved
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck WSS EXT_CHIP h17 h14
+    M_CHECK_RETCODE 0
+    api_report "4.1.0 WSS_REGISTERS" ERRORCOUNT
+end
+
+
+;;;;;;;;;;;;;;;;; MANUEL TESTS ;;;;;;;;;;;;;;;;;;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

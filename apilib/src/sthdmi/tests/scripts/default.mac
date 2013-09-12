@@ -1,0 +1,112 @@
+; ****************************************************************************
+; File         : DEFAULT.MAC
+; Requirements :
+; Author       : Adel Chaouch - May 2005
+; ****************************************************************************
+; Test
+
+; general behavior :
+; driver is assumed to be not initialized before starting these file tests
+
+source OSPATH+DRV_PATH_HDMI+"utility.mac"
+
+define M_TEST_MENU
+    M_CHECK_PLATFORM
+    if API_BOARD=="mb519"
+    M_VIDEO_FIRMWARE
+    end
+    EXEC_ALL_TEST=0
+    ;api_error 0
+    print ""
+    print "    0 - API BASIC TESTS"
+    print "    1 - RETURNS TESTS"
+    print "    2 - HDMI DISPLAYS TESTS"
+    print "    3 - HDMI AUDIO TESTS"
+    print "    4 - INFO FRAME TESTS"
+    print "    5 - EDID RETRIEVE TESTS"
+    print "    6 - CEC TESTS"
+    print "    7 - EXECUTE ALL TESTS"
+    print ""
+    print "    Enter your choice :"
+    x=getkey
+    if x>=48
+       x=x-48
+    end
+    choice=1
+    if x>6
+       choice=0
+    end
+    if x==7
+        EXEC_ALL_TEST=1
+        choice=63
+    end
+    else
+        while x!=0
+           choice=choice*2
+           x=x-1
+        end
+    end
+    if choice&1
+        ; API BASIC TESTS
+        source OSPATH+DRV_PATH_HDMI+"hdmibas.mac"
+        M_BASIC
+        del M_BASIC
+    end
+    if choice&2
+        ; RETURNS TESTS
+        source OSPATH+DRV_PATH_HDMI+"returns.mac"
+        M_RET_ALL EXEC_ALL_TEST
+        del M_RET_*
+    end
+    if choice&4
+       ; DISPLAY TESTS
+       source OSPATH+DRV_PATH_HDMI+"hdmidisp.mac"
+       M_HDMI_DISP
+       del M_HDMI*
+    end
+    if choice&8
+      ; AUDIO TESTS
+       source OSPATH+DRV_PATH_HDMI+"hdmiaud.mac"
+       M_HDMI_AUDIO
+       del M_HDMI*
+    end
+    if choice&h10
+       ; INFO FRAME TESTS
+       source OSPATH+DRV_PATH_HDMI+"hdmifram.mac"
+       M_HDMI_INFOFRAME EXEC_ALL_TEST
+       del M_HDMI*
+       del M_TEST_HDMI*
+    end
+    if choice&h20
+       ;EDID RETRIVE TESTS
+       source OSPATH+DRV_PATH_HDMI+"hdmisink.mac"
+       M_HDMI_PARSE_EDID
+    end
+    if choice&h40
+       ;CEC Tests
+       source OSPATH+DRV_PATH_HDMI+"hdmisink.mac"
+       HDOUT=1
+       STVOUT_HDCP = 0
+       STVOUT_HPD = 0
+       M_BEIO_ON "HD"
+       M_TEST_HDMI_CEC
+    end
+
+    if EXEC_ALL_TEST==1
+        M_CHECK_BAS_ERR ERR_BAS
+        ;if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+;          M_CHECK_RET_ERR ERR_ALRIN ERR_BADP ERR_NOMEM ERR_DENCA ERR_INVHN ERR_NOFRE ERR_OPENH ERR_UNKDE ERR_VNOTA ERR_VNOTE ERR_VENAB ERR_VINCO
+;          M_CHECK_TEST1_ERR ERR_T100 ERR_T101 ERR_T102 ERR_T103 ERR_T104 ERR_T105 ERR_T106 ERR_T107 ERR_T108 ERR_T109 ERR_T110 ERR_T111
+;          M_CHECK_TEST2_ERR ERR_T200 ERR_T201 ERR_T202 ERR_T203 ERR_T204 ERR_T205 ERR_T206
+;          M_CHECK_TEST3_ERR ERR_T300 ERR_T301 ERR_T302 ERR_T303 ERR_T304 ERR_T305 ERR_T306 ERR_T307 ERR_T308 ERR_T309 ERR_T310 ERR_T311
+;          M_CHECK_TEST4_ERR ERR_T400 ERR_T401 ERR_T402 ERR_T403
+;          M_CHECK_TEST5_ERR ERR_T500 ERR_T501 ERR_T502 ERR_T503 ERR_T504 ERR_T505
+;          M_CHECK_TEST6_ERR ERR_T600 ERR_T601 ERR_T602
+;          M_CHECK_MUL_ERR ERR_MULT
+;        end
+    end
+end
+
+M_TEST_MENU
+
+

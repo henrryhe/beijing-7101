@@ -1,0 +1,63 @@
+console off
+
+define mymb411_mcmx
+  ## change here the CKGA reference clock frequency (27 MHz for non ptach mb411, 30 for cocoref or patched board)
+  set $input_freq=27
+		source mb411.cmd
+  source sh4connect.cmd
+  source ..\..\registers.cmd
+  source ..\..\clocks.cmd
+  source ..\..\hw_mb411.cmd
+  source plugins.cmd
+##connectsh4le $arg0 mb411_setup "resettype=hard linkspeed=9.765KHz linktimeout=5"
+  connectsh4le $arg0 echo $arg1 mb411_setup_mcmx
+  mb411_setup_mcmx
+end
+
+define mymb411
+  ## change here the CKGA reference clock frequency (27 MHz for non ptach mb411, 30 for cocoref or patched board)
+  set $input_freq=27
+  source sh4connect.cmd
+  source ..\..\registers.cmd
+  source ..\..\clocks.cmd
+  source ..\..\hw_mb411.cmd
+  source plugins.cmd
+##connectsh4le $arg0 mb411_setup "resettype=hard linkspeed=9.765KHz linktimeout=5"
+  connectsh4le $arg0 echo $arg1 mb411_setup
+  mb411_setup
+end
+
+define mb411bypass
+  enable_jtag
+  ## Manual control of JTAG (manual TCK)
+  jtag mode=manual
+
+  ## Reset TMC and then bypass to ST40
+  jtag tck=01010 ntrst=00011 tms=00000 tdo=01111
+
+  ## Reset STb7100 leaving ST40 in reset hold
+  jtag nrst=0
+  sleep 0 20000
+  jtag asebrk=0
+  sleep 0 20000
+  jtag asebrk=1
+  sleep 0 20000
+  jtag nrst=1
+
+  ## Normal control of JTAG
+  jtag mode=normal
+end
+
+define sh4_unlock_lx_video
+ set *0xB9001124=0x50000a8c
+ set *0xB9001174=0x00000341
+ set *0xB9001170=0x1A004001
+ set *0xB9001174=0x00000340
+ printf "\n\n LX video should now be waiting for its debugger \n\n"
+end
+
+set pagination 0
+file vid_test.exe
+mymb411 10.129.105.254 "msglevel=none linktimeout=5 linkspeed=10MHz jtagreset jtagpinout=st40 -inicommand mb411bypass"
+load
+tbreak main

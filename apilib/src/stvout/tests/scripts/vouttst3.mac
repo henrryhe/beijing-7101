@@ -1,0 +1,496 @@
+; ****************************************************************************
+; File         : VOUTTST3.MAC
+; Requirements :
+; Author       : Adel Chaouch - December 2003
+; ****************************************************************************
+; M_TEST3_OUTPUTS ALL_TEST1:Test for STi5528, STi5100 and STi5105
+; M_TEST4_OUTPUTS ALL_TEST1:Test for STi4629
+; M_TEST5_OUTPUTS ALL_TEST1:Test for STi55xx
+; M_TEST5_OUTPUTS ALL_TEST1:Test for STi55xx
+; M_TEST6_OUTPUTS ALL_TEST1:Test for STi7710
+; general behavior :
+; driver is assumed to be not initialized before starting these file tests
+
+; This macro is used for STi5528, STi5100 and STi5105 chips...
+define M_TEST3_OUTPUTS ALL_TEST1
+  loop=0
+  dacchoice=""
+  while loop==0
+    if ALL_TEST1==1
+      dacchoice="all"
+    end
+    else
+      print "-------------------------------------------------"
+      print "Test VOUT API routines with DACS Configuration "
+      dacchoice=""
+
+      if (API_CHIPID=="5105")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+           print " 1  - test case M_TEST_RGB_DAC123     "
+           print " 3  - test case M_TEST_YUV_DAC123_MAIN"
+           print " 5  - test case M_TEST_YC_DAC12       "
+           print " 7  - test case M_TEST_CVBS_DAC1_MAIN "
+           print " 11 - test case M_TEST-CVBS_DAC3      "
+      end
+      else
+          if (API_CHIPID=="5188")||(API_CHIPID=="5525")
+              print " 1  - test case M_TEST_RGB_DAC123     "
+              print " 3  - test case M_TEST_YUV_DAC123_MAIN"
+              print " 5  - test case M_TEST_YC_DAC12       "
+              print " 10 - test case M_TEST_CVBS_AUX(DAC 4)"
+              print " 11 - test case M_TEST-CVBS_DAC3      "
+          end
+          else
+              print " 1  - test case M_TEST_RGB_DAC123     "
+              print " 2  - test case M_TEST_RGB_DAC456     "
+              print " 3  - test case M_TEST_YUV_DAC123_MAIN"
+              print " 4  - test case M_TEST_YUV_DAC456_AUX "
+              print " 5  - test case M_TEST_YC_DAC12       "
+              print " 6  - test case M_TEST_YC_DAC45       "
+              print " 7  - test case M_TEST_CVBS_DAC1_MAIN "
+              print " 8  - test case M_TEST_CVBS_DAC5_MAIN "
+              print " 9  - test case M_TEST_CVBS_DAC2_AUX  "
+              print " 10 - test case M_TEST_CVBS_DAC4_AUX  "
+              print " 11 - test case M_TEST-CVBS_DAC3      "
+              print " 12 - test case M_TEST_CVBS_DAC6      "
+          end
+      end
+
+      print " all- All tests                       "
+      if (API_CHIPID=="5301")||(API_CHIPID=="5525")
+      print " hit Spacebar to Quit this menu"
+      end
+      else
+      print " hit return to Quit this menu"
+      end
+      print " Enter your choice :"
+      dacchoice=getstring
+    end
+    if (ST_OS=="LINUX")
+       print " x - to Quit this menu"
+    end
+    elif (API_CHIPID=="5301")||(API_CHIPID=="5525")
+      if dacchoice==" "
+          loop=1
+      end
+      else
+          if dacchoice!=""
+             M_DENC_INIT
+          end
+      end
+    end
+    else
+      if dacchoice==""
+          loop=1
+      end
+      else
+          M_DENC_INIT
+      end
+    end
+
+    if (ST_OS=="LINUX")
+        if dacchoice=="x"
+                print "exit"
+                loop=1
+        end
+    end
+
+    if dacchoice=="1"
+        M_TEST_RGB_DAC123
+    end
+    if dacchoice=="2"
+        M_TEST_RGB_DAC456
+    end
+    if dacchoice=="3"
+        M_TEST_YUV_DAC123
+    end
+    if dacchoice=="4"
+        M_TEST_YUV_DAC456
+    end
+    if dacchoice=="5"
+        M_TEST_YC_DAC12
+    end
+    if dacchoice=="6"
+        M_TEST_YC_DAC45
+    end
+    if dacchoice=="7"
+       M_TEST_CVBS_DAC1_MAIN
+    end
+    if dacchoice=="8"
+       M_TEST_CVBS_DAC5_MAIN
+    end
+    if dacchoice=="9"
+      M_TEST_CVBS_DAC2_AUX
+    end
+    if dacchoice=="10"
+       if (API_CHIPID=="5525")
+         M_TEST_CVBS_AUX
+       end
+       else
+          M_TEST_CVBS_DAC4_AUX
+       end
+    end
+    if dacchoice=="11"
+       M_TEST_CVBS_DAC3
+    end
+    if dacchoice=="12"
+       M_TEST_CVBS_DAC6
+    end
+    if dacchoice=="all"
+        ERR_T300=FALSE_
+        ERR_T301=FALSE_
+        ERR_T302=FALSE_
+        ERR_T303=FALSE_
+        ERR_T304=FALSE_
+        ERR_T305=FALSE_
+        ERR_T306=FALSE_
+        ERR_T307=FALSE_
+        ERR_T308=FALSE_
+        ERR_T309=FALSE_
+        ERR_T310=FALSE_
+        ERR_T311=FALSE_
+        if (API_CHIPID!="5105")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+           M_TEST_RGB_DAC123
+           M_TEST_RGB_DAC456
+           M_TEST_YUV_DAC123
+           M_TEST_YUV_DAC456
+           M_TEST_YC_DAC12
+           M_TEST_YC_DAC45
+           M_TEST_CVBS_DAC1_MAIN
+           M_TEST_CVBS_DAC5_MAIN
+           M_TEST_CVBS_DAC2_AUX
+           M_TEST_CVBS_DAC4_AUX
+           M_TEST_CVBS_DAC3
+           M_TEST_CVBS_DAC6
+        end
+        else
+           M_TEST_RGB_DAC123
+           M_TEST_YUV_DAC123
+           M_TEST_YC_DAC12
+           M_TEST_CVBS_DAC1_MAIN
+           M_TEST_CVBS_DAC3
+           M_TEST_CVBS_DAC6
+        end
+        if ALL_TEST1!=1
+          if (API_CHIPID!="5105")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+          M_CHECK_TEST3_ERR ERR_T300 ERR_T301 ERR_T302 ERR_T303 ERR_T304 ERR_T305 ERR_T306 ERR_T307 ERR_T308 ERR_T309 ERR_T310 ERR_T311
+          end
+          else
+          M_CHECK_TEST10_ERR ERR_T300 ERR_T301 ERR_T302 ERR_T303 ERR_T304 ERR_T305
+          end
+        end
+        loop=1
+    end
+    if dacchoice!=""
+        M_DENC_TERM
+    end
+  end
+end
+;This macro is used only for STi4629 chip...
+define M_TEST4_OUTPUTS ALL_TEST1
+  loop=0
+  dacchoice=""
+  while loop==0
+    if ALL_TEST1==1
+      dacchoice="all"
+    end
+    else
+      print "-------------------------------------------------"
+      print "Test VOUT API routines with DACS Configuration "
+      dacchoice=""
+      print " 1  - test case M_TEST_RGB_DAC123     "
+      print " 2  - test case M_TEST_YUV_DAC123     "
+      print " 3  - test case M_TEST_YC_DAC12       "
+      print " 4  - test case M_TEST-CVBS_DAC3      "
+      print " all- All tests                       "
+      print " hit return to Quit this menu"
+      print " Enter your choice :"
+      dacchoice=getstring
+    end
+
+    if dacchoice==""
+        loop=1
+    end
+    else
+        M_DENC_INIT
+    end
+    if dacchoice=="1"
+        M_TEST_RGB_DAC123
+    end
+    if dacchoice=="2"
+        M_TEST_YUV_DAC123
+    end
+    if dacchoice=="3"
+        M_TEST_YC_DAC12
+    end
+    if dacchoice=="4"
+       M_TEST_CVBS_DAC3
+    end
+    if dacchoice=="all"
+        ERR_T400=FALSE_
+        ERR_T401=FALSE_
+        ERR_T402=FALSE_
+        ERR_T403=FALSE_
+        M_TEST_RGB_DAC123
+        M_TEST_YUV_DAC123
+        M_TEST_YC_DAC12
+        M_TEST_CVBS_DAC3
+        if ALL_TEST1!=1
+          M_CHECK_TEST4_ERR ERR_T400 ERR_T401 ERR_T402 ERR_T403
+        end
+        loop=1
+    end
+    if dacchoice!=""
+        M_DENC_TERM
+    end
+  end
+end
+;This macro is used for STi55xx and precisely STi5516...
+define M_TEST5_OUTPUTS ALL_TEST1
+loop=0
+  dacchoice=""
+  while loop==0
+    if ALL_TEST1==1
+      dacchoice="all"
+    end
+    else
+      print "-------------------------------------------------"
+      print "Test VOUT API routines with DACS Configuration "
+      dacchoice=""
+      print " 1  - test case M_TEST_RGB_DAC456     "
+      print " 2  - test case M_TEST_YUV_DAC456     "
+      print " 3  - test case M_TEST_YC_DAC12       "
+      print " 4  - test case M_TEST_YC_DAC45       "
+      print " 5  - test case M_TEST_CVBS_DAC3      "
+      print " 6  - test case M_TEST_CVBS_DAC6      "
+      print " all- All tests                       "
+      print " hit return to Quit this menu"
+      print " Enter your choice :"
+      dacchoice=getstring
+    end
+
+    if dacchoice==""
+        loop=1
+    end
+    else
+        if dacchoice!="all"
+         M_DENC_INIT
+        end
+    end
+    if dacchoice=="1"
+        M_TEST_RGB_DAC456
+    end
+    if dacchoice=="2"
+        M_TEST_YUV_DAC456
+    end
+    if dacchoice=="3"
+        M_TEST_YC_DAC12
+    end
+    if dacchoice=="4"
+        M_TEST_YC_DAC45
+    end
+    if dacchoice=="5"
+        M_TEST_CVBS_DAC3
+    end
+    if dacchoice=="6"
+        M_TEST_CVBS_DAC6
+    end
+    if dacchoice=="all"
+        ERR_T500=FALSE_
+        ERR_T501=FALSE_
+        ERR_T502=FALSE_
+        ERR_T503=FALSE_
+        ERR_T504=FALSE_
+        ERR_T505=FALSE_
+        M_TEST_RGB_DAC456_OUTPUT
+        M_TEST_YUV_DAC456_OUTPUT
+        M_TEST_YC_DAC12_OUTPUT
+        M_TEST_YC_DAC45_OUTPUT
+        M_TEST_CVBS_DAC3_OUTPUT
+        M_TEST_CVBS_DAC6_OUTPUT
+        if ALL_TEST1!=1
+          M_CHECK_TEST5_ERR ERR_T500 ERR_T501 ERR_T502 ERR_T503 ERR_T504 ERR_T505
+        end
+       loop=1
+    end
+    if (dacchoice!="")&&(dacchoice!="all")
+        M_DENC_TERM
+    end
+  end
+end
+define M_TEST_CVBS_DAC3_OUTPUT
+ api_checkerr
+ M_DENC_INIT
+ M_TEST_CVBS_DAC3
+ M_DENC_TERM
+end
+define M_TEST_YC_DAC12_OUTPUT
+ api_checkerr
+ M_DENC_INIT
+ M_TEST_YC_DAC12
+ M_DENC_TERM
+end
+define M_TEST_RGB_DAC456_OUTPUT
+ api_checkerr
+ M_DENC_INIT
+ M_TEST_RGB_DAC456
+ M_DENC_TERM
+end
+define M_TEST_YUV_DAC456_OUTPUT
+ api_checkerr
+ M_DENC_INIT
+ M_TEST_YUV_DAC456
+ M_DENC_TERM
+end
+define M_TEST_YC_DAC45_OUTPUT
+ api_checkerr
+ M_DENC_INIT
+ M_TEST_YC_DAC45
+ M_DENC_TERM
+end
+define M_TEST_CVBS_DAC6_OUTPUT
+ api_checkerr
+ M_DENC_INIT
+ M_TEST_CVBS_DAC6
+ M_DENC_TERM
+end
+
+;This macro is used for STi7710...
+define M_TEST6_OUTPUTS ALL_TEST1
+  loop=0
+  dacchoice=""
+  while loop==0
+    if ALL_TEST1==1
+      dacchoice="all"
+    end
+    else
+      print "-------------------------------------------------"
+      print "Test VOUT API routines with DACS Configuration "
+      dacchoice=""
+      print " 1  - test case M_TEST_YC_DAC12              "
+      print " 2  - test case M_TEST-CVBS_DAC1             "
+      print " 3  - test case M_TEST-CVBS_DAC3             "
+      print " all- All tests                              "
+      if (ST_OS=="LINUX")
+        print " x - to Quit this menu"
+      end
+      else
+        print " hit return to Quit this menu"
+      end
+      print " Enter your choice :"
+      dacchoice=getstring
+    end
+
+    if (ST_OS=="LINUX")
+        if dacchoice=="x"
+                print "exit"
+                loop=1
+        end
+    end
+
+    if dacchoice==""
+       loop=1
+    end
+    else
+       M_DENC_INIT
+    end
+    if dacchoice=="1"
+        M_TEST_YC_DAC12
+    end
+    if dacchoice=="2"
+        M_TEST1_CVBS_DAC1
+    end
+    if dacchoice=="3"
+        M_TEST_CVBS_DAC3
+    end
+    if dacchoice=="all"
+        ERR_T600=FALSE_
+        ERR_T601=FALSE_
+        ERR_T602=FALSE_
+        ERR_T603=FALSE_
+        M_TEST_YC_DAC12
+        M_TEST1_CVBS_DAC1
+        M_TEST_CVBS_DAC3
+        if ALL_TEST1!=1
+          M_CHECK_TEST6_ERR ERR_T600 ERR_T601 ERR_T602 ERR_T603
+        end
+        loop=1
+    end
+    if dacchoice!=""
+        M_DENC_TERM
+    end
+  end
+end
+
+;This macro is used for STi7100...
+define M_TEST8_OUTPUTS ALL_TEST1
+  loop=0
+  dacchoice=""
+  while loop==0
+    if ALL_TEST1==1
+      dacchoice="all"
+    end
+    else
+      print "-------------------------------------------------"
+      print "Test VOUT API routines with DACS Configuration "
+      dacchoice=""
+      print " 1  - test case M_TEST_YC_DAC12              "
+      print " 2  - test case M_TEST-CVBS_DAC1             "
+      print " 3  - test case M_TEST-CVBS_DAC3             "
+      print " 4  - test case M_TEST_RGB_DAC456            "
+      print " all- All tests                              "
+      if (ST_OS=="LINUX")
+        print " x - to Quit this menu"
+      end
+      else
+        print " hit return to Quit this menu"
+      end
+      print " Enter your choice :"
+      dacchoice=getstring
+    end
+
+    if (ST_OS=="LINUX")
+        if dacchoice=="x"
+                print "exit"
+                loop=1
+        end
+    end
+
+    if dacchoice==""
+        loop=1
+    end
+    else
+        M_DENC_INIT
+    end
+    if dacchoice=="1"
+        M_TEST_YC_DAC12
+    end
+    if dacchoice=="2"
+        M_TEST1_CVBS_DAC1
+    end
+    if dacchoice=="3"
+        M_TEST_CVBS_DAC3
+    end
+    if dacchoice=="4"
+        M_TEST_RGB_DAC456
+    end
+    if dacchoice=="all"
+        ERR_T700=FALSE_
+        ERR_T701=FALSE_
+        ERR_T702=FALSE_
+        ERR_T703=FALSE_
+        M_TEST_YC_DAC12
+        M_TEST1_CVBS_DAC1
+        M_TEST_CVBS_DAC3
+        M_TEST_RGB_DAC456
+        M_TEST_YUV_DAC456
+        if ALL_TEST1!=1
+          M_CHECK_TEST6_ERR ERR_T600 ERR_T601 ERR_T602 ERR_T603
+        end
+        loop=1
+    end
+    if dacchoice!=""
+        M_DENC_TERM
+    end
+  end
+end
+

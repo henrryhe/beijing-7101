@@ -1,0 +1,307 @@
+; ****************************************************************************
+; File         : VTGMSHD.MAC
+; Tests        : VTG timing modes in master mode on HD TV
+;                with SD output on STi7710 chip.
+; Requirements : video on screen
+; Author       : HSM - BS - January 2001
+; Update       : WA       - October 2004
+; ****************************************************************************
+
+; Test to check VTG master mode features on HD TV : VTG1/Mix1
+define M_51_MASTER_HD
+    api_report "M_51_MASTER_HD"
+    if (API_CHIPID=="7015")||(API_CHIPID=="7020")
+        vtg_init "VTG2" , h8000
+        HDLVTG2=vtg_open "VTG2"
+        vtg_setmode HDLVTG2
+    end
+    vtg_init "VTG1"
+    HDLVTG1=vtg_open "VTG1"
+
+    if (API_CHIPID=="7200")
+	 ;HD TEST
+	 print "========================================================="
+	 print "                       HD TEST                           "
+	 print "========================================================="
+         M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I60000_74250"
+	 api_quest "Mode SMPTE 274M I60 & EIA770.3 I60 OK on Monitor ?"
+         M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I59940_74176"
+	 api_quest "Mode SMPTE 274M I60 /1.001 & EIA770.3 I60 /1.001 OK on Monitor ?"
+	 M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I50000_74250_1"
+	 api_quest "Mode SMPTE 274M I50  OK on Monitor ?"
+	 M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_720P60000_74250"
+	 api_quest "Mode SMPTE 296M P60 OK on Monitor ?"
+	 M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_720P59940_74176"
+    	 api_quest "Mode SMPTE 296M P60 /1.001 OK on Monitor ?"
+	 M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_720P50000_74250"
+	 api_quest "Mode 720P50HZ OK on Monitor ?"
+	 M_CHECK_RETCODE 0
+	 ;ED TEST
+         print "========================================================="
+	 print "                        ED TEST                          "
+	 print "========================================================="
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P59940_27000"
+	 api_quest "Mode ATSC P59 OK on Monitor ?"
+         M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P60000_27027"
+	 api_quest "Mode ATSC P59 *1.001 OK on Monitor ?"
+         M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_576P50000_27000"
+	 api_quest "Mode 576P OK on Monitor ?"
+         M_CHECK_RETCODE 0
+	 ;HD reduced quality test
+	 print "========================================================="
+	 print "                HD REDUCED QUALITY TEST                  "
+	 print "========================================================="
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I60000_74250" 1
+	 api_quest "Mode SMPTE 274M I60 & EIA770.3 I60 OK on Monitor ?"
+         M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I59940_74176" 1
+	 api_quest "Mode SMPTE 274M I60 /1.001 & EIA770.3 I60 /1.001 OK on Monitor ?"
+	 M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I50000_74250_1" 1
+	 api_quest "Mode SMPTE 274M I50  OK on Monitor ?"
+	 M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_720P60000_74250" 1
+	 api_quest "Mode SMPTE 296M P60 OK on Monitor ?"
+	 M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_720P59940_74176" 1
+	 api_quest "Mode SMPTE 296M P60 /1.001 OK on Monitor ?"
+	 M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_720P50000_74250" 1
+	 api_quest "Mode 720P50HZ OK on Monitor ?"
+	 M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P59940_27000" 1
+	 api_quest "Mode ATSC P59 OK on Monitor ?"
+         M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P60000_27027" 1
+	 api_quest "Mode ATSC P59 *1.001 OK on Monitor ?"
+         M_CHECK_RETCODE 0
+	 M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_576P50000_27000" 1
+	 api_quest "Mode 576P OK on Monitor ?"
+         M_CHECK_RETCODE 0
+    end
+    else
+       if (API_CHIPID!="7100")&&(API_CHIPID!="7710")&&(API_CHIPID!="7109")
+	    M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I50000_72000"
+            api_quest "Mode 1080i(1250) OK on Monitor ?"
+            M_CHECK_RETCODE 0
+
+            M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I50000_74250_1"
+            api_quest "Mode SMPTE 274M I50  OK on Monitor ?"
+            M_CHECK_RETCODE 0
+
+            M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I50000_74250"
+            api_quest "Mode SMPTE 274M I50 OK on Monitor ?"
+            M_CHECK_RETCODE 0
+       end
+       ;   M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080P60000_148500"
+       ;   api_quest "Mode SMPTE 274M P60 OK on Monitor ?"
+       ;   M_CHECK_RETCODE 0
+
+       ;    M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080P59940_148352"
+       ;    api_quest "Mode SMPTE 274M P60 /1.001 OK on Monitor ?"
+       ;    M_CHECK_RETCODE 0
+
+       ;    M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080P50000_148500"
+       ;    api_quest "Mode SMPTE 274M P50 OK on Monitor ?"
+       ;    M_CHECK_RETCODE 0
+
+       if (API_CHIPID=="7710")
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_720P50000_74250"
+       api_quest "Mode 720P50000_74250 OK on Monitor ?"
+       M_CHECK_RETCODE 0
+
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I50000_74250"
+       api_quest "Mode 1080I50000_74250 OK on Monitor ?"
+       M_CHECK_RETCODE 0
+
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_768P75000_78750"
+       api_quest "Mode 768P75000_78750 OK on Monitor ?"
+       M_CHECK_RETCODE 0
+
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_768P60000_65000"
+       api_quest "Mode MODE_768P60000_65000 OK on Monitor ?"
+       M_CHECK_RETCODE 0
+
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_768P85000_94500"
+       api_quest "Mode 768P85000_94500 OK on Monitor ?"
+       M_CHECK_RETCODE 0
+
+       end
+
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I60000_74250"
+       api_quest "Mode SMPTE 274M I60 & EIA770.3 I60 OK on Monitor ?"
+       M_CHECK_RETCODE 0
+
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I59940_74176"
+       api_quest "Mode SMPTE 274M I60 /1.001 & EIA770.3 I60 /1.001 OK on Monitor ?"
+       M_CHECK_RETCODE 0
+       if (API_CHIPID!="7100")&&(API_CHIPID!="7710")&&(API_CHIPID!="7109")
+            M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080P30000_74250"
+       ;    api_quest "Mode SMPTE 274M P30 OK on Monitor ?"
+       ;    M_CHECK_RETCODE 0
+
+           M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080P29970_74176"
+       ;    api_quest "Mode SMPTE 274M P30 /1.001 OK on Monitor ?"
+       ;    M_CHECK_RETCODE 0
+
+           M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080P25000_74250"
+       ;    api_quest "Mode SMPTE 274M P25 OK on Monitor ?"
+       ;    M_CHECK_RETCODE 0
+
+           M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080P24000_74250"
+       ;    api_quest "Mode SMPTE 274M P24 OK on Monitor ?"
+       ;    M_CHECK_RETCODE 0
+           M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080P23976_74176"
+       ;    api_quest "Mode SMPTE 274M P24 /1.001 OK on Monitor ?"
+       ;    M_CHECK_RETCODE 0
+
+           M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1035I60000_74250"
+           api_quest "Mode SMPTE 240M I60 OK on Monitor ?"
+           M_CHECK_RETCODE 0
+
+           M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1035I59940_74176"
+           api_quest "Mode SMPTE 240M I60 /1.001 OK on Monitor ?"
+           M_CHECK_RETCODE 0
+
+       end
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_720P60000_74250"
+       api_quest "Mode SMPTE 296M P60 OK on Monitor ?"
+       M_CHECK_RETCODE 0
+
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_720P59940_74176"
+       api_quest "Mode SMPTE 296M P60 /1.001 OK on Monitor ?"
+       M_CHECK_RETCODE 0
+
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P60000_27027"
+
+       api_quest "Mode ATSC P59 *1.001 OK on Monitor ?"
+       M_CHECK_RETCODE 0
+
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P59940_27000"
+       api_quest "Mode ATSC P59 OK on Monitor ?"
+       M_CHECK_RETCODE 0
+
+        ; VGA modes
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P60000_25200"
+       api_quest "Mode 480P60000_25200 OK on Monitor ?"
+       M_CHECK_RETCODE 0
+
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P59940_25175"
+       api_quest "Mode 480P59940_25175 OK on Monitor ?"
+       M_CHECK_RETCODE 0
+
+       if (API_CHIPID=="7109")
+            ; XGA mode
+            M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_768P75000_78750"
+            api_quest "Mode MODE_768P75000_87754 OK on Monitor ?"
+            M_CHECK_RETCODE 0
+
+            M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_768P60000_65000"
+            api_quest "Mode MODE_768P60000_65000 OK on Monitor ?"
+            M_CHECK_RETCODE 0
+
+            M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_768P85000_94500"
+            api_quest "Mode MODE_768P85000_94500 OK on Monitor ?"
+            M_CHECK_RETCODE 0
+       end
+       if (API_CHIPID!="7100")&&(API_CHIPID!="7710")&&(API_CHIPID!="7109")
+
+           M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P30000_13514"
+       ;    api_quest "Mode ATSC P30 *1.001 OK ?"
+       ;    M_CHECK_RETCODE 0
+
+           M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P24000_10811"
+       ;    api_quest "Mode ATSC P24 *1.001 OK ?"
+       ;    M_CHECK_RETCODE 0
+
+
+           M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P29970_13500"
+       ;    api_quest "Mode ATSC P30 OK ?"
+       ;    M_CHECK_RETCODE 0
+            M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P23976_10800"
+       ;    api_quest "Mode ATSC P24 OK ?"
+       ;    M_CHECK_RETCODE 0
+
+           M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P30000_12285"
+       ;    api_quest "Mode ATSC P30 *1.001 square OK ?"
+       ;    M_CHECK_RETCODE 0
+
+           M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P24000_9828"
+       ;    api_quest "Mode ATSC P24 *1.001 square OK ?"
+       ;    M_CHECK_RETCODE 0
+
+           M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P59940_24545"
+           api_quest "Mode ATSC P59 square OK on Monitor ?"
+           M_CHECK_RETCODE 0
+
+           M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P29970_12273"
+       ;    api_quest "Mode ATSC P30 square OK ?"
+       ;    M_CHECK_RETCODE 0
+
+           M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P23976_9818"
+       ;    api_quest "Mode ATSC P24 square Ok ?"
+       ;    M_CHECK_RETCODE 0
+            M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P60000_24570"
+            api_quest "Mode ATSC P59 *1.001 square OK on Monitor ?"
+            M_CHECK_RETCODE 0
+        end
+    end
+
+    vtg_close HDLVTG1
+    vtg_term  "VTG1" 1
+
+    api_report "M_51_MASTER_HD" ERRORCOUNT
+end
+
+
+; Australian modes tests
+
+define M_AUSTRALIAN_MODE_TESTS
+    api_report "M_AUSTRALIAN_MODE_TESTS"
+
+    vtg_init "VTG1"
+    HDLVTG1=vtg_open "VTG1"
+
+    ;576P (STVTG_TIMING_MODE_576P50000_27000)
+    M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_576P50000_27000"
+    api_quest "Mode 576P OK on Monitor ?"
+    M_CHECK_RETCODE 0
+
+   ; 720p 50HZ
+    M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_720P50000_74250"
+    api_quest "Mode 720P50HZ OK on Monitor ?"
+    M_CHECK_RETCODE 0
+
+
+    ; 1152I 50HZ
+    M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1152I50000_48000"
+    api_quest "Mode 1152I50HZ OK on Monitor ?"
+    M_CHECK_RETCODE 0
+
+    ; test 1080I_72 50HZ
+    M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I50000_72000"
+    api_quest "Mode 1080I50Hz OK on Monitor ?"
+    M_CHECK_RETCODE 0
+
+    ; test 1080I 50HZ
+    M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I50000_74250"
+    api_quest "Mode SMPTE 295M I50 OK on Monitor ?"
+    M_CHECK_RETCODE 0
+
+    ;M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I50000_74250_1"
+    ;api_quest "Mode SMPTE 274M I50  OK on Monitor ?"
+    ;M_CHECK_RETCODE 0
+
+    vtg_close HDLVTG1
+    vtg_term  "VTG1"
+
+    api_report "M_AUSTRALIAN_MODE_TESTS" ERRORCOUNT
+end
+

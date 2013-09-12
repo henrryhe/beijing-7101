@@ -1,0 +1,214 @@
+#!/bin/sh
+# File       : loadimage
+# Function   : load the Linux Kernel on test board, and boot the test board
+# Assumption : script 'setup.bash' already run
+# *************************************************************************
+
+# --- Checking files
+
+FILE=$ROOTFS_DIR/MyFirmware.txt
+if !(test -f $FILE)
+then
+	echo "$FILE does not exists, cannot load kernel image"
+	echo "Exiting ..."
+	exit
+fi
+
+FILE=mytargetsetup.bash
+if !(test -f $FILE)
+then
+	echo "$FILE does not exists, cannot load kernel image"
+	echo "Exiting ..."
+	exit
+fi
+
+
+
+# --- What is the selected platform ?
+
+AUDIOCOMPANIONS=`grep "Audio" $ROOTFS_DIR/MyFirmware.txt`
+VIDEOCOMPANIONS=`grep "Video" $ROOTFS_DIR/MyFirmware.txt`
+
+AUDIOCOMPANION_ADDR=0x`echo $AUDIOCOMPANIONS | cut -d "x" -f 2 | cut -d "." -f1`
+
+# --- Which Linux server ?
+case "$DVD_FRONTEND" in
+    "7100" )
+    if test "$MY_LINUX_DISTRIB" = "/opt/STM/STLinux-2.2"
+    then
+        case "$BOARD" in
+            "mb411" )
+                STDCMD=mb411stb7100cut20bypass27MHz
+            ;;
+            "coco" )
+                STDCMD=mb442stb7109bypass30MHz
+            ;;
+        esac
+    else
+        case "$BOARD" in
+            "mb411" )
+                STDCMD=mb411bypass
+            ;;
+            "coco" )
+                STDCMD=mb442stb7109bypass30MHz
+            ;;
+        esac
+
+    fi
+    ;;
+    "7109" )
+        case "$BOARD" in
+            "mb411" )
+                STDCMD=mb411stb7109cut30bypass27MHz
+            ;;
+            "coco" )
+                STDCMD=mb442stb7109bypass30MHz
+            ;;
+        esac
+    ;;
+    "7200" )
+        STDCMD=mymb519bypass
+    ;;
+    *)
+    echo "Please select chip type ..."
+    exit
+esac
+
+
+# --- Which Linux distrib ?
+
+DISTRIB=$MY_LINUX_DISTRIB
+if test "$DISTRIB" = ""
+then
+   # In order to keep backward compatibility with start_710x_lddeX.X mechanism
+   # set first with MY_LINUX_DISTRIB and if not existing with LINUX_DISTRIB
+   DISTRIB=$LINUX_DISTRIB
+fi
+if test "$DISTRIB" = "/opt/STM/STLinux-2.3ear"
+then
+    NAME=$DVD_FRONTEND-$HOST-23ear    # Initial hostname for the target
+elif test "$DISTRIB" = "/opt/STM/STLinux-2.2"
+then
+    NAME=$DVD_FRONTEND-$HOST-22    # Initial hostname for the target
+elif test "$DISTRIB" = "/opt/STM/STLinux-2.0"
+then
+    NAME=$DVD_FRONTEND-$HOST-20    # Initial hostname for the target
+else
+    NAME=$DVD_FRONTEND-$HOST-xx    # Initial hostname for the target
+fi
+# Note : NAME is set only for user's information
+
+
+# --- How many mega-bytes ared needed by firmware (code+data) ?
+
+case $DVD_FRONTEND in
+    "7200" )
+    COPROCESSOR=""
+    ;;
+
+    * )
+    VIDEO_FW="2"
+    AUDIO_FW="2"
+    if test "$AUDIOCOMPANION_ADDR" = "0x04100000"
+    then
+       VIDEO_FW="1"
+    fi
+    COPROCESSOR=coprocessor_mem="$VIDEO_FW"m@0x04000000,"$AUDIO_FW"m@"$AUDIOCOMPANION_ADDR"
+    ;;
+esac
+
+
+# --- What are my target and IP addresses ?
+
+source mytargetsetup.bash           # get target's paths and IP
+
+# --- Other parameters
+
+AUTOCONF=off                 							# Try to determine addresses automatically?
+TCP_UDP=,nfsvers=2,rsize=4096,wsize=8192,tcp			# Select tcp vs udp protocol (empty for udp)
+IDE=ide0=noprobe             							# IDE related stuffs
+ETHERNET=nwhwconf=device:eth0,hwaddr:$MY_MAC_ADDRESS	# Ethernet related stuffs, with MAC address
+SERVERDIR=$MY_TARGET         							# Where is the Linux kernel (Root of target's file system)
+
+case $DVD_FRONTEND in
+    "7200" )
+    MEM_SIZE=32m               # Memory Size
+    ;;
+
+    * )
+    MEM_SIZE=48m               # Memory size
+    ;;
+esac
+
+case $DVD_FRONTEND in
+    "7200" )
+    BIGPHYSAREA_SIZE=1512     # Bigphysarea size
+    ;;
+
+    * )
+    BIGPHYSAREA_SIZE=1000     # Bigphysarea size
+    ;;
+esac
+
+if test "$SERVERDIR" = ""
+then
+   # In order to keep backward compatibility with start_710x_lddeX.X mechanism
+   # set first with MY_TARGET and if not existing with MY_TARGETDIR
+   SERVERDIR=$MY_TARGETDIR         							# Where is the Linux kernel (Root of target's file system)
+fi
+
+KERNEL=$KDIR/vmlinux
+
+#--- Echo used parameters
+
+echo
+echo "Selected configuration: $DVD_FRONTEND"
+echo "Booting Kernel: $KERNEL"
+echo "Server_dir="  $SERVERDIR
+echo
+echo "Coprocessor: $COPROCESSOR"
+
+for i in $AUDIOCOMPANIONS; do
+    echo "  Audio firmware=" $i
+done
+for i in $VIDEOCOMPANIONS; do
+    echo "  Video firmware=" $i
+done
+echo
+
+
+echo " MY_JEI_IP        = " $MY_JEI_IP
+echo " KERNEL           = " $KERNEL
+echo " STDCMD           = " $STDCMD
+echo " ETHERNET         = " $ETHERNET
+echo " IDE              = " $IDE
+echo " MY_SERVERIP      = " $MY_SERVERIP
+echo " SERVERDIR        = " $SERVERDIR
+echo " TCP_UDP          = " $TCP_UDP
+echo " MY_TARGETIP      = " $MY_TARGETIP
+echo " MY_GWIP          = " $MY_GWIP
+echo " MY_NETMASK       = " $MY_NETMASK
+echo " NAME             = " $NAME
+echo " AUTOCONF         = " $AUTOCONF
+echo " MEM_SIZE         = " $MEM_SIZE
+echo " COPROCESSOR      = " $COPROCESSOR
+echo " BIGPHYSAREA_SIZE = " $BIGPHYSAREA_SIZE
+
+# --- Now load image on the test board
+
+echo "st40load_gdb..."
+st40load_gdb \
+        -t $MY_JEI_IP \
+        -b $KERNEL \
+        -c $STDCMD \
+        -- \
+        console=ttyAS0,115200 \
+        $ETHERNET \
+        root=/dev/nfs \
+        $IDE \
+        nfsroot=$MY_SERVERIP:$SERVERDIR$TCP_UDP \
+        ip=$MY_TARGETIP::$MY_GWIP:$MY_NETMASK:$NAME::$AUTOCONF \
+        mem=$MEM_SIZE \
+        $COPROCESSOR \
+        bigphysarea=$BIGPHYSAREA_SIZE
+

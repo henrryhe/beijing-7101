@@ -1,0 +1,188 @@
+#!/bin/sh
+
+# Init variables
+SRC_DIR=.
+MODULE_DEST_DIR=$ROOTFS_DIR/exports/lib/modules
+
+# Local variable
+PROBLEM=
+
+echo
+echo "Usage: $0 [-a|-c]"
+echo "-----  with: -a: make all modules"
+echo "             -c: force clean before each make"
+echo
+echo "MODULE_DEST_DIR: $MODULE_DEST_DIR"
+echo "RPC_ROOT: $RPC_ROOT"
+echo "LSPROOT: $LSPROOT"
+echo
+
+# Check Parameters
+if test "$1" = "-a"
+then
+    ALL=1
+    CLEAN=1
+fi
+
+if test "$1" = "-c"
+then
+    CLEAN=1
+fi
+
+# Check MULTICOM environment
+if test "$RPC_ROOT" = ""
+then
+    echo "Please set RPC_ROOT system variable ..."
+    exit
+fi
+if test "$LSPROOT" = ""
+then
+    echo "Please set LSPROOT system variable ..."
+    exit
+fi
+
+if !(test -d $MODULE_DEST_DIR)
+then
+    mkdir $MODULE_DEST_DIR
+fi
+
+
+###########################################################################
+# Build phase of drivers with upper case makefile:
+#            fdma common lx_loader
+###########################################################################
+
+for i in $DVD_ROOT/dvdgr-prj-stvid/tests/src/lx_loader/
+do
+
+echo "*********************************************************"
+echo "Building:      $i ? (y/n)"
+echo "*********************************************************"
+if test "$ALL" = "1"
+then
+    a=y
+    echo $a
+else
+    read a
+fi
+
+if test "x$a" = "xy"
+then
+  cd $i
+  rm -f *.ko
+
+  # Make
+  if test "$CLEAN" = "1"
+  then
+     make clean
+  fi
+
+  make
+
+  # Copy to target
+  if test -f $SRC_DIR/*.ko
+  then
+    CMD='cp '$SRC_DIR'/*.ko '$MODULE_DEST_DIR
+
+    echo
+    echo "Copying: $CMD"
+    $CMD
+    echo "SUCCESSFULL !!!"
+  else
+    echo
+	echo
+	echo "WARNING: .ko not created !!!!!"
+    PROBLEM=`echo $PROBLEM $i`
+  fi
+
+  echo
+  echo	
+fi
+
+done
+
+
+###########################################################################
+# Special case for MULTICOM drivers
+###########################################################################
+
+for i in $RPC_ROOT/src/platform 
+do
+
+echo "*********************************************************"
+echo "Building:      $i ? (y/n)"
+echo "*********************************************************"
+if test "$ALL" = "1"
+then
+    a=y
+    echo $a
+else
+    read a
+fi
+
+if test "x$a" = "xy"
+then
+#  MODULE_LIST="$RPC_ROOT/src/rpc/rpc_userver/obj/linux/st40/rpc_userver.ko $RPC_ROOT/src/mme/host/obj/linux/st40/mme_host.ko $RPC_ROOT/src/embx/embxshmc/obj/linux/st40/embxshmc.ko $RPC_ROOT/src/embx/embxshm/obj/linux/st40/embxshm.ko $RPC_ROOT/src/embx/embxshell/obj/linux/st40/embxshell.ko $RPC_ROOT/src/embx/embxmailbox/obj/linux/st40/embxmailbox.ko $RPC_ROOT/src/embx/embxloopback/obj/linux/st40/embxloopback.ko"
+  MODULE_LIST="$RPC_ROOT/lib/linux/st40/rpc_userver.ko $RPC_ROOT/lib/linux/st40/mme_host.ko $RPC_ROOT/lib/linux/st40/embxshmc.ko $RPC_ROOT/lib/linux/st40/embxshm.ko $RPC_ROOT/lib/linux/st40/embxshell.ko $RPC_ROOT/lib/linux/st40/embxmailbox.ko $RPC_ROOT/lib/linux/st40/embxloopback.ko"
+
+  cd $i
+
+  # Make
+  if test "$CLEAN" = "1"
+  then
+     rm -f $MODULE_LIST
+
+     make -C $RPC_ROOT clean
+
+   # multicom is now only compiled whenever cleaned all
+   #  make -C $RPC_ROOT DISABLE_IA32_LINUX=1 DISABLE_ST20_OS20=1 DISABLE_ST40_OS21=1 DISABLE_ST40_LINUX=1 DISABLE_ST220_OS21=1 DISABLE_ST231_OS21=1
+    make -C $RPC_ROOT KERNELDIR=$KDIR ENABLE_DEBUG=1 DISABLE_IA32_LINUX=1 DISABLE_ST20_OS20=1 DISABLE_ST40_OS21=1 DISABLE_ST220_OS21=1 DISABLE_ST231_OS21=1 modules
+  fi
+
+
+  for j in `echo $MODULE_LIST`
+  do
+    # Copy to target
+    if test -f $j
+    then
+        CMD='cp '$j' '$MODULE_DEST_DIR
+
+        echo
+        echo "Copying: $CMD"
+        $CMD
+        echo "SUCCESSFULL !!!"
+    else
+        echo
+        echo
+        echo "WARNING: .ko not created !!!!!"
+        PROBLEM=`echo $PROBLEM $j`
+    fi
+  done
+
+  echo
+  echo	
+fi
+
+done
+
+
+###########################################################################
+# Inform user of result
+###########################################################################
+if test "$PROBLEM" = ""
+then
+    echo
+    echo "---------------------------> MakeAll is SUCCESSFULL !!!!"
+    echo
+else
+    echo
+    echo "PROBLEM with following drivers:"
+    for i in `echo $PROBLEM`
+    do
+        echo "  $i"
+    done
+    echo
+fi
+
+
+

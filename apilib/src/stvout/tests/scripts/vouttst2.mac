@@ -1,0 +1,362 @@
+; ****************************************************************************
+; File         : VOUTTST2.MAC
+; Requirements :
+; Author       : Jacques GAMON - November 2000
+; ****************************************************************************
+; Test
+
+; general behavior :
+; driver is assumed to be not initialized before starting these file tests
+
+define M_TEST2_OUTPUTS ALL_TEST2
+  loop=0
+  hdchoice=""
+  while loop==0
+    if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+      if ALL_TEST2==1
+        hdchoice="8"
+      end
+      else
+        print "-----------------------------------------"
+        print "Test VOUT API routines "
+        hdchoice=""
+        print " 1 - test case M_TEST_SVM"
+        print " 2 - test case M_TEST_YC444_24"
+        print " 3 - test case M_TEST_YC422_16"
+        print " 4 - test case M_TEST_YC422_8"
+        print " 5 - test case M_TEST_RGB888_24"
+        print " 6 - test case M_TEST_HD_RGB"
+        print " 7 - test case M_TEST_HD_YUV"
+        print " 8 - all tests"
+        print " hit return to Quit this menu"
+        print " Enter your choice :"
+        hdchoice=getstring
+      end
+    end
+    else
+      hdchoice="4"
+      loop=1
+    end
+
+    if hdchoice==""
+;        hdchoice="9"
+        loop=1
+    end
+
+    if hdchoice=="1"
+        M_TEST_SVM
+        end
+
+    if hdchoice=="2"
+        M_TEST_YC444_24
+        end
+
+    if hdchoice=="3"
+        M_TEST_YC422_16
+        end
+
+    if hdchoice=="4"
+        M_TEST_YC422_8
+        end
+
+    if hdchoice=="5"
+        M_TEST_RGB888_24
+        end
+
+    if hdchoice=="6"
+        M_TEST_HD_RGB
+        end
+
+    if hdchoice=="7"
+        M_TEST_HD_YUV
+        end
+
+    if hdchoice=="8"
+        ERR_T200=FALSE_
+        ERR_T201=FALSE_
+        ERR_T202=FALSE_
+        ERR_T203=FALSE_
+        ERR_T204=FALSE_
+        ERR_T205=FALSE_
+        ERR_T206=FALSE_
+        M_TEST_SVM
+        M_TEST_YC444_24
+        M_TEST_YC422_16
+        M_TEST_YC422_8
+        M_TEST_RGB888_24
+        M_TEST_HD_RGB
+        M_TEST_HD_YUV
+        if ALL_TEST2!=1
+          M_CHECK_TEST2_ERR ERR_T200 ERR_T201 ERR_T202 ERR_T203 ERR_T204 ERR_T205 ERR_T206
+        end
+        loop=1
+    end
+  end
+end
+
+
+
+;----------------------------------------------------------------------
+; Macro name : M_5528_DIGITAL_OUTPUT_TEST
+; Parameters : None
+; Goal       : Test digital output going out from STi5528 by showing it
+;              on STi4629
+;-----------------------------------------------------------------------
+define M_5528_DIGITAL_OUTPUT_TEST
+        ERRORCOUNT=0
+        print "----------------------------------------"
+        print "Initialising digital output on main DENC"
+        print "----------------------------------------"
+        denc_init "MAIN_DENC"
+        str=denc_capa "MAIN_DENC"
+        DENCVERSION =api_evalstr str 5
+        MAIN_DENC_HDL=denc_open "MAIN_DENC"
+        denc_setmode MAIN_DENC_HDL
+        vout_init "VOUT_DIGITAL" VOUT_DEVICE_TYPE_DIGOUT
+        MAIN_VOUT_HDL = vout_open "VOUT_DIGITAL"
+
+        print "---------------------------"
+        print "     Testing PAL mode      "
+        print "---------------------------"
+
+        ; Setting digital output to PAL mode
+        vout_setparams MAIN_VOUT_HDL "YCbCr422_8" 0
+
+        ; Setting main VTG to PAL
+        vtg_init "MAIN_VTG"
+        MAIN_VTG_HDL=vtg_open "MAIN_VTG"
+        vtg_setmode MAIN_VTG_HDL
+
+        ; Initialise auxiliay DENC and set to PAL
+        denc_init , , 4
+        AUX_DENC_HDL=denc_open
+        denc_setmode AUX_DENC_HDL
+
+        ; Initialise CVBS output on Vout
+        vout_init , VOUT_DEVICE_TYPE_4629
+        vout_open
+        vout_enable
+
+        ; Setting VTG to SLAVE
+        vtg_init , "TYPE_DENC"
+        vtg_open
+        vtg_setmode , "MODE_SLAVE"
+
+        print "Is CVBS output on STi4629 dac 3 OK ?(Y/N)"
+        response=getstring
+        if ((response!="y")&&(response!="Y"))
+        ERRORCOUNT=ERRORCOUNT+1
+        end
+        print "---------------------------"
+        print "     Testing NTSC mode      "
+        print "---------------------------"
+
+        ; Setting digital output to PAL mode
+        vout_setparams MAIN_VOUT_HDL "YCbCr422_8" 1
+
+        ; Setting main VTG to PAL
+        vtg_setmode MAIN_VTG_HDL "MODE_480I59940_13500"
+
+        ; Initialise auxiliay DENC and set to PAL
+        denc_setmode AUX_DENC_HDL 1
+        print "Is CVBS output on STi4629 dac 3 OK ?(Y/N)"
+        response=getstring
+        if ((response!="y")&&(response!="Y"))
+        ERRORCOUNT=ERRORCOUNT+1
+        end
+        M_CHECK_TEST_ERROR 0
+
+        vtg_term , 1
+        vtg_term "MAIN_VTG" 1
+
+        vout_term "VOUT_DIGITAL" 1
+        vout_term , 1
+
+        denc_term "MAIN_DENC" 1
+        denc_term ,1
+end
+
+;----------------------------------------------------------------------
+; Macro name : M_5107_DIGITAL_OUTPUT_TEST
+; Parameters : None
+; Goal       : Test digital output going out from STi5107 using a logical
+; analyser
+;-----------------------------------------------------------------------
+define M_5107_DIGITAL_OUTPUT_TEST
+        ERRORCOUNT=0
+        print "----------------------------------------"
+        print "Initialising digital output"
+        print "----------------------------------------"
+        denc_init
+        str=denc_capa
+        DENCVERSION =api_evalstr str 5
+        DENC_HDL=denc_open
+        denc_setmode DENC_HDL
+        vout_init "VOUT_DIGITAL" VOUT_DEVICE_TYPE_DIGOUT "YCbCr422_8"
+        VOUT_HDL = vout_open "VOUT_DIGITAL"
+
+        print "----------------------------------------"
+        print "Initialising PIO1 and PIO3 for digital output"
+        print "----------------------------------------"
+        poke h20900700 h0
+        VOUT_PIOSet
+
+        print "---------------------------"
+        print "     Testing PAL mode      "
+        print "---------------------------"
+
+        ; Setting digital output to PAL mode
+        vout_setparams VOUT_HDL "YCbCr422_8" 0
+
+        ; Setting main VTG to PAL
+        vtg_init "VTG"
+        VTG_HDL=vtg_open "VTG"
+        vtg_setmode VTG_HDL
+
+        print "Is output on Logical Analyser OK ?(Y/N)"
+        response=getstring
+        if ((response!="y")&&(response!="Y"))
+        ERRORCOUNT=ERRORCOUNT+1
+        end
+        print "---------------------------"
+        print "     Testing NTSC mode      "
+        print "---------------------------"
+
+        ; Setting digital output to NTSC mode
+        vout_setparams VOUT_HDL "YCbCr422_8" 1
+
+        ; Setting main VTG to NTSC
+        vtg_setmode VTG_HDL "MODE_480I59940_13500"
+        denc_setmode DENC_HDL 1
+
+        print "Is output on Logical Analyser OK ?(Y/N)"
+        response=getstring
+        if ((response!="y")&&(response!="Y"))
+        ERRORCOUNT=ERRORCOUNT+1
+        end
+        M_CHECK_TEST_ERROR 0
+
+        vtg_term "VTG" 1
+
+        vout_term "VOUT_DIGITAL" 1
+
+        denc_term , 1
+end
+
+
+;----------------------------------------------------------------------
+; Macro name : M_7710_HD_OUTPUT_TEST
+; Parameters : None
+; Goal       : Test HD outputs on STi7710
+;-----------------------------------------------------------------------
+define M_7710_HD_OUTPUT_TEST ALL_TEST3
+loop=0
+  hdchoice=""
+  while loop==0
+      if ALL_TEST3==1
+        hdchoice="4"
+      end
+      else
+        print "-----------------------------------------"
+        print "Test VOUT API routines "
+        hdchoice=""
+        print " 1 - test case M_TEST_HD_RGB"
+        print " 2 - test case M_TEST_HD_YUV "
+        if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+        print " 3 - test case M_TEST_HD_YUV on HD_DACS"
+        print " 4 - test case M_TEST_HD_RGB on HD_DACS"
+        print " 5 - test case M_TEST_HD_YUV on HD_DACS REDUCED QUALITY"
+        print " 6 - test case M_TEST_HD_RGB on HD_DACS REDUCED QUALITY"
+        end
+        print " 7 - test case M_TEST_YC422_16"
+        print " 8 - test case M_TEST_YC422_8"
+
+        print " 9 - all tests"
+
+
+        if (ST_OS=="LINUX")
+           print " x - to Quit this menu"
+        end
+        else
+           print " hit return to Quit this menu"
+        end
+        print " Enter your choice :"
+        hdchoice=getstring
+      end
+
+      if hdchoice==""
+         hdchoice="4"
+         loop=1
+      end
+
+      if hdchoice=="1"
+         M_TEST1_HD_RGB
+         loop=1
+      end
+
+      if hdchoice=="2"
+         M_TEST1_HD_YUV
+        loop=1
+      end
+
+      if hdchoice=="3"
+         HDDACS=1
+         M_TEST1_HD_YUV
+         HDDACS=0
+         loop=1
+      end
+
+      if hdchoice=="4"
+         HDDACS=1
+         M_TEST1_HD_RGB
+         HDDACS=0
+         loop=1
+      end
+
+      if hdchoice=="5"
+         HDDACS=1
+         M_TEST2_HD_YUV
+         HDDACS=0
+         loop=1
+      end
+
+      if hdchoice=="6"
+         HDDACS=1
+         M_TEST2_HD_RGB
+         HDDACS=0
+         loop=1
+      end
+
+      if hdchoice=="7"
+         M_TEST_YC422_16
+         loop=1
+      end
+
+      if hdchoice=="8"
+        M_TEST_YC422_8
+        loop=1
+      end
+
+      if hdchoice=="9"
+         ERR_T200=FALSE_
+         ERR_T201=FALSE_
+         M_TEST1_HD_RGB
+         M_TEST1_HD_YUV
+         if ALL_TEST3!=1
+           M_CHECK_TEST7_ERR ERR_T200 ERR_T201
+         end
+         loop=1
+      end
+      if (ST_OS=="LINUX")
+         if hdchoice=="x"
+               print "exit"
+               loop=1
+         end
+      end
+  end
+end
+
+
+
+
+

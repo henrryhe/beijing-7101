@@ -1,0 +1,886 @@
+; ****************************************************************************
+; File         : VOUTMULT.MAC
+; Requirements :
+; Author       : Jacques GAMON - Janvier 2001
+; ****************************************************************************
+; Tests :
+; M_TEST_MULT55XX
+; M_TEST_MULT0119
+; M_TEST_MULT7020
+; M_TEST_MULTI_INSTANCES
+
+; general behavior :
+; driver is assumed to be not initialized before starting these file tests
+
+define M_TEST_MULT55XX
+  if DENCVERSION<6
+    print " 'rgb/yc/cvbs adjust' capabilities not available "
+  end
+  else
+    ERRORCOUNT = 0
+    print " Init outputs RGB, Y/C and CVBS"
+    vout_init "VoutRGB" DEVICETYPE "RGB"
+    vout_init "VoutYC" DEVICETYPE "YC"
+    vout_init "VoutCVBS" DEVICETYPE "CVBS"
+    ;
+    print " Open 2 devices on RGB, Y/C and CVBS"
+    hndl1_rgb = vout_open "VoutRGB"
+    hndl1_yc = vout_open "VoutYC"
+    hndl1_cvbs = vout_open "VoutCVBS"
+    hndl2_rgb = vout_open "VoutRGB"
+    hndl2_yc = vout_open "VoutYC"
+    hndl2_cvbs = vout_open "VoutCVBS"
+    ;
+    print "--- start -----------------------------"
+    print "   Set Default parameters on RGB, Y/C and CVBS devices"
+    print "   and Enable on RGB, Y/C and CVBS devices"
+    vout_setparams hndl1_rgb "RGB"
+    vout_enable hndl1_rgb
+    vout_setparams hndl1_yc "YC"
+    vout_enable hndl1_yc
+    vout_setparams hndl1_cvbs "CVBS"
+    vout_enable hndl1_cvbs
+    print "   test default value, internal driver and hardware"
+    voutrddac EXTERNAL_DENC PRNT
+    vout_getparams hndl2_rgb "RGB" PRNT
+    M_CHECK_EXPECTED_PARAM P1+8 DAC4
+    M_CHECK_EXPECTED_PARAM P2+8 DAC5
+    M_CHECK_EXPECTED_PARAM P3+8 DAC6
+    vout_getparams hndl2_yc "YC" PRNT
+    M_CHECK_EXPECTED_PARAM P1+8 DAC1
+    if DENCVERSION>6
+      M_CHECK_EXPECTED_PARAM P2+8 DAC2
+    end
+    M_CHECK_EXPECTED_PARAM P3 DACC
+    vout_getparams hndl2_cvbs "CVBS" PRNT
+    M_CHECK_EXPECTED_PARAM P1+8 DAC3
+    M_CHECK_EXPECTED_PARAM P2 DACC
+    ;
+    print ""
+    print "   Set Dac values on RGB outputs "
+    vout_setdac hndl1_rgb "RGB" 1 2 3
+    print "   test RGB values, internal 'VoutRGB'1 and hardware"
+    voutrddac EXTERNAL_DENC PRNT
+    vout_getparams hndl1_rgb "RGB" PRNT
+    M_CHECK_EXPECTED_PARAM P1 1
+    M_CHECK_EXPECTED_PARAM P2 2
+    M_CHECK_EXPECTED_PARAM P3 3
+    M_CHECK_EXPECTED_PARAM DAC4 1+8
+    M_CHECK_EXPECTED_PARAM DAC5 2+8
+    M_CHECK_EXPECTED_PARAM DAC6 3+8
+    print "   test RGB values, internal 'VoutRGB'2"
+    vout_getparams hndl2_rgb "RGB" PRNT
+    M_CHECK_EXPECTED_PARAM P1 1
+    M_CHECK_EXPECTED_PARAM P2 2
+    M_CHECK_EXPECTED_PARAM P3 3
+    print "   test YC values, internal 'VoutYC'2"
+    vout_getparams hndl2_yc "YC" PRNT
+    M_CHECK_UNEXPECTED_PARAM P1 1
+    if DENCVERSION>6
+      M_CHECK_UNEXPECTED_PARAM P2 2
+    end
+    M_CHECK_UNEXPECTED_PARAM P3 3
+    print "   test CVBS values, internal 'VoutCVBS'2"
+    vout_getparams hndl2_cvbs "CVBS" PRNT
+    M_CHECK_UNEXPECTED_PARAM P1 1
+    M_CHECK_UNEXPECTED_PARAM P2 2
+    ;
+    print ""
+    print "   Set Dac values on YC outputs "
+    vout_setdac hndl1_yc "YC" 4 5 6+8
+    print "   test YC values, internal 'VoutYC'1 and hardware"
+    voutrddac EXTERNAL_DENC PRNT
+    vout_getparams hndl1_yc "YC" PRNT
+    M_CHECK_EXPECTED_PARAM P1 4
+    if DENCVERSION>6
+      M_CHECK_EXPECTED_PARAM P2 5
+    end
+    M_CHECK_EXPECTED_PARAM P3 6+8
+    M_CHECK_EXPECTED_PARAM DAC1 4+8
+    if DENCVERSION>6
+      M_CHECK_EXPECTED_PARAM DAC2 5+8
+    end
+    M_CHECK_EXPECTED_PARAM DACC 6+8
+    print "   test YC values, internal 'VoutYC'2"
+    vout_getparams hndl2_yc "YC" PRNT
+    M_CHECK_EXPECTED_PARAM P1 4
+    if DENCVERSION>6
+      M_CHECK_EXPECTED_PARAM P2 5
+    end
+    M_CHECK_EXPECTED_PARAM P3 6+8
+    print "   test RGB values, internal 'VoutRGB'2"
+    vout_getparams hndl2_rgb "RGB" PRNT
+    M_CHECK_UNEXPECTED_PARAM P1 4
+    M_CHECK_UNEXPECTED_PARAM P2 5
+    M_CHECK_UNEXPECTED_PARAM P3 6
+    print "   test CVBS values, internal 'VoutCVBS'2"
+    vout_getparams hndl2_cvbs "CVBS" PRNT
+    M_CHECK_UNEXPECTED_PARAM P1 4
+    M_CHECK_UNEXPECTED_PARAM P2 5
+    ;
+    print ""
+    print "   Set Dac values on CVBS outputs "
+    vout_setdac hndl1_cvbs "CVBS" 7 7+8
+    print "   test CVBS values, internal 'VoutCVBS'1 and hardware"
+    voutrddac EXTERNAL_DENC PRNT
+    vout_getparams hndl1_cvbs "CVBS" PRNT
+    M_CHECK_EXPECTED_PARAM P1 7
+    M_CHECK_EXPECTED_PARAM P2 7+8
+    M_CHECK_EXPECTED_PARAM DAC3 7+8
+    M_CHECK_EXPECTED_PARAM DACC 7+8
+    print "   test CVBS values, internal 'VoutCVBS'2"
+    vout_getparams hndl2_cvbs "CVBS" PRNT
+    M_CHECK_EXPECTED_PARAM P1 7
+    M_CHECK_EXPECTED_PARAM P2 7+8
+    print "   test RGB values, internal 'VoutRGB'2"
+    vout_getparams hndl2_rgb "RGB" PRNT
+    M_CHECK_UNEXPECTED_PARAM P1 7
+    M_CHECK_UNEXPECTED_PARAM P2 8
+    print "   test YC values, internal 'VoutYC'2"
+    vout_getparams hndl2_yc "YC" PRNT
+    M_CHECK_UNEXPECTED_PARAM P1 7
+    if DENCVERSION>6
+      M_CHECK_UNEXPECTED_PARAM P2 8
+    end
+    M_CHECK_TEST_ERROR 0
+    ERR_MULT=GLOBERR
+    print "--- end -------------------------------"
+    ;
+    print " disable/close/term the driver."
+    vout_close hndl1_rgb
+    vout_close hndl1_yc
+    vout_close hndl1_cvbs
+    vout_close hndl2_rgb
+    vout_close hndl2_yc
+    vout_close hndl2_cvbs
+    vout_term "VoutRGB"
+    vout_term "VoutYC"
+    vout_term "VoutCVBS"
+  end
+end
+
+
+define M_TEST_MULT0119
+  ERRORCOUNT=0
+    print " Init outputs RGB, Y/C and CVBS"
+    vout_init "VoutRGB" DEVICETYPE "RGB" "DENC119"
+    vout_init "VoutCVBS" DEVICETYPE "CVBS" "DENC119"
+    ;
+    print " Open 2 devices on RGB, Y/C and CVBS"
+    hndl1_rgb = vout_open "VoutRGB"
+    hndl1_cvbs = vout_open "VoutCVBS"
+    hndl2_rgb = vout_open "VoutRGB"
+    hndl2_cvbs = vout_open "VoutCVBS"
+    ;
+    print "--- start -----------------------------"
+    print "   Set Default parameters on RGB and CVBS devices"
+    print "   and Enable on RGB and CVBS devices"
+    vout_setparams hndl1_rgb "RGB"
+    vout_enable hndl1_rgb
+    vout_setparams hndl1_cvbs "CVBS"
+    vout_enable hndl1_cvbs
+    print "   test default value, internal driver (Inverted parameter)"
+    vout_getparams hndl2_rgb "RGB" PRNT
+    M_CHECK_EXPECTED_PARAM P8 FALSE_
+    vout_getparams hndl2_cvbs "CVBS" PRNT
+    M_CHECK_EXPECTED_PARAM P8 FALSE_
+    ;
+    print ""
+    print "   Set Inverted value to FALSE on RGB outputs "
+    vout_setinv hndl1_rgb TRUE_
+    print "   test RGB values, internal 'VoutRGB'1"
+    vout_getparams hndl1_rgb "RGB" PRNT
+    M_CHECK_EXPECTED_PARAM P8 TRUE_
+    print "   test RGB values, internal 'VoutRGB'2"
+    vout_getparams hndl2_rgb "RGB" PRNT
+    M_CHECK_UNEXPECTED_PARAM P8 TRUE_
+    print "   test CVBS values, internal 'VoutCVBS'2"
+    vout_getparams hndl2_cvbs "CVBS" PRNT
+    M_CHECK_UNEXPECTED_PARAM P8 TRUE_
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_MULT=GLOBERR
+    print "--- end -------------------------------"
+    ;
+    print " disable/close/term the driver."
+    vout_close hndl1_rgb
+    vout_close hndl1_cvbs
+    vout_close hndl2_rgb
+    vout_close hndl2_cvbs
+    vout_term "VoutRGB"
+    vout_term "VoutCVBS"
+end
+
+define M_DISPLAY_ON_7020
+    ; VOUT Digital HD Configuration
+    print "        -- start vout hddig --"
+    vout_init "HDDIG" VOUT_DEVICE_TYPE_AUTO "YCbCr422_8"
+    HDLHDDIG=vout_open "HDDIG"
+    vout_enable HDLHDDIG
+
+    ; DENC 7015/20 config
+    print "        -- start denc 7015/20 --"
+    denc_init
+    HDLDENC=denc_open
+    denc_set HDLDENC
+
+    ; VOUT 7015/20 DENC Configuration
+    print "        -- start vout cvbs7015/20 --"
+    vout_init "DENC7015-20" VOUT_DEVICE_TYPE_AUTO "CVBS"
+    HDLVOUT=vout_open "DENC7015-20"
+    vout_enable HDLVOUT
+
+    ; VOUT Analog HD Configuration
+    print "        -- start vout hdana --"
+    vout_init "HDANA" VOUT_DEVICE_TYPE_AUTO "HD_RGB"
+    HDLHDANA=vout_open "HDANA"
+    vout_setparams HDLHDANA "HD_RGB"
+    vout_enable HDLHDANA
+
+    ; VTG1 Init
+    print "        -- start vtg1 --"
+    vtg_init
+    HDLVTGMAIN=vtg_open
+    vtg_setmode HDLVTGMAIN "MODE_1080I60000_74250"
+    vtg_getmode
+
+    ; VTG2 Init
+    print "        -- start vtg2 --"
+    vtg_init "VTG2" , h8000
+    HDLVTGAUX=vtg_open "VTG2"
+    vtg_setmode
+    vtg_getmode
+
+  ; VOUT Analog SVM
+    vout_init "VoutSVM" VOUT_DEVICE_TYPE_AUTO "SVM"
+    HDLVOUTSVM = vout_open "VoutSVM"
+    print "   Set Default parameters and Enable device Svm on 7015/20"
+    vout_setparams HDLVOUTSVM "SVM"
+    vout_enable HDLVOUTSVM
+end
+
+
+define M_DISPLAY_OFF_7020
+    vout_term "VoutSVM" 1
+
+    vtg_term "VTG2" 1
+    vtg_term  , 1
+
+    vout_term "HDANA" 1
+    vout_term "DENC7015-20" 1
+
+    denc_close HDLDENC
+    denc_term
+
+    vout_term "HDDIG" 1
+end
+
+
+define M_DISPLAY_ON_7710
+    ; DENC 7710 config
+    print "        -- start denc 7710 --"
+    denc_init
+    HDLDENC=denc_open
+    denc_set HDLDENC
+
+    ; VTG1 Init
+    print "        -- start vtg1 --"
+    if (CHIP_CUT=="STI7710_CUT2x")
+        vtg_init "VTG1" 5 h20103000
+    end
+    else
+        vtg_init "VTG1" 5 h20103c00
+    end
+    HDLVTGMAIN=vtg_open "VTG1"
+    vtg_setmode HDLVTGMAIN "MODE_1080I60000_74250"
+
+    ; VOUT Analog HD Configuration
+    print "        -- start vout hdana --"
+    vout_init "HDANA" VOUT_DEVICE_TYPE_AUTO "HD_RGB"
+    HDLHDANA=vout_open "HDANA"
+    vout_setparams HDLHDANA "HD_RGB"
+    vout_enable HDLHDANA
+
+    vout_init
+    HDLVOUT=vout_open
+    vout_enable HDLVOUT
+end
+
+define M_DISPLAY_OFF_7710
+
+    vout_close HDLHDANA
+    vout_term "HDANA" 1
+    vout_close HDLVOUT
+    vout_term , 1
+    vtg_close HDLVTGMAIN
+    vtg_term "VTG1" 1
+    denc_close HDLDENC
+    denc_term
+
+end
+
+define M_DISPLAY_ON_7100
+    ; DENC 7100 config
+    print "        -- start denc --"
+    denc_init
+    HDLDENC=denc_open
+    denc_set HDLDENC
+
+    ; VTG1 Init
+    print "        -- start vtg1 --"
+    vtg_init "VTG1"
+    HDLVTGMAIN=vtg_open "VTG1"
+    vtg_setmode HDLVTGMAIN "MODE_1080I60000_74250"
+
+    ; VOUT Analog HD Configuration
+    print "        -- start vout hdana --"
+    vout_init "HDANA" VOUT_DEVICE_TYPE_AUTO "HD_RGB"
+    HDLHDANA=vout_open "HDANA"
+    vout_setparams HDLHDANA "HD_RGB"
+    vout_enable HDLHDANA
+    if (API_CHIPID=="7109")
+      VTG_EnableHVSync ; enable HD output
+    end
+
+    if (API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+        vout_init
+        HDLVOUT=vout_open
+        vout_enable HDLVOUT
+    end
+end
+
+define M_DISPLAY_OFF_7100
+
+    vout_close HDLHDANA
+    vout_term "HDANA" 1
+    if (API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+        vout_close HDLVOUT
+        vout_term , 1
+    end
+    vtg_close HDLVTGMAIN
+    vtg_term "VTG1" 1
+    denc_close HDLDENC
+    denc_term
+
+end
+
+
+
+define M_TEST_MULT7015
+  HDLVOUTSVM =0
+  HDLVOUT119 =0
+  HDL119 =0
+  HDLDENC=0
+  HDLHDDIG=0
+  HDLHDANA=0
+  HDLVOUT=0
+  HDLVTGMAIN=0
+  HDLVTGAUX=0
+
+  ERRORCOUNT = 0
+  api_checkerr
+  print "--- start -----------------------------"
+  M_DISPLAY_ON_7020
+  ; here call HD graphic display in mode 1080 I 60000 74250
+
+  ; DENC init STV0119
+  denc_init "DENC119" , , 1
+  HDL119=denc_open "DENC119"
+  denc_setmode HDL119 5
+
+  ; VOUT CVBS STV0119
+  vout_init "VOUT119" VOUT_DEVICE_TYPE_DENC "CVBS" "DENC119"
+  HDLVOUT119 = vout_open "VOUT119"
+  vout_setparams HDLVOUT119 "CVBS"
+  vout_enable HDLVOUT119
+  vout_setinv HDLVOUT119 0
+
+  ;Color Bar Pattern on stv0119 and on denc 7015/20
+  denc_cbp HDL119 1
+  denc_cbp HDLDENC 1
+
+  print " ......................................................."
+  print "               Picture on HD RGB output and             "
+  print "     Color Bar Pattern on CVBS output 7015 and stv0119  "
+  print " ......................................................."
+  print ""
+  print "  --> HD Display ok?"
+  print "  --> CBP on Denc 7015 and STV0119  ok?"
+  api_quest
+  ;
+  M_CHECK_TEST_ERROR 0
+  ERR_MULT=GLOBERR
+  ;
+  print " disable/close/term all devices."
+  denc_cbp HDL119 0
+  denc_cbp HDLDENC 0
+  M_DISPLAY_OFF_7020
+  vout_term "VOUT119" 1
+  denc_close HDL119
+  denc_term "DENC119" 1
+  print "--- end -------------------------------"
+end
+
+define M_TEST_MULT5528
+  if DENCVERSION<6
+    print " 'rgb/yc/cvbs adjust' capabilities not available "
+  end
+  else
+    ERRORCOUNT = 0
+    print " Init outputs RGB, Y/C and CVBS"
+    vout_init "VoutRGB" DEVICETYPE "RGB"
+    vout_init "VoutYC" DEVICETYPE "YC"
+    vout_init "VoutCVBS" DEVICETYPE "CVBS"
+    ;
+    print " Open 2 devices on RGB, Y/C and CVBS"
+    hndl1_rgb = vout_open "VoutRGB"
+    hndl1_yc = vout_open "VoutYC"
+    hndl1_cvbs = vout_open "VoutCVBS"
+    hndl2_rgb = vout_open "VoutRGB"
+    hndl2_yc = vout_open "VoutYC"
+    hndl2_cvbs = vout_open "VoutCVBS"
+    ;
+    print "--- start -----------------------------"
+    print "   Set Default parameters on RGB, Y/C and CVBS devices"
+    print "   and Enable on RGB, Y/C and CVBS devices"
+    vout_setparams hndl1_rgb "RGB"
+    vout_enable hndl1_rgb
+    vout_setparams hndl1_yc "YC"
+    vout_enable hndl1_yc
+    vout_setparams hndl1_cvbs "CVBS"
+    vout_enable hndl1_cvbs
+    print "   test default value, internal driver and hardware"
+    voutrddac EXTERNAL_DENC PRNT
+    vout_getparams hndl2_rgb "RGB" PRNT
+    if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5525")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+    M_CHECK_EXPECTED_PARAM P1+8 DAC4
+    M_CHECK_EXPECTED_PARAM P2+8 DAC5
+    M_CHECK_EXPECTED_PARAM P3+8 DAC6
+    end
+    else
+    M_CHECK_EXPECTED_PARAM P1+8 DAC1
+    M_CHECK_EXPECTED_PARAM P2+8 DAC2
+    M_CHECK_EXPECTED_PARAM P3+8 DAC3
+    end
+    vout_getparams hndl2_yc "YC" PRNT
+    M_CHECK_EXPECTED_PARAM P1+8 DAC1
+    M_CHECK_EXPECTED_PARAM P2+8 DAC2
+    M_CHECK_EXPECTED_PARAM P3 DACC
+
+    vout_getparams hndl2_cvbs "CVBS" PRNT
+    if (API_CHIPID=="5100")||(API_CHIPID=="5301")
+       M_CHECK_EXPECTED_PARAM P1+8 DAC6
+       M_CHECK_EXPECTED_PARAM P2 DACC
+    end
+    if (API_CHIPID=="5528")||(API_CHIPID=="5105")||(API_CHIPID=="5188")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+      M_CHECK_EXPECTED_PARAM P1+8 DAC3
+      M_CHECK_EXPECTED_PARAM P2 DACC
+    end
+    ;
+    print ""
+    print "   Set Dac values on RGB outputs "
+    vout_setdac hndl1_rgb "RGB" 1 2 3
+    print "   test RGB values, internal 'VoutRGB'1 and hardware"
+    voutrddac EXTERNAL_DENC PRNT
+    vout_getparams hndl1_rgb "RGB" PRNT
+    M_CHECK_EXPECTED_PARAM P1 1
+    M_CHECK_EXPECTED_PARAM P2 2
+    M_CHECK_EXPECTED_PARAM P3 3
+    if (API_CHIPID=="5528")||(API_CHIPID=="5105")||(API_CHIPID=="5525")||(API_CHIPID=="5188")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+        M_CHECK_EXPECTED_PARAM DAC1 1+8
+        M_CHECK_EXPECTED_PARAM DAC2 2+8
+        M_CHECK_EXPECTED_PARAM DAC3 3+8
+    end
+    if (API_CHIPID=="5100")||(API_CHIPID=="5301")
+        M_CHECK_EXPECTED_PARAM DAC4 1+8
+        M_CHECK_EXPECTED_PARAM DAC5 2+8
+        M_CHECK_EXPECTED_PARAM DAC6 3+8
+    end
+    print "   test RGB values, internal 'VoutRGB'2"
+    vout_getparams hndl2_rgb "RGB" PRNT
+    M_CHECK_EXPECTED_PARAM P1 1
+    M_CHECK_EXPECTED_PARAM P2 2
+    M_CHECK_EXPECTED_PARAM P3 3
+    print "   test YC values, internal 'VoutYC'2"
+    vout_getparams hndl2_yc "YC" PRNT
+    M_CHECK_UNEXPECTED_PARAM P1 1
+    M_CHECK_UNEXPECTED_PARAM P2 2
+    M_CHECK_UNEXPECTED_PARAM P3 3
+    print "   test CVBS values, internal 'VoutCVBS'2"
+    vout_getparams hndl2_cvbs "CVBS" PRNT
+    M_CHECK_UNEXPECTED_PARAM P1 1
+    M_CHECK_UNEXPECTED_PARAM P2 2
+    ;
+    print ""
+    print "   Set Dac values on YC outputs "
+    vout_setdac hndl1_yc "YC" 4 5 6+8
+    print "   test YC values, internal 'VoutYC'1 and hardware"
+    voutrddac EXTERNAL_DENC PRNT
+    vout_getparams hndl1_yc "YC" PRNT
+    M_CHECK_EXPECTED_PARAM P1 4
+    M_CHECK_EXPECTED_PARAM P2 5
+    M_CHECK_EXPECTED_PARAM P3 6+8
+    if (API_CHIPID=="5528")
+        M_CHECK_EXPECTED_PARAM DAC5 4+8
+        M_CHECK_EXPECTED_PARAM DAC4 5+8
+        M_CHECK_EXPECTED_PARAM DACC 6+8
+    end
+    if (API_CHIPID=="5100")||(API_CHIPID=="5105")||(API_CHIPID=="5301")||(API_CHIPID=="5525")||(API_CHIPID=="5188")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+       M_CHECK_EXPECTED_PARAM DAC1 4+8
+       M_CHECK_EXPECTED_PARAM DAC2 5+8
+       M_CHECK_EXPECTED_PARAM DACC 6+8
+    end
+    print "   test YC values, internal 'VoutYC'2"
+    vout_getparams hndl2_yc "YC" PRNT
+    M_CHECK_EXPECTED_PARAM P1 4
+    M_CHECK_EXPECTED_PARAM P2 5
+    M_CHECK_EXPECTED_PARAM P3 6+8
+    print "   test RGB values, internal 'VoutRGB'2"
+    vout_getparams hndl2_rgb "RGB" PRNT
+    M_CHECK_UNEXPECTED_PARAM P1 4
+    M_CHECK_UNEXPECTED_PARAM P2 5
+    M_CHECK_UNEXPECTED_PARAM P3 6
+    print "   test CVBS values, internal 'VoutCVBS'2"
+    vout_getparams hndl2_cvbs "CVBS" PRNT
+    M_CHECK_UNEXPECTED_PARAM P1 4
+    M_CHECK_UNEXPECTED_PARAM P2 5
+    ;
+    print ""
+    print "   Set Dac values on CVBS outputs "
+    vout_setdac hndl1_cvbs "CVBS" 7 7+8
+    print "   test CVBS values, internal 'VoutCVBS'1 and hardware"
+    voutrddac EXTERNAL_DENC PRNT
+    vout_getparams hndl1_cvbs "CVBS" PRNT
+    M_CHECK_EXPECTED_PARAM P1 7
+    M_CHECK_EXPECTED_PARAM P2 7+8
+    if (API_CHIPID=="5100")||(API_CHIPID=="5301")||(API_CHIPID=="5525")
+        M_CHECK_EXPECTED_PARAM DAC3 7+8
+    end
+    else
+      M_CHECK_EXPECTED_PARAM DAC6 7+8
+    end
+    M_CHECK_EXPECTED_PARAM DACC 7+8
+    print "   test CVBS values, internal 'VoutCVBS'2"
+    vout_getparams hndl2_cvbs "CVBS" PRNT
+    M_CHECK_EXPECTED_PARAM P1 7
+    M_CHECK_EXPECTED_PARAM P2 7+8
+    print "   test RGB values, internal 'VoutRGB'2"
+    vout_getparams hndl2_rgb "RGB" PRNT
+    M_CHECK_UNEXPECTED_PARAM P1 7
+    M_CHECK_UNEXPECTED_PARAM P2 8
+    print "   test YC values, internal 'VoutYC'2"
+    vout_getparams hndl2_yc "YC" PRNT
+    M_CHECK_UNEXPECTED_PARAM P1 7
+    M_CHECK_UNEXPECTED_PARAM P2 8
+
+    M_CHECK_TEST_ERROR 0
+    ERR_MULT=GLOBERR
+    print "--- end -------------------------------"
+    ;
+    print " disable/close/term the driver."
+    vout_close hndl1_rgb
+    vout_close hndl1_yc
+    vout_close hndl1_cvbs
+    vout_close hndl2_rgb
+    vout_close hndl2_yc
+    vout_close hndl2_cvbs
+    vout_term "VoutRGB"
+    vout_term "VoutYC"
+    vout_term "VoutCVBS"
+  end
+end
+
+define M_TEST_MULT4629
+  if DENCVERSION<6
+    print " 'rgb/yc/cvbs adjust' capabilities not available "
+  end
+  else
+    ERRORCOUNT = 0
+    print " Init outputs RGB, Y/C and CVBS"
+    vout_init "VoutYC" DEVICETYPE "YC"
+    vout_init "VoutCVBS" DEVICETYPE "CVBS"
+    ;
+    print " Open 2 devices on Y/C and CVBS"
+    ;
+    hndl1_yc = vout_open "VoutYC"
+    hndl1_cvbs = vout_open "VoutCVBS"
+    hndl2_yc = vout_open "VoutYC"
+    hndl2_cvbs = vout_open "VoutCVBS"
+    ;
+    print "--- start -----------------------------"
+    print "   Set Default parameters on Y/C and CVBS devices"
+    print "   and Enable Y/C and CVBS devices"
+    vout_setparams hndl1_yc "YC"
+    vout_enable hndl1_yc
+    vout_setparams hndl1_cvbs "CVBS"
+    vout_enable hndl1_cvbs
+    ;
+    print "   test default value, internal driver and hardware"
+    voutrddac EXTERNAL_DENC PRNT
+    vout_getparams hndl2_yc "YC" PRNT
+
+    M_CHECK_EXPECTED_PARAM P1+8 DAC1
+    M_CHECK_EXPECTED_PARAM P2+8 DAC2
+    M_CHECK_EXPECTED_PARAM P3 DACC
+
+    vout_getparams hndl2_cvbs "CVBS" PRNT
+    M_CHECK_EXPECTED_PARAM P1+8 DAC3
+    M_CHECK_EXPECTED_PARAM P2 DACC
+    ;
+    print ""
+    print "   Set Dac values on YC outputs "
+    vout_setdac hndl1_yc "YC" 4 5 6+8
+    print "   test YC values, internal 'VoutYC'1 and hardware"
+    voutrddac EXTERNAL_DENC PRNT
+    vout_getparams hndl1_yc "YC" PRNT
+    M_CHECK_EXPECTED_PARAM P1 4
+    M_CHECK_EXPECTED_PARAM P2 5
+    M_CHECK_EXPECTED_PARAM P3 6+8
+    M_CHECK_EXPECTED_PARAM DACC 6+8
+    print "   test YC values, internal 'VoutYC'2"
+    vout_getparams hndl2_yc "YC" PRNT
+    M_CHECK_EXPECTED_PARAM P1 4
+    M_CHECK_EXPECTED_PARAM P2 5
+    M_CHECK_EXPECTED_PARAM P3 6+8
+    print "   test CVBS values, internal 'VoutCVBS'2"
+    vout_getparams hndl2_cvbs "CVBS" PRNT
+    M_CHECK_UNEXPECTED_PARAM P1 4
+    M_CHECK_UNEXPECTED_PARAM P2 5
+    ;
+    print ""
+    print "   Set Dac values on CVBS outputs "
+    vout_setdac hndl1_cvbs "CVBS" 7 7+8
+    print "   test CVBS values, internal 'VoutCVBS'1 and hardware"
+    voutrddac EXTERNAL_DENC PRNT
+    vout_getparams hndl1_cvbs "CVBS" PRNT
+    M_CHECK_EXPECTED_PARAM P1 7
+    M_CHECK_EXPECTED_PARAM P2 7+8
+
+    M_CHECK_EXPECTED_PARAM DAC3 7+8
+    M_CHECK_EXPECTED_PARAM DACC 7+8
+
+    print "   test CVBS values, internal 'VoutCVBS'2"
+    vout_getparams hndl2_cvbs "CVBS" PRNT
+    M_CHECK_EXPECTED_PARAM P1 7
+    M_CHECK_EXPECTED_PARAM P2 7+8
+
+    print "   test YC values, internal 'VoutYC'2"
+    vout_getparams hndl2_yc "YC" PRNT
+    M_CHECK_UNEXPECTED_PARAM P1 7
+    M_CHECK_UNEXPECTED_PARAM P2 8
+    M_CHECK_TEST_ERROR 0
+    ERR_MULT=GLOBERR
+    print "--- end -------------------------------"
+    ;
+    print " disable/close/term the driver."
+    vout_close hndl1_yc
+    vout_close hndl1_cvbs
+    vout_close hndl2_yc
+    vout_close hndl2_cvbs
+    vout_term "VoutYC"
+    vout_term "VoutCVBS"
+  end
+end
+
+
+define M_TEST_MULT7020
+  HDLVOUTSVM =0
+  HDLDENC=0
+  HDLHDDIG=0
+  HDLHDANA=0
+  HDLVOUT=0
+  HDLVTGMAIN=0
+  HDLVTGAUX=0
+
+  ERRORCOUNT = 0
+  api_checkerr
+  print "--- start -----------------------------"
+  M_DISPLAY_ON_7020
+  ; here call HD graphic display in mode 1080 I 60000 74250
+
+  ;cannot use stv0119 external DENC with 7020cut1 due to conflict with external synth
+  denc_cbp HDLDENC 1
+
+  print " ..................................................."
+  print "           Picture on HD RGB output and             "
+  print " Color Bar Pattern on CVBS output 7020"
+  print " ..................................................."
+  print ""
+  print "  --> HD Display ok?"
+  print "  --> CBP on Denc 7020 ok?"
+  api_quest
+  ;
+  M_CHECK_TEST_ERROR 0
+  ERR_MULT=GLOBERR
+  ;
+  print " disable/close/term all devices."
+  denc_cbp HDLDENC 0
+  M_DISPLAY_OFF_7020
+  print "--- end -------------------------------"
+end
+
+define M_TEST_MULT7710
+   HDLDENC=0
+   HDLHDANA=0
+   HDLVOUT=0
+   HDLVTGMAIN=0
+   ERRORCOUNT = 0
+
+   api_checkerr
+   print "--- start -----------------------------"
+
+   M_DISPLAY_ON_7710
+
+   denc_cbp HDLDENC 1
+
+   print " ......................................................."
+   print "              Picture on HD RGB output and              "
+   print "   Color Bar Pattern on CVBS output and YC output 7710  "
+   print " ......................................................."
+   print ""
+   print "  --> HD Display ok?"
+   print "  --> CBP on Denc 7710 ok?"
+   api_quest
+  ;
+   M_CHECK_TEST_ERROR 0
+   ERR_MULT=GLOBERR
+  ;
+   print " disable/close/term all devices."
+   denc_cbp HDLDENC 0
+   M_DISPLAY_OFF_7710
+   print "--- end -------------------------------"
+
+end
+
+define M_TEST_MULT7100
+   HDLDENC=0
+   HDLHDANA=0
+   HDLVOUT=0
+   HDLVTGMAIN=0
+   ERRORCOUNT = 0
+   HDLAUXDENC=0
+
+   api_checkerr
+   print "--- start -----------------------------"
+   M_DISPLAY_ON_7100
+   if (API_CHIPID=="7200")
+        denc_init "DENC2" ,,, hFD10F000
+        HDLAUXDENC=denc_open "DENC2"
+        denc_cbp HDLAUXDENC 1
+   end
+   denc_cbp HDLDENC 1
+      ; enable SD & HD DACS
+
+
+   print " ......................................................."
+   print "              Picture on HD RGB output and              "
+   print "   Color Bar Pattern on CVBS output and YC output 7100  "
+   print " ......................................................."
+   print ""
+   print "  --> HD Display ok?"
+   print "  --> CBP on Denc  ok?"
+   if (API_CHIPID=="7200")
+        print "  --> CBP on Remote Denc  ok?"
+   end
+   api_quest
+  ;
+   M_CHECK_TEST_ERROR 0
+   ERR_MULT=GLOBERR
+  ;
+   print " disable/close/term all devices."
+   denc_cbp HDLDENC 0
+   if (API_CHIPID=="7200")
+     denc_cbp HDLAUXDENC 0
+   end
+   M_DISPLAY_OFF_7100
+   print "--- end -------------------------------"
+
+end
+
+define M_TEST_MULT5525
+  if DENCVERSION<6
+    print " 'rgb/yc/cvbs adjust' capabilities not available "
+  end
+  else
+        HDLDENC=0
+        HDLDENC2=0
+        HDLVOUT=0
+        hndl_cvbs=0
+        HDLVTGMAIN=0
+        HDLVTGAUX=0
+        ERRORCOUNT = 0
+
+        api_checkerr
+        print "------- start MULTI-INSTANCE test --------"
+
+        vout_init "VoutCVBS" DEVICETYPE "CVBS"
+        hndl_cvbs=vout_open "VoutCVBS"
+        vout_setparams hndl_cvbs "CVBS"
+        vout_enable hndl_cvbs
+
+        M_DENC_AUX_INIT
+        denc_cbp HDLDENC2
+        print " ......................................................."
+        print "              Picture on MAIN RGB output and            "
+        print "              Color Bar Pattern on CVBS AUX output      "
+        print " ......................................................."
+        print ""
+        print "  --> MAIN Display ok?"
+        print "  --> CBP on Denc AUX ok?"
+        api_quest
+
+        M_DENC_AUX_TERM
+        vout_term "VoutCVBS" 1
+  end
+end
+
+
+define M_TEST_MULTI_INSTANCES
+  api_checkerr
+  print " ----------------------"
+  print " test Multi-Instances : "
+  print " ----------------------"
+  if HDOUT==1
+    if API_CHIPID=="7015"
+       M_TEST_MULT7015
+    end
+    elif API_CHIPID=="7020"
+       M_TEST_MULT7020
+    end
+    elif API_CHIPID=="7710"
+      M_TEST_MULT7710
+    end
+    elif (API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+      M_TEST_MULT7100
+    end
+  end
+  else if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+    if ((EXTERNAL_DENC==1)&&(DEVICETYPE==VOUT_DEVICE_TYPE_4629))
+        print "External denc selected"
+        M_DENC_INIT
+        str=denc_capa
+        DENCVERSION=api_evalstr str 5
+        M_TEST_MULT4629
+        M_DENC_TERM
+    end
+    else
+        M_DENC_INIT
+        str=denc_capa
+        DENCVERSION=api_evalstr str 5
+        if (API_CHIPID=="5528")||(API_CHIPID=="5100")||(API_CHIPID=="5105")||(API_CHIPID=="5301")||(API_CHIPID=="5188")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+                M_TEST_MULT5528
+        end
+        else
+             if (API_CHIPID=="5525")
+                M_TEST_MULT5528
+                M_TEST_MULT5525
+             end
+             else
+                M_TEST_MULT55XX
+             end
+        end
+        M_DENC_TERM
+    end
+  end
+  end
+end

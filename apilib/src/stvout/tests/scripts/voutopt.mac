@@ -1,0 +1,67 @@
+; ****************************************************************************
+; File         : VOUTOPT.MAC
+; Requirements :
+; Author       : Adel Chaouch December 2003
+; ****************************************************************************
+; Tests :
+; M_TEST_DENC_OPT
+
+define M_TEST_DENC_OPT
+  print " ----------------------------------"
+  print " test DENC V>=12 options"
+  print " Set/Get option"
+  print " ----------------------------------"
+  print " init/open/set default parameters/enable driver,"
+  ERRORCOUNT=0
+  hndl_rgb=0
+  OUTPUTTYPE = "RGB"
+  vout_init "VoutCVBS" DEVICETYPE "CVBS"
+  hndl_cvbs=vout_open "VoutCVBS"
+  vout_setparams hndl_cvbs "CVBS"
+  vout_enable hndl_cvbs
+  if (DEVICETYPE!=VOUT_DEVICE_TYPE_7710)&&(DEVICETYPE!=VOUT_DEVICE_TYPE_7100)
+  vout_init "Voutput0" DEVICETYPE OUTPUTTYPE
+  hndl_rgb=vout_open "Voutput0"
+  vout_setparams hndl_rgb OUTPUTTYPE
+  vout_enable hndl_rgb
+  end
+  ;
+  print "--- start -----------------------------"
+  if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)
+  vout_setoption hndl GENERAL_AUX_NOT_MAIN 0
+  vout_getoption hndl GENERAL_AUX_NOT_MAIN
+  vout_setoption hndl GENERAL_AUX_NOT_MAIN 1
+  vout_getoption hndl GENERAL_AUX_NOT_MAIN
+  end
+  vout_setoption hndl NOTCH_FILTER_ON_LUMA 0
+  vout_getoption hndl NOTCH_FILTER_ON_LUMA
+  vout_setoption hndl NOTCH_FILTER_ON_LUMA 1
+  vout_getoption hndl NOTCH_FILTER_ON_LUMA
+
+  if (DEVICETYPE!=VOUT_DEVICE_TYPE_7710)&&(DEVICETYPE!=VOUT_DEVICE_TYPE_7100)
+  vout_setoption hndl RGB_SATURATION 0
+  vout_getoption hndl RGB_SATURATION
+  vout_setoption hndl RGB_SATURATION 1
+  vout_getoption hndl RGB_SATURATION
+  end
+
+  vout_setoption hndl IF_DELAY 0
+  vout_getoption hndl IF_DELAY
+  vout_setoption hndl IF_DELAY 1
+  vout_getoption hndl IF_DELAY
+  print " "
+  print "--- end -------------------------------"
+  ;
+  M_CHECK_TEST_ERROR 0
+  print " disable/close/term the driver."
+  vout_disable hndl_cvbs
+  vout_close hndl_cvbs
+  vout_term "VoutCVBS"
+  if (DEVICETYPE!=VOUT_DEVICE_TYPE_7710)&&(DEVICETYPE!=VOUT_DEVICE_TYPE_7100)
+  vout_disable hndl_rgb
+  vout_close hndl_rgb
+  vout_term "Voutput0"
+  end
+end
+
+

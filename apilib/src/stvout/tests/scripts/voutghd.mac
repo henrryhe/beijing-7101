@@ -1,0 +1,982 @@
+; ****************************************************************************
+; File         : VOUTGHD.MAC
+; Requirements :
+; Author       : Jacques GAMON - November 2000
+; Author       : Adel Chaouch - September 2004
+; ****************************************************************************
+; Test :
+; M_TEST_SVM
+; M_TEST_YC444_24
+; M_TEST_YC422_16
+; M_TEST_YC422_8
+; M_TEST_RGB888_24
+; M_TEST_HD_RGB
+; M_TEST_HD_YUV
+; Tests on STi7710
+; M_TEST1_HD_RGB
+; M_TEST1_HD_RGB
+
+define M_PRNT_SVM
+  if PRNT==1
+    print " Delay:     " SVMDELAY " Shape:  " SVMSHAPE " Gain: " SVMGAIN
+    print " OsdFactor: " SVMFACTO " Filter: " SVMFILTE
+  end
+end
+
+define M_TEST_SVM
+  api_checkerr
+  if HDOUT==0
+    print " capabilities not available! "
+    TESTSVM=FALSE_
+  end
+  else
+    OUTPUTTYPE = "SVM"
+    print " -----------------------------------------------"
+    print " test ANALOG OUTPUT SVM                         "
+    print " -----------------------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+    vout_init "VoutSVM" DEVICETYPE OUTPUTTYPE
+    hndl_svm=vout_open "VoutSVM"
+    vout_setparams hndl_svm OUTPUTTYPE
+    vout_enable hndl_svm
+    ;
+    print "--- start -----------------------------"
+    vout_capa "VoutSVM"
+    print "            Capabilities expected :"
+    print "    Capability : SupportedOutputs :"
+    print "     Analog    : RGB YUV YC CVBS SVM"
+    print "     Digital   : YCbCr444_24 YCbCr422_16 YCbCr422_8 RGB888_24 HD_RGB HD_YUV"
+    print "    Capability : Selected : ANALOG_SVM"
+    print "    Capability : SupportedAnalogOutputsAdjustable : No"
+    print "    Capability : AnalogPictureControlCapable : No"
+    print "    Capability : AnalogLumaChromaFilteringCapable : No"
+    print "    Capability : EmbeddedSynchroCapable : No"
+    api_quest
+    ;
+    print " test default values :"
+    vout_getparams hndl_svm OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P10 7
+    M_CHECK_EXPECTED_PARAM P11 0
+    M_CHECK_EXPECTED_PARAM P12 31
+    M_CHECK_EXPECTED_PARAM P13 0
+    M_CHECK_EXPECTED_PARAM P14 2
+    M_CHECK_EXPECTED_PARAM P15 1
+    print " set values :"
+  ; SVM DelayCompensation
+    for I 0 7
+      vout_setsvm hndl_svm I 0 0 0 1 1
+      vout_getparams hndl_svm OUTPUTTYPE PRNT
+      voutrdsvm PRNT
+      M_CHECK_EXPECTED_PARAM P10 I
+      ;M_CHECK_EXPECTED_PARAM SVMDELAY I
+      VOUT_DotsOutIfOk 1
+    end
+  ; SVM Shape
+    for I 0 3
+      vout_setsvm hndl_svm 0 I 0 0 1 1
+      vout_getparams hndl_svm OUTPUTTYPE PRNT
+      voutrdsvm PRNT
+      M_CHECK_EXPECTED_PARAM P11 I
+      ;M_CHECK_EXPECTED_PARAM SVMSHAPE I
+    end
+  ; SVM Gain
+    for I 0 31
+      vout_setsvm hndl_svm 0 0 I 0 1 1
+      vout_getparams hndl_svm OUTPUTTYPE PRNT
+      voutrdsvm PRNT
+      M_CHECK_EXPECTED_PARAM P12 I
+      ;M_CHECK_EXPECTED_PARAM SVMGAIN I
+    end
+  ; SVM OSDFactor
+    for I 0 3
+      vout_setsvm hndl_svm 0 0 0 I 1 1
+      vout_getparams hndl_svm OUTPUTTYPE PRNT
+      voutrdsvm PRNT
+      M_CHECK_EXPECTED_PARAM P13 I
+      ;M_CHECK_EXPECTED_PARAM SVMFACTO I
+    end
+  ; SVM VideoFilter and OSDFilter
+      vout_setsvm hndl_svm 0 0 0 0 1 1
+      vout_getparams hndl_svm OUTPUTTYPE PRNT
+      voutrdsvm PRNT
+      M_CHECK_EXPECTED_PARAM P14 1
+      M_CHECK_EXPECTED_PARAM P15 1
+      ;M_CHECK_EXPECTED_PARAM SVMFILTE 0
+      vout_setsvm hndl_svm 0 0 0 0 1 2
+      vout_getparams hndl_svm OUTPUTTYPE PRNT
+      voutrdsvm PRNT
+      M_CHECK_EXPECTED_PARAM P14 1
+      M_CHECK_EXPECTED_PARAM P15 2
+      ;M_CHECK_EXPECTED_PARAM SVMFILTE 1
+      vout_setsvm hndl_svm 0 0 0 0 2 1
+      vout_getparams hndl_svm OUTPUTTYPE PRNT
+      voutrdsvm PRNT
+      M_CHECK_EXPECTED_PARAM P14 2
+      M_CHECK_EXPECTED_PARAM P15 1
+      ;M_CHECK_EXPECTED_PARAM SVMFILTE 2
+      vout_setsvm hndl_svm 0 0 0 0 2 2
+      vout_getparams hndl_svm OUTPUTTYPE PRNT
+      voutrdsvm PRNT
+      M_CHECK_EXPECTED_PARAM P14 2
+      M_CHECK_EXPECTED_PARAM P15 2
+      ;M_CHECK_EXPECTED_PARAM SVMFILTE 3
+    M_PRNT_SVM
+    VOUT_DotsOutIfOk 0
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T200=GLOBERR
+    print " disable/close/term the driver."
+    vout_disable hndl_svm
+    vout_close hndl_svm
+    vout_term "VoutSVM"
+  end
+end
+
+
+define M_TEST_YC444_24
+  api_checkerr
+  if HDOUT==0
+    print " capabilities not available! "
+    TEST444_24=FALSE_
+  end
+  else
+    OUTPUTTYPE="YCbCr444"
+    print " -----------------------------------------------"
+    print " test DIGITAL OUTPUT YcbCr444 24 bits Components"
+    print " -----------------------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+    vout_init "VoutDig1" DEVICETYPE OUTPUTTYPE
+    hndl_dig1=vout_open "VoutDig1"
+    vout_setparams hndl_dig1 OUTPUTTYPE
+    vout_enable hndl_dig1
+    ;
+    print "--- start -----------------------------"
+    vout_capa "VoutDig1"
+    print "            Capabilities expected :"
+    print "    Capability : SupportedOutputs :"
+    print "     Analog    : RGB YUV YC CVBS SVM"
+    print "     Digital   : YCbCr444_24 YCbCr422_16 YCbCr422_8 RGB888_24 HD_RGB HD_YUV"
+    print "    Capability : Selected : DIGITAL_YCbCr444_24bitsComponents"
+    print "    Capability : SupportedAnalogOutputsAdjustable : No"
+    print "    Capability : AnalogPictureControlCapable : No"
+    print "    Capability : AnalogLumaChromaFilteringCapable : No"
+    print "    Capability : EmbeddedSynchroCapable : Yes"
+    api_quest
+    ;
+    print " test default values :"
+    ; test driver values
+    vout_getparams hndl_dig1 OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P9 FALSE_
+    ; test hardware value
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGDIG&7 4
+    ;
+    print " set values :"
+    vout_setemb hndl_dig1 OUTPUTTYPE TRUE_
+    ; test driver values
+    vout_getparams hndl_dig1 OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P9 TRUE_
+    ; test hardware value
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGDIG&2 2
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T201=GLOBERR
+    print " disable/close/term the driver."
+    vout_disable hndl_dig1
+    vout_close hndl_dig1
+    vout_term "VoutDig1"
+  end
+end
+
+define M_TEST_YC422_16
+  api_checkerr
+  if HDOUT==0
+    print " capabilities not available! "
+    TEST422_16=FALSE_
+  end
+  else
+    OUTPUTTYPE="YCbCr422_16"
+    print " -----------------------------------------------"
+    print " test DIGITAL OUTPUT YcbCr422 16 bits Components"
+    print " -----------------------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+    ; init vtg
+    if (API_CHIPID=="7710")
+      if (CHIP_CUT=="STI7710_CUT2x")
+        vtg_init "VTG1" 5 h20103000
+      end
+      else
+        vtg_init "VTG1" 5 h20103c00
+      end
+    end
+    else
+      vtg_init "VTG1"
+    end
+    hdl_vtg1=vtg_open "VTG1"
+    vtg_setmode hdl_vtg1 "MODE_1080I60000_74250"
+    vtg_so hdl_vtg1 0 1
+    vout_init "VoutDig2" DEVICETYPE OUTPUTTYPE
+    hndl_dig2=vout_open "VoutDig2"
+    vout_setparams hndl_dig2 OUTPUTTYPE
+    vout_enable hndl_dig2
+    ;
+    print "--- start -----------------------------"
+    vout_capa "VoutDig2"
+    print "            Capabilities expected :"
+    print "    Capability : SupportedOutputs :"
+    print "     Analog    : RGB YUV YC CVBS SVM"
+    print "     Digital   : YCbCr444_24 YCbCr422_16 YCbCr422_8 RGB888_24 HD_RGB HD_YUV"
+    print "    Capability : Selected : DIGITAL_YCbCr422_16bitsChromaMultiplexed"
+    print "    Capability : SupportedAnalogOutputsAdjustable : No"
+    print "    Capability : AnalogPictureControlCapable : No"
+    print "    Capability : AnalogLumaChromaFilteringCapable : No"
+    print "    Capability : EmbeddedSynchroCapable : Yes"
+    api_quest
+    ;
+
+    print " test default values :"
+    ; test driver values
+    vout_getparams hndl_dig2 OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P9 FALSE_
+    ;test hardware value
+    voutrddspcfg PRNT
+    if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+        M_CHECK_EXPECTED_PARAM DSPCFGDIG&7 2
+    end
+    else
+        M_CHECK_EXPECTED_PARAM DSPCFGDIG&7 4
+    end
+    ;
+    print " set values :"
+    vout_setemb hndl_dig2 OUTPUTTYPE TRUE_
+    ; test driver values
+    vout_getparams hndl_dig2 OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P9 TRUE_
+    ; test hardware value
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGDIG&2 2
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T202=GLOBERR
+    print " disable/close/term the driver."
+    vout_disable hndl_dig2
+    vout_close hndl_dig2
+    vout_term "VoutDig2"
+    vtg_close hdl_vtg1
+    vtg_term "VTG1"
+  end
+end
+
+define M_TEST_YC422_8
+  api_checkerr
+  OUTPUTTYPE="YCbCr422_8"
+  print " -----------------------------------------------"
+  print " test DIGITAL OUTPUT YcbCr422 8 bits Components"
+  print " -----------------------------------------------"
+  print " init/open/set default parameters/enable driver,"
+  ERRORCOUNT=0
+  api_checkerr
+  ; init vtg
+  if (API_CHIPID=="7710")
+    if (CHIP_CUT=="STI7710_CUT2x")
+      vtg_init "VTG1" 5 h20103000
+    end
+    else
+      vtg_init "VTG1" 5 h20103c00
+    end
+  end
+  else
+    vtg_init "VTG1"
+  end
+  hdl_vtg1=vtg_open "VTG1"
+  vtg_setmode hdl_vtg1 "MODE_480I59940_13500"
+
+  ; init denc
+  denc_init
+  str=denc_capa
+  DENCVERSION=api_evalstr str 5
+  HDLDENC=denc_open
+  denc_setmode HDLDENC "NTSCM"
+
+  vout_init "VoutDig3" DEVICETYPE OUTPUTTYPE
+  hndl_dig3=vout_open "VoutDig3"
+  vout_setparams hndl_dig3 OUTPUTTYPE
+  vout_enable hndl_dig3
+  vtg_so hdl_vtg1 0 1
+  ;
+  print "--- start -----------------------------"
+  vout_capa "VoutDig3"
+  print "            Capabilities expected :"
+  print "    Capability : SupportedOutputs :"
+  if HDOUT==1
+    print "     Analog    : RGB YUV YC CVBS SVM"
+    print "     Digital   : YCbCr444_24 YCbCr422_16 YCbCr422_8 RGB888_24 HD_RGB HD_YUV"
+  end
+  else
+    print "     Analog    : none"
+    print "     Digital   : YCbCr422_8"
+  end
+  print "    Capability : Selected : DIGITAL_YCbCr422_8bitsMultiplexed"
+  print "    Capability : SupportedAnalogOutputsAdjustable : No"
+  print "    Capability : AnalogPictureControlCapable : No"
+  print "    Capability : AnalogLumaChromaFilteringCapable : No"
+  print "    Capability : EmbeddedSynchroCapable : Yes"
+  api_quest
+  ;
+  if HDOUT==1
+    print " test default values :"
+    ; test driver values
+    vout_getparams hndl_dig3 OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P9 FALSE_
+    ; test hardware value
+if (ST_OS!="LINUX")
+    voutrddspcfg PRNT
+    if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+    M_CHECK_EXPECTED_PARAM DSPCFGDIG&7 3
+    end
+    else
+    M_CHECK_EXPECTED_PARAM DSPCFGDIG&15 0
+    end
+  end
+end
+  ;
+  print " set values :"
+  vout_setemb hndl_dig3 OUTPUTTYPE TRUE_
+  ; test driver values
+  vout_getparams hndl_dig3 OUTPUTTYPE PRNT
+  M_CHECK_EXPECTED_PARAM P9 TRUE_
+  if HDOUT==1
+    ; test hardware value
+    voutrddspcfg PRNT
+    if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+      M_CHECK_EXPECTED_PARAM DSPCFGDIG&3 3
+    end
+    else
+      M_CHECK_EXPECTED_PARAM DSPCFGDIG&8 8
+    end
+  end
+  else
+    ; test hardware value
+    voutrddvo_656 PRNT
+    M_CHECK_EXPECTED_PARAM DVO_656_E6M 1
+    print " set back to CCIR 601 :"
+    vout_setemb hndl_dig3 OUTPUTTYPE FALSE_
+    ; test driver values
+    vout_getparams hndl_dig3 OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P9 FALSE_
+    ; test hardware value
+    voutrddvo_656 PRNT
+    M_CHECK_EXPECTED_PARAM DVO_656_E6M 0
+  end
+  print "--- end -------------------------------"
+  ;
+  M_CHECK_TEST_ERROR 0
+  ERR_T203=GLOBERR
+  print " disable/close/term the driver."
+  vout_disable hndl_dig3
+  vout_close hndl_dig3
+  vout_term "VoutDig3"
+  vtg_close hdl_vtg1
+  vtg_term "VTG1"
+  denc_term , 1
+end
+
+define M_TEST_RGB888_24
+  api_checkerr
+  if HDOUT==0
+    print " capabilities not available! "
+    TEST888_24=FALSE_
+  end
+  else
+    OUTPUTTYPE="RGB888"
+    print " -----------------------------------------------"
+    print " test DIGITAL OUTPUT rgb888 24 bits Components"
+    print " -----------------------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+    vout_init "VoutDig4" DEVICETYPE OUTPUTTYPE
+    hndl_dig4=vout_open "VoutDig4"
+    vout_setparams hndl_dig4 OUTPUTTYPE
+    vout_enable hndl_dig4
+    ;
+    print "--- start -----------------------------"
+    vout_capa "VoutDig4"
+    print "            Capabilities expected :"
+    print "    Capability : SupportedOutputs :"
+    print "     Analog    : RGB YUV YC CVBS SVM"
+    print "     Digital   : YCbCr444_24 YCbCr422_16 YCbCr422_8 RGB888_24 HD_RGB HD_YUV"
+    print "    Capability : Selected : DIGITAL_RGB888_24bitsComponent"
+    print "    Capability : SupportedAnalogOutputsAdjustable : No"
+    print "    Capability : AnalogPictureControlCapable : No"
+    print "    Capability : AnalogLumaChromaFilteringCapable : No"
+    print "    Capability : EmbeddedSynchroCapable : Yes"
+    api_quest
+    ;
+    print " test default values :"
+    ; test driver values
+    vout_getparams hndl_dig4 OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P9 FALSE_
+    ; test hardware value
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGDIG&7 5
+    ;
+    print " set values :"
+    vout_setemb hndl_dig4 OUTPUTTYPE TRUE_
+    ; test driver values
+    vout_getparams hndl_dig4 OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P9 TRUE_
+    ; test hardware value
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGDIG&2 2
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T204=GLOBERR
+    print " disable/close/term the driver."
+    vout_disable hndl_dig4
+    vout_close hndl_dig4
+    vout_term "VoutDig4"
+  end
+end
+
+define M_TEST_HD_RGB
+  api_checkerr
+  if HDOUT==0
+    print " capabilities not available! "
+    TESTHDRGB=FALSE_
+  end
+  else
+    OUTPUTTYPE = "HD_RGB"
+    print " -----------------------------------------------"
+    print " test ANALOG OUTPUT HD RGB "
+    print " -----------------------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+    vout_init "VoutRgbHd" DEVICETYPE OUTPUTTYPE
+    hndl_rgbhd=vout_open "VoutRgbHd"
+    vout_setparams hndl_rgbhd OUTPUTTYPE
+    vout_enable hndl_rgbhd
+  ;
+    print "---------------------------------------"
+    vout_capa "VoutRgbHd"
+    print "            Capabilities expected :"
+    print "    Capability : SupportedOutputs :"
+    print "     Analog    : RGB YUV YC CVBS SVM"
+    print "     Digital   : YCbCr444_24 YCbCr422_16 YCbCr422_8 RGB888_24 HD_RGB HD_YUV"
+    print "    Capability : Selected : HD_ANALOG_RGB"
+    print "    Capability : SupportedAnalogOutputsAdjustable : No"
+    print "    Capability : AnalogPictureControlCapable : No"
+    print "    Capability : AnalogLumaChromaFilteringCapable : No"
+    print "    Capability : EmbeddedSynchroCapable : Yes"
+    api_quest
+    ;
+    print " test default values :"
+  ; test driver values
+    vout_getparams hndl_rgbhd OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P7 FALSE_
+
+  ; test hardware value
+if (ST_OS!="LINUX")
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGANA&7 1
+    M_CHECK_EXPECTED_PARAM DSPCFGDAC&7168 0
+end
+  ;
+    print " set values :"
+    vout_setemb hndl_rgbhd OUTPUTTYPE TRUE_
+  ; test driver values
+    vout_getparams hndl_rgbhd OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P7 TRUE_
+  ; test hardware value
+if (ST_OS!="LINUX")
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGANA&6 6
+end
+    print " disable :"
+    vout_disable hndl_rgbhd
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGDAC&7168 7168
+    print "--- end -------------------------------"
+  ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T205=GLOBERR
+    print "close/term the driver."
+    vout_close hndl_rgbhd
+    vout_term "VoutRgbHd"
+  end
+end
+
+
+define M_TEST_HD_YUV
+  api_checkerr
+  if HDOUT==0
+    print " capabilities not available! "
+    TESTHDYUV=FALSE_
+  end
+  else
+    OUTPUTTYPE = "HD_YUV"
+    print " -----------------------------------------------"
+    print " test ANALOG OUTPUT HD YUV "
+    print " -----------------------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+    vout_init "VoutYuvHd" DEVICETYPE OUTPUTTYPE
+    hndl_yuvhd=vout_open "VoutYuvHd"
+    vout_setparams hndl_yuvhd OUTPUTTYPE
+    vout_enable hndl_yuvhd
+  ;
+    print "---------------------------------------"
+    vout_capa "VoutYuvHd"
+    print "            Capabilities expected :"
+    print "    Capability : SupportedOutputs :"
+    print "     Analog    : RGB YUV YC CVBS SVM"
+    print "     Digital   : YCbCr444_24 YCbCr422_16 YCbCr422_8 RGB888_24 HD_RGB HD_YUV"
+    print "    Capability : Selected : HD_ANALOG_YUV"
+    print "    Capability : SupportedAnalogOutputsAdjustable : No"
+    print "    Capability : AnalogPictureControlCapable : No"
+    print "    Capability : AnalogLumaChromaFilteringCapable : No"
+    print "    Capability : EmbeddedSynchroCapable : Yes"
+    api_quest
+    ;
+
+    print " test default values :"
+    ; test driver values
+    vout_getparams hndl_yuvhd OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P7 FALSE_
+    ; test hardware value
+    if (ST_OS!="LINUX")
+          voutrddspcfg PRNT
+          M_CHECK_EXPECTED_PARAM DSPCFGANA&7 0
+          M_CHECK_EXPECTED_PARAM DSPCFGDAC&7168 0
+    end
+    print " set values :"
+    vout_setemb hndl_yuvhd OUTPUTTYPE TRUE_
+    ; test driver values
+    vout_getparams hndl_yuvhd OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P7 TRUE_
+    ; test hardware value
+    if (ST_OS!="LINUX")
+        voutrddspcfg PRNT
+        M_CHECK_EXPECTED_PARAM DSPCFGANA&6 6
+    end
+
+    print " disable :"
+    vout_disable hndl_yuvhd
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGDAC&7168 7168
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T206=GLOBERR
+    print " close/term the driver."
+    vout_close hndl_yuvhd
+    vout_term "VoutYuvHd"
+  end
+end
+
+define M_TEST1_HD_RGB
+  api_checkerr
+  if HDOUT==0
+    print " capabilities not available! "
+    TESTHDRGB=FALSE_
+  end
+  else
+    OUTPUTTYPE = "HD_RGB"
+    print " -----------------------------------------------"
+    print " test ANALOG OUTPUT HD RGB "
+    print " -----------------------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+    if (API_CHIPID=="7710")
+      if (CHIP_CUT=="STI7710_CUT2x")
+        vtg_init "VTG" 5 h20103000
+      end
+      else
+        vtg_init "VTG" 5 h20103c00
+      end
+    end
+    else
+      vtg_init "VTG"
+    end
+    hdl_vtg1=vtg_open "VTG"
+    vtg_setmode hdl_vtg1 "MODE_1080I60000_74250"
+    if (HDDACS==1)
+     if (API_CHIPID=="7200")
+      vout_init "VoutRgbHd" DEVICETYPE OUTPUTTYPE , , , , , 1
+     end
+     else
+      vout_init "VoutRgbHd" DEVICETYPE OUTPUTTYPE , , , , 1
+     end
+    end
+    else
+    vout_init "VoutRgbHd" DEVICETYPE OUTPUTTYPE
+    end
+    hndl_rgbhd=vout_open "VoutRgbHd"
+    vout_setparams hndl_rgbhd OUTPUTTYPE
+    vout_enable hndl_rgbhd
+  ;
+    print "---------------------------------------"
+    vout_capa "VoutRgbHd"
+    print "            Capabilities expected :"
+    print "    Capability : SupportedOutputs :"
+    print "     Analog    : RGB YUV YC CVBS"
+    print "     Digital   : HD_RGB HD_YUV"
+    print "    Capability : Selected : HD_ANALOG_RGB"
+    print "    Capability : SupportedAnalogOutputsAdjustable : No"
+    print "    Capability : AnalogPictureControlCapable : No"
+    print "    Capability : AnalogLumaChromaFilteringCapable : No"
+    print "    Capability : EmbeddedSynchroCapable : Yes"
+    api_quest
+    ;
+if (API_CHIPID!="7200")
+    print " test default values :"
+  ; test driver values
+    vout_getparams hndl_rgbhd OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P7 FALSE_
+  ; test hardware value
+if (ST_OS!="LINUX")
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGANA&7 1
+    M_CHECK_EXPECTED_PARAM DSPCFGDAC&56 0
+end
+  ;
+    print " set values :"
+    vout_setemb hndl_rgbhd OUTPUTTYPE TRUE_
+  ; test driver values
+    vout_getparams hndl_rgbhd OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P7 TRUE_
+  ; test hardware value
+if (ST_OS!="LINUX")
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGANA&6 6
+end
+end
+    print " disable :"
+    vout_disable hndl_rgbhd
+if (API_CHIPID!="7200")
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGDAC&56 56
+end
+    print "--- end -------------------------------"
+  ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T205=GLOBERR
+    print "close/term the driver."
+    vout_close hndl_rgbhd
+    vout_term "VoutRgbHd"
+    vtg_close hdl_vtg1
+    vtg_term "VTG"
+  end
+end
+
+
+define M_TEST1_HD_YUV
+  api_checkerr
+  if HDOUT==0
+    print " capabilities not available! "
+    TESTHDYUV=FALSE_
+  end
+  else
+    OUTPUTTYPE = "HD_YUV"
+    print " -----------------------------------------------"
+    print " test ANALOG OUTPUT HD YUV "
+    print " -----------------------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+    if (API_CHIPID=="7710")
+      if (CHIP_CUT=="STI7710_CUT2x")
+        vtg_init "VTG" 5 h20103000
+      end
+      else
+        vtg_init "VTG" 5 h20103c00
+      end
+    end
+    else
+      vtg_init "VTG"
+    end
+    hdl_vtg1=vtg_open "VTG"
+    vtg_setmode hdl_vtg1 "MODE_1080I60000_74250"
+    if HDDACS==1
+      if (API_CHIPID=="7200")
+      vout_init "VoutYuvHd" DEVICETYPE OUTPUTTYPE , , , , , 1
+      end
+      else
+      vout_init "VoutYuvHd" DEVICETYPE OUTPUTTYPE , , , , 1
+      end
+    end
+    else
+    vout_init "VoutYuvHd" DEVICETYPE OUTPUTTYPE
+    end
+    hndl_yuvhd=vout_open "VoutYuvHd"
+    vout_setparams hndl_yuvhd OUTPUTTYPE
+    vout_enable hndl_yuvhd
+    if (API_CHIPID!="7200")
+      if HDDACS==1
+         vtg_so hdl_vtg1 0 1
+         vout_setemb hndl_yuvhd "HD_YUV" 1 0 4
+      end
+    end
+  ;
+    print "---------------------------------------"
+    vout_capa "VoutYuvHd"
+    print "            Capabilities expected :"
+    print "    Capability : SupportedOutputs :"
+    print "     Analog    : RGB YUV YC CVBS "
+    print "     Digital   : HD_RGB HD_YUV"
+    print "    Capability : Selected : HD_ANALOG_YUV"
+    print "    Capability : SupportedAnalogOutputsAdjustable : No"
+    print "    Capability : AnalogPictureControlCapable : No"
+    print "    Capability : AnalogLumaChromaFilteringCapable : No"
+    print "    Capability : EmbeddedSynchroCapable : Yes"
+    api_quest
+    ;
+    if (API_CHIPID!="7200")
+          print " test default values :"
+        ; test driver values
+          vout_getparams hndl_yuvhd OUTPUTTYPE PRNT
+          if (HDDACS==1)
+          M_CHECK_EXPECTED_PARAM P7 TRUE_
+          end
+          else
+          M_CHECK_EXPECTED_PARAM P7 FALSE_
+          end
+        ; test hardware value
+          voutrddspcfg PRNT
+          if HDDACS!=1
+           if (ST_OS!="LINUX")
+              M_CHECK_EXPECTED_PARAM DSPCFGANA&7 0
+              M_CHECK_EXPECTED_PARAM DSPCFGDAC&56 0
+           end
+          end
+        ;
+          print " set values :"
+          vout_setemb hndl_yuvhd OUTPUTTYPE TRUE_
+        ; test driver values
+          vout_getparams hndl_yuvhd OUTPUTTYPE PRNT
+          M_CHECK_EXPECTED_PARAM P7 TRUE_
+        ; test hardware value
+          voutrddspcfg PRNT
+          M_CHECK_EXPECTED_PARAM DSPCFGANA&6 6
+    end
+    print " disable :"
+    vout_disable hndl_yuvhd
+    if (API_CHIPID!="7200")
+        voutrddspcfg PRNT
+        M_CHECK_EXPECTED_PARAM DSPCFGDAC&56 56
+    end
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T206=GLOBERR
+    print " close/term the driver."
+    vout_close hndl_yuvhd
+    vout_term "VoutYuvHd"
+    vtg_close hdl_vtg1
+    vtg_term "VTG"
+
+  end
+end
+
+define M_TEST2_HD_RGB
+  api_checkerr
+  if HDOUT==0
+    print " capabilities not available! "
+    TESTHDRGB=FALSE_
+  end
+  else
+    OUTPUTTYPE = "HD_RGB"
+    print " -----------------------------------------------"
+    print " test ANALOG OUTPUT HD RGB : REDUCED QUALITY"
+    print " -----------------------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+    if (API_CHIPID=="7710")
+      if (CHIP_CUT=="STI7710_CUT2x")
+        vtg_init "VTG1" 5 h20103000
+      end
+      else
+        vtg_init "VTG1" 5 h20103c00
+      end
+    end
+    else
+      vtg_init "VTG1"
+    end
+    hdl_vtg1=vtg_open "VTG1"
+    vtg_setmode hdl_vtg1 "MODE_1080I60000_74250"
+    if (HDDACS==1)
+     vout_init "VoutRgbHd" DEVICETYPE OUTPUTTYPE , , , , 1  UPS_HDRQ
+    end
+    else
+    vout_init "VoutRgbHd" DEVICETYPE OUTPUTTYPE
+    end
+    hndl_rgbhd=vout_open "VoutRgbHd"
+    vout_setparams hndl_rgbhd OUTPUTTYPE
+    vout_enable hndl_rgbhd
+  ;
+    print "---------------------------------------"
+    vout_capa "VoutRgbHd"
+    print "            Capabilities expected :"
+    print "    Capability : SupportedOutputs :"
+    print "     Analog    : RGB YUV YC CVBS"
+    print "     Digital   : HD_RGB HD_YUV"
+    print "    Capability : Selected : HD_ANALOG_RGB"
+    print "    Capability : SupportedAnalogOutputsAdjustable : No"
+    print "    Capability : AnalogPictureControlCapable : No"
+    print "    Capability : AnalogLumaChromaFilteringCapable : No"
+    print "    Capability : EmbeddedSynchroCapable : Yes"
+    api_quest
+    ;
+    print " test default values :"
+  ; test driver values
+    vout_getparams hndl_rgbhd OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P7 FALSE_
+  ; test hardware value
+if (ST_OS!="LINUX")
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGANA&7 1
+    M_CHECK_EXPECTED_PARAM DSPCFGDAC&56 0
+end
+  ;
+    print " set values :"
+    vout_setemb hndl_rgbhd OUTPUTTYPE TRUE_
+  ; test driver values
+    vout_getparams hndl_rgbhd OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P7 TRUE_
+  ; test hardware value
+if (ST_OS!="LINUX")
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGANA&6 6
+end
+    print " disable :"
+    vout_disable hndl_rgbhd
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGDAC&56 56
+    print "--- end -------------------------------"
+  ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T205=GLOBERR
+    print "close/term the driver."
+    vout_close hndl_rgbhd
+    vout_term "VoutRgbHd"
+    vtg_close hdl_vtg1
+    vtg_term "VTG1"
+  end
+end
+
+
+define M_TEST2_HD_YUV
+  api_checkerr
+  if HDOUT==0
+    print " capabilities not available! "
+    TESTHDYUV=FALSE_
+  end
+  else
+    OUTPUTTYPE = "HD_YUV"
+    print " -----------------------------------------------"
+    print " test ANALOG OUTPUT HD YUV : REDUCED QUALITY"
+    print " -----------------------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+    if (API_CHIPID=="7710")
+      if (CHIP_CUT=="STI7710_CUT2x")
+        vtg_init "VTG1" 5 h20103000
+      end
+      else
+        vtg_init "VTG1" 5 h20103c00
+      end
+    end
+    else
+      vtg_init "VTG1"
+    end
+    hdl_vtg1=vtg_open "VTG1"
+    vtg_setmode hdl_vtg1 "MODE_1080I60000_74250"
+    if HDDACS==1
+    vout_init "VoutYuvHd" DEVICETYPE OUTPUTTYPE , , , , 1  UPS_HDRQ
+    end
+    else
+    vout_init "VoutYuvHd" DEVICETYPE OUTPUTTYPE
+    end
+    hndl_yuvhd=vout_open "VoutYuvHd"
+    vout_setparams hndl_yuvhd OUTPUTTYPE
+    vout_enable hndl_yuvhd
+    if HDDACS==1
+       vtg_so hdl_vtg1 0 1
+       vout_setemb hndl_yuvhd "HD_YUV" 1 0 4
+    end
+
+  ;
+    print "---------------------------------------"
+    vout_capa "VoutYuvHd"
+    print "            Capabilities expected :"
+    print "    Capability : SupportedOutputs :"
+    print "     Analog    : RGB YUV YC CVBS "
+    print "     Digital   : HD_RGB HD_YUV"
+    print "    Capability : Selected : HD_ANALOG_YUV"
+    print "    Capability : SupportedAnalogOutputsAdjustable : No"
+    print "    Capability : AnalogPictureControlCapable : No"
+    print "    Capability : AnalogLumaChromaFilteringCapable : No"
+    print "    Capability : EmbeddedSynchroCapable : Yes"
+    api_quest
+    ;
+    print " test default values :"
+  ; test driver values
+    vout_getparams hndl_yuvhd OUTPUTTYPE PRNT
+    if (HDDACS==1)
+    M_CHECK_EXPECTED_PARAM P7 TRUE_
+    end
+    else
+    M_CHECK_EXPECTED_PARAM P7 FALSE_
+    end
+  ; test hardware value
+    voutrddspcfg PRNT
+    if HDDACS!=1
+     if (ST_OS!="LINUX")
+        M_CHECK_EXPECTED_PARAM DSPCFGANA&7 0
+        M_CHECK_EXPECTED_PARAM DSPCFGDAC&56 0
+     end
+    end
+  ;
+    print " set values :"
+    vout_setemb hndl_yuvhd OUTPUTTYPE TRUE_
+  ; test driver values
+    vout_getparams hndl_yuvhd OUTPUTTYPE PRNT
+    M_CHECK_EXPECTED_PARAM P7 TRUE_
+  ; test hardware value
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGANA&6 6
+    print " disable :"
+    vout_disable hndl_yuvhd
+    voutrddspcfg PRNT
+    M_CHECK_EXPECTED_PARAM DSPCFGDAC&56 56
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T206=GLOBERR
+    print " close/term the driver."
+    vout_close hndl_yuvhd
+    vout_term "VoutYuvHd"
+    vtg_close hdl_vtg1
+    vtg_term "VTG1"
+
+  end
+end
+
+

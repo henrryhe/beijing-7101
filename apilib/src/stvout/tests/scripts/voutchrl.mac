@@ -1,0 +1,189 @@
+; ****************************************************************************
+; File         : VOUTCHRL.MAC
+; Requirements :
+; Author       : Jacques GAMON - February 2001
+; ****************************************************************************
+; Tests :
+; M_TEST_CHROMA
+; M_TEST_LUMA
+
+
+define M_TEST_DENC_CHROMA
+  if DENCVERSION<10
+    print " capability not available "
+    TESTCHR=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test CHROMA value, "
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    ERRORCOUNT=0
+    print " init/open/set default parameters/enable driver,"
+    vout_init "Voutput1" DEVICETYPE "CVBS"
+    hndl_cvbs=vout_open "Voutput1"
+    vout_setparams hndl_cvbs "CVBS"
+    vout_enable hndl_cvbs
+    ;
+    print "--- start -----------------------------"
+;    vout_getparams hndl_cvbs ANALOG_CVBS PRNT
+;    M_CHECK_EXPECTED_PARAM P4 I
+    ; test hardware default values
+    print " Test default values"
+    voutrdchroma EXTERNAL_DENC PRNT
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_7100)||(DEVICETYPE==VOUT_DEVICE_TYPE_7109)
+       M_CHECK_EXPECTED_PARAM CHROMA0 154
+       M_CHECK_EXPECTED_PARAM CHROMA1 38
+       M_CHECK_EXPECTED_PARAM CHROMA2 55
+       M_CHECK_EXPECTED_PARAM CHROMA3 7
+       M_CHECK_EXPECTED_PARAM CHROMA4 9
+       M_CHECK_EXPECTED_PARAM CHROMA5 45
+       M_CHECK_EXPECTED_PARAM CHROMA6 73
+       M_CHECK_EXPECTED_PARAM CHROMA7 134
+       M_CHECK_EXPECTED_PARAM CHROMA8 154
+    end
+    else
+       if (DEVICETYPE!=VOUT_DEVICE_TYPE_4629)
+       M_CHECK_EXPECTED_PARAM CHROMA0 49
+       M_CHECK_EXPECTED_PARAM CHROMA1 39
+       M_CHECK_EXPECTED_PARAM CHROMA2 84
+       M_CHECK_EXPECTED_PARAM CHROMA3 71
+       M_CHECK_EXPECTED_PARAM CHROMA4 95
+       M_CHECK_EXPECTED_PARAM CHROMA5 119
+       M_CHECK_EXPECTED_PARAM CHROMA6 108
+       M_CHECK_EXPECTED_PARAM CHROMA7 123
+       M_CHECK_EXPECTED_PARAM CHROMA8 128
+       end
+    end
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T110=GLOBERR
+    print " disable/close/term the driver."
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput1"
+  end
+end
+
+
+define M_TEST_CHROMA
+  api_checkerr
+  M_TEST_DENC_CHROMA
+end
+
+define M_TEST_DENC_LUMA
+  if DENCVERSION<10
+    print " capability not available "
+    TESTLUM=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test LUMA value, "
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    ERRORCOUNT=0
+    print " init/open/set default parameters/enable driver,"
+    vout_init "Voutput1" DEVICETYPE "CVBS"
+    hndl_cvbs=vout_open "Voutput1"
+    vout_setparams hndl_cvbs "CVBS"
+    vout_enable hndl_cvbs
+    ;
+    print "--- start -----------------------------"
+;    vout_getparams hndl_cvbs ANALOG_CVBS PRNT
+;    M_CHECK_EXPECTED_PARAM P5 I
+    ; test hardware default values
+    print " Test default values"
+    voutrdluma EXTERNAL_DENC PRNT
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_7100)||(DEVICETYPE==VOUT_DEVICE_TYPE_7109)
+        M_CHECK_EXPECTED_PARAM LUMA0 35
+        M_CHECK_EXPECTED_PARAM LUMA1 129
+        M_CHECK_EXPECTED_PARAM LUMA2 247
+        M_CHECK_EXPECTED_PARAM LUMA3 254
+        M_CHECK_EXPECTED_PARAM LUMA4 30
+        M_CHECK_EXPECTED_PARAM LUMA5 5
+        M_CHECK_EXPECTED_PARAM LUMA6 164
+        M_CHECK_EXPECTED_PARAM LUMA7 249
+        M_CHECK_EXPECTED_PARAM LUMA8 68
+        M_CHECK_EXPECTED_PARAM LUMA9 6
+    end
+    else
+       if (DEVICETYPE!=VOUT_DEVICE_TYPE_4629)
+         M_CHECK_EXPECTED_PARAM LUMA0 33
+         M_CHECK_EXPECTED_PARAM LUMA1 127
+         M_CHECK_EXPECTED_PARAM LUMA2 247
+         M_CHECK_EXPECTED_PARAM LUMA3 3
+         M_CHECK_EXPECTED_PARAM LUMA4 31
+         M_CHECK_EXPECTED_PARAM LUMA5 251
+         M_CHECK_EXPECTED_PARAM LUMA6 172
+         M_CHECK_EXPECTED_PARAM LUMA7 7
+         M_CHECK_EXPECTED_PARAM LUMA8 61
+         M_CHECK_EXPECTED_PARAM LUMA9 248
+       end
+    end
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T111=GLOBERR
+    print " disable/close/term the driver."
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput1"
+  end
+end
+
+define M_TEST_LUMA
+  api_checkerr
+  M_TEST_DENC_LUMA
+end
+define M_TEST_CLDELAY
+    if DENCVERSION<10
+        print " capability not available "
+        TESTLUM=FALSE_
+    end
+    else
+        print " ---------------------------------------"
+        print " test Chroma/Luma delay "
+        print " Set C/L delay function for CVBS output"
+        print " affected register is DENC_CFG9"
+        print " ---------------------------------------"
+        ERRORCOUNT=0
+        print " init/open/set default parameters/enable driver,"
+
+        vout_init "Voutput1" DEVICETYPE "CVBS"
+        hndl_cvbs=vout_open "Voutput1"
+        vout_setparams hndl_cvbs "CVBS"
+        vout_enable hndl_cvbs
+
+        print "--- start -----------------------------"
+        for I 1 10
+            VOUT_AdjustCLdelay hndl_cvbs I
+        end
+
+        print " ---------------------------------------"
+        print " test Chroma/Luma delay "
+        print " Set C/L delay function for YC output"
+        print " affected register is DENC_CHROMA_DELAY for 7109"
+        print " and DENC_CFG9 for others"
+        print " ---------------------------------------"
+        ERRORCOUNT=0
+        print " init/open/set default parameters/enable driver,"
+        vout_init "Voutput2" DEVICETYPE "YC"
+        hndl_yc=vout_open "Voutput2"
+        vout_setparams hndl_yc "YC"
+        vout_enable hndl_yc
+
+       print "--- start -----------------------------"
+        for I 1 10
+            VOUT_AdjustCLdelay hndl_yc I
+        end
+
+        print " disable/close/term the driver."
+        vout_disable hndl_cvbs
+        vout_close hndl_cvbs
+        vout_term "Voutput1"
+        vout_disable hndl_yc
+        vout_close hndl_yc
+        vout_term "Voutput2"
+    end
+end

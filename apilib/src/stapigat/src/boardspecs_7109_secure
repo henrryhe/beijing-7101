@@ -1,0 +1,324 @@
+*mb411sysp1:
+--defsym _start=0x84401000 --defsym _stack=0x853ffffc
+
+*comment_mb411sysp1_is_used_by_7109_3MB_are_reserved_for_videoLX_in_example_below:
+--defsym _start=0x84501000 --defsym _stack=0x854ffffc
+
+*mb411lmisysp1:
+--defsym _start=0x84401000 --defsym _stack=0x853ffffc
+
+*comment_mb411lmisysp1_is_used_by_7100_2MB_are_reserved_for_videoLX_in_example_below:
+--defsym _start=0x84401000 --defsym _stack=0x853ffffc
+
+*board_link:
+%{!mboard=*:%{!r:%{!rlib:%e-mboard undefined}}}\
+\
+%{mboard=gdbsim:%(gdbsim)}\
+\
+%{mboard=sh4202microdevp0|mboard=sh4202microdevsimp0:%(sh4202microdevp0)}\
+%{mboard=sh4202microdevp1|mboard=sh4202microdevsimp1|mboard=sh4202microdev|mboard=sh4202microdevsim:%(sh4202microdevp1)}\
+%{mboard=sh4202microdevp2|mboard=sh4202microdevsimp2:%(sh4202microdevp2)}\
+%{mboard=sh4202microdevp3|mboard=sh4202microdevsimp3:%(sh4202microdevp3)}\
+%{mboard=sh4202microdev*:%{!mboard=sh4202microdevfemi*:%{!mboard=sh4202microdev:%{!mboard=sh4202microdevsim:%{!mboard=sh4202microdevp0:%{!mboard=sh4202microdevsimp0:%{!mboard=sh4202microdevp1:%{!mboard=sh4202microdevsimp1:%{!mboard=sh4202microdevp2:%{!mboard=sh4202microdevsimp2:%{!mboard=sh4202microdevp3:%{!mboard=sh4202microdevsimp3:%e-mboard=sh4202microdev* unrecognised}}}}}}}}}}}}\
+\
+%{mboard=sh4202microdevfemip0|mboard=sh4202microdevfemisimp0:%(sh4202microdevfemip0)}\
+%{mboard=sh4202microdevfemip1|mboard=sh4202microdevfemisimp1|mboard=sh4202microdevfemi|mboard=sh4202microdevfemisim:%(sh4202microdevfemip1)}\
+%{mboard=sh4202microdevfemip2|mboard=sh4202microdevfemisimp2:%(sh4202microdevfemip2)}\
+%{mboard=sh4202microdevfemip3|mboard=sh4202microdevfemisimp3:%(sh4202microdevfemip3)}\
+%{mboard=sh4202microdevfemi*:%{!mboard=sh4202microdevfemi:%{!mboard=sh4202microdevfemisim:%{!mboard=sh4202microdevfemip0:%{!mboard=sh4202microdevfemisimp0:%{!mboard=sh4202microdevfemip1:%{!mboard=sh4202microdevfemisimp1:%{!mboard=sh4202microdevfemip2:%{!mboard=sh4202microdevfemisimp2:%{!mboard=sh4202microdevfemip3:%{!mboard=sh4202microdevfemisimp3:%e-mboard=sh4202microdevfemi* unrecognised}}}}}}}}}}}\
+\
+%{mboard=sh4202romramp0|mboard=sh4202romramsimp0:%(sh4202romramp0)}\
+%{mboard=sh4202romramp1|mboard=sh4202romramsimp1|mboard=sh4202romram|mboard=sh4202romramsim:%(sh4202romramp1)}\
+%{mboard=sh4202romramp2|mboard=sh4202romramsimp2:%(sh4202romramp2)}\
+%{mboard=sh4202romramp3|mboard=sh4202romramsimp3:%(sh4202romramp3)}\
+%{mboard=sh4202romram*:%{!mboard=sh4202romramfemi*:%{!mboard=sh4202romram:%{!mboard=sh4202romramsim:%{!mboard=sh4202romramp0:%{!mboard=sh4202romramsimp0:%{!mboard=sh4202romramp1:%{!mboard=sh4202romramsimp1:%{!mboard=sh4202romramp2:%{!mboard=sh4202romramsimp2:%{!mboard=sh4202romramp3:%{!mboard=sh4202romramsimp3:%e-mboard=sh4202romram* unrecognised}}}}}}}}}}}}\
+\
+%{mboard=sh4202romramfemip0|mboard=sh4202romramfemisimp0:%(sh4202romramfemip0)}\
+%{mboard=sh4202romramfemip1|mboard=sh4202romramfemisimp1|mboard=sh4202romramfemi|mboard=sh4202romramfemisim:%(sh4202romramfemip1)}\
+%{mboard=sh4202romramfemip2|mboard=sh4202romramfemisimp2:%(sh4202romramfemip2)}\
+%{mboard=sh4202romramfemip3|mboard=sh4202romramfemisimp3:%(sh4202romramfemip3)}\
+%{mboard=sh4202romramfemi*:%{!mboard=sh4202romramfemi:%{!mboard=sh4202romramfemisim:%{!mboard=sh4202romramfemip0:%{!mboard=sh4202romramfemisimp0:%{!mboard=sh4202romramfemip1:%{!mboard=sh4202romramfemisimp1:%{!mboard=sh4202romramfemip2:%{!mboard=sh4202romramfemisimp2:%{!mboard=sh4202romramfemip3:%{!mboard=sh4202romramfemisimp3:%e-mboard=sh4202romramfemi* unrecognised}}}}}}}}}}}\
+\
+%{mboard=sh7750evalp0|mboard=sh7750evalsimp0:%(sh7750evalp0)}\
+%{mboard=sh7750evalp1|mboard=sh7750evalsimp1|mboard=sh7750eval|mboard=sh7750evalsim:%(sh7750evalp1)}\
+%{mboard=sh7750evalp2|mboard=sh7750evalsimp2:%(sh7750evalp2)}\
+%{mboard=sh7750evalp3|mboard=sh7750evalsimp3:%(sh7750evalp3)}\
+%{mboard=sh7750eval*:%{!mboard=sh7750eval:%{!mboard=sh7750evalsim:%{!mboard=sh7750evalp0:%{!mboard=sh7750evalsimp0:%{!mboard=sh7750evalp1:%{!mboard=sh7750evalsimp1:%{!mboard=sh7750evalp2:%{!mboard=sh7750evalsimp2:%{!mboard=sh7750evalp3:%{!mboard=sh7750evalsimp3:%e-mboard=sh7750eval* unrecognised}}}}}}}}}}}\
+\
+%{mboard=sh7751evalp0|mboard=sh7751evalsimp0:%(sh7751evalp0)}\
+%{mboard=sh7751evalp1|mboard=sh7751evalsimp1|mboard=sh7751eval|mboard=sh7751evalsim:%(sh7751evalp1)}\
+%{mboard=sh7751evalp2|mboard=sh7751evalsimp2:%(sh7751evalp2)}\
+%{mboard=sh7751evalp3|mboard=sh7751evalsimp3:%(sh7751evalp3)}\
+%{mboard=sh7751eval*:%{!mboard=sh7751eval:%{!mboard=sh7751evalsim:%{!mboard=sh7751evalp0:%{!mboard=sh7751evalsimp0:%{!mboard=sh7751evalp1:%{!mboard=sh7751evalsimp1:%{!mboard=sh7751evalp2:%{!mboard=sh7751evalsimp2:%{!mboard=sh7751evalp3:%{!mboard=sh7751evalsimp3:%e-mboard=sh7751eval* unrecognised}}}}}}}}}}}\
+\
+%{mboard=sh7751rsystemhp0|mboard=sh7751rsystemhsimp0:%(sh7751rsystemhp0)}\
+%{mboard=sh7751rsystemhp1|mboard=sh7751rsystemhsimp1|mboard=sh7751rsystemh|mboard=sh7751rsystemhsim:%(sh7751rsystemhp1)}\
+%{mboard=sh7751rsystemhp2|mboard=sh7751rsystemhsimp2:%(sh7751rsystemhp2)}\
+%{mboard=sh7751rsystemhp3|mboard=sh7751rsystemhsimp3:%(sh7751rsystemhp3)}\
+%{mboard=sh7751rsystemh*:%{!mboard=sh7751rsystemh:%{!mboard=sh7751rsystemhsim:%{!mboard=sh7751rsystemhp0:%{!mboard=sh7751rsystemhsimp0:%{!mboard=sh7751rsystemhp1:%{!mboard=sh7751rsystemhsimp1:%{!mboard=sh7751rsystemhp2:%{!mboard=sh7751rsystemhsimp2:%{!mboard=sh7751rsystemhp3:%{!mboard=sh7751rsystemhsimp3:%e-mboard=sh7751rsystemh* unrecognised}}}}}}}}}}}\
+\
+%{mboard=db457p0|mboard=db457simp0:%(db457p0)}\
+%{mboard=db457p1|mboard=db457simp1|mboard=db457|mboard=db457sim:%(db457p1)}\
+%{mboard=db457p2|mboard=db457simp2:%(db457p2)}\
+%{mboard=db457p3|mboard=db457simp3:%(db457p3)}\
+%{mboard=db457*:%{!mboard=db457:%{!mboard=db457sim:%{!mboard=db457p0:%{!mboard=db457simp0:%{!mboard=db457p1:%{!mboard=db457simp1:%{!mboard=db457p2:%{!mboard=db457simp2:%{!mboard=db457p3:%{!mboard=db457simp3:%e-mboard=db457* unrecognised}}}}}}}}}}}\
+\
+%{mboard=espressolmip0|mboard=espressolmisimp0:%(espressolmip0)}\
+%{mboard=espressolmip1|mboard=espressolmisimp1|mboard=espressolmi|mboard=espressolmisim:%(espressolmip1)}\
+%{mboard=espressolmip2|mboard=espressolmisimp2:%(espressolmip2)}\
+%{mboard=espressolmip3|mboard=espressolmisimp3:%(espressolmip3)}\
+%{mboard=espressolmi*:%{!mboard=espressolmi:%{!mboard=espressolmisim:%{!mboard=espressolmip0:%{!mboard=espressolmisimp0:%{!mboard=espressolmip1:%{!mboard=espressolmisimp1:%{!mboard=espressolmip2:%{!mboard=espressolmisimp2:%{!mboard=espressolmip3:%{!mboard=espressolmisimp3:%e-mboard=espressolmi* unrecognised}}}}}}}}}}}\
+\
+%{mboard=espressop0|mboard=espressosimp0:%(espressop0)}\
+%{mboard=espressop1|mboard=espressosimp1|mboard=espresso|mboard=espressosim:%(espressop1)}\
+%{mboard=espressop2|mboard=espressosimp2:%(espressop2)}\
+%{mboard=espressop3|mboard=espressosimp3:%(espressop3)}\
+%{mboard=espresso*:%{!mboard=espressolmi*:%{!mboard=espresso:%{!mboard=espressosim:%{!mboard=espressop0:%{!mboard=espressosimp0:%{!mboard=espressop1:%{!mboard=espressosimp1:%{!mboard=espressop2:%{!mboard=espressosimp2:%{!mboard=espressop3:%{!mboard=espressosimp3:%e-mboard=espresso* unrecognised}}}}}}}}}}}}\
+\
+%{mboard=mb293emip0|mboard=mb293emisimp0:%(mb293emip0)}\
+%{mboard=mb293emip1|mboard=mb293emisimp1|mboard=mb293emi|mboard=mb293emisim:%(mb293emip1)}\
+%{mboard=mb293emip2|mboard=mb293emisimp2:%(mb293emip2)}\
+%{mboard=mb293emip3|mboard=mb293emisimp3:%(mb293emip3)}\
+%{mboard=mb293emi*:%{!mboard=mb293emi:%{!mboard=mb293emisim:%{!mboard=mb293emip0:%{!mboard=mb293emisimp0:%{!mboard=mb293emip1:%{!mboard=mb293emisimp1:%{!mboard=mb293emip2:%{!mboard=mb293emisimp2:%{!mboard=mb293emip3:%{!mboard=mb293emisimp3:%e-mboard=mb293emi* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb293p0|mboard=mb293simp0:%(mb293p0)}\
+%{mboard=mb293p1|mboard=mb293simp1|mboard=mb293|mboard=mb293sim:%(mb293p1)}\
+%{mboard=mb293p2|mboard=mb293simp2:%(mb293p2)}\
+%{mboard=mb293p3|mboard=mb293simp3:%(mb293p3)}\
+%{mboard=mb293*:%{!mboard=mb293emi*:%{!mboard=mb293:%{!mboard=mb293sim:%{!mboard=mb293p0:%{!mboard=mb293simp0:%{!mboard=mb293p1:%{!mboard=mb293simp1:%{!mboard=mb293p2:%{!mboard=mb293simp2:%{!mboard=mb293p3:%{!mboard=mb293simp3:%e-mboard=mb293* unrecognised}}}}}}}}}}}}\
+\
+%{mboard=mb317p0|mboard=mb317simp0:%(mb317p0)}\
+%{mboard=mb317p1|mboard=mb317simp1|mboard=mb317|mboard=mb317sim:%(mb317p1)}\
+%{mboard=mb317p2|mboard=mb317simp2:%(mb317p2)}\
+%{mboard=mb317p3|mboard=mb317simp3:%(mb317p3)}\
+%{mboard=mb317*:%{!mboard=mb317:%{!mboard=mb317sim:%{!mboard=mb317p0:%{!mboard=mb317simp0:%{!mboard=mb317p1:%{!mboard=mb317simp1:%{!mboard=mb317p2:%{!mboard=mb317simp2:%{!mboard=mb317p3:%{!mboard=mb317simp3:%e-mboard=mb317* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb350emip0|mboard=mb350emisimp0:%(mb350emip0)}\
+%{mboard=mb350emip1|mboard=mb350emisimp1|mboard=mb350emi|mboard=mb350emisim:%(mb350emip1)}\
+%{mboard=mb350emip2|mboard=mb350emisimp2:%(mb350emip2)}\
+%{mboard=mb350emip3|mboard=mb350emisimp3:%(mb350emip3)}\
+%{mboard=mb350emi*:%{!mboard=mb350emi:%{!mboard=mb350emisim:%{!mboard=mb350emip0:%{!mboard=mb350emisimp0:%{!mboard=mb350emip1:%{!mboard=mb350emisimp1:%{!mboard=mb350emip2:%{!mboard=mb350emisimp2:%{!mboard=mb350emip3:%{!mboard=mb350emisimp3:%e-mboard=mb350emi* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb350p0|mboard=mb350simp0:%(mb350p0)}\
+%{mboard=mb350p1|mboard=mb350simp1|mboard=mb350|mboard=mb350sim:%(mb350p1)}\
+%{mboard=mb350p2|mboard=mb350simp2:%(mb350p2)}\
+%{mboard=mb350p3|mboard=mb350simp3:%(mb350p3)}\
+%{mboard=mb350*:%{!mboard=mb350emi*:%{!mboard=mb350:%{!mboard=mb350sim:%{!mboard=mb350p0:%{!mboard=mb350simp0:%{!mboard=mb350p1:%{!mboard=mb350simp1:%{!mboard=mb350p2:%{!mboard=mb350simp2:%{!mboard=mb350p3:%{!mboard=mb350simp3:%e-mboard=mb350* unrecognised}}}}}}}}}}}}\
+\
+%{mboard=mb360p0|mboard=mb360simp0:%(mb360p0)}\
+%{mboard=mb360p1|mboard=mb360simp1|mboard=mb360|mboard=mb360sim:%(mb360p1)}\
+%{mboard=mb360p2|mboard=mb360simp2:%(mb360p2)}\
+%{mboard=mb360p3|mboard=mb360simp3:%(mb360p3)}\
+%{mboard=mb360*:%{!mboard=mb360:%{!mboard=mb360sim:%{!mboard=mb360p0:%{!mboard=mb360simp0:%{!mboard=mb360p1:%{!mboard=mb360simp1:%{!mboard=mb360p2:%{!mboard=mb360simp2:%{!mboard=mb360p3:%{!mboard=mb360simp3:%e-mboard=mb360* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb374p0|mboard=mb374simp0:%(mb374p0)}\
+%{mboard=mb374p1|mboard=mb374simp1|mboard=mb374|mboard=mb374sim:%(mb374p1)}\
+%{mboard=mb374p2|mboard=mb374simp2:%(mb374p2)}\
+%{mboard=mb374p3|mboard=mb374simp3:%(mb374p3)}\
+%{mboard=mb374*:%{!mboard=mb374:%{!mboard=mb374sim:%{!mboard=mb374p0:%{!mboard=mb374simp0:%{!mboard=mb374p1:%{!mboard=mb374simp1:%{!mboard=mb374p2:%{!mboard=mb374simp2:%{!mboard=mb374p3:%{!mboard=mb374simp3:%e-mboard=mb374* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb376emip0|mboard=mb376emisimp0:%(mb376emip0)}\
+%{mboard=mb376emip1|mboard=mb376emisimp1|mboard=mb376emi|mboard=mb376emisim:%(mb376emip1)}\
+%{mboard=mb376emip2|mboard=mb376emisimp2:%(mb376emip2)}\
+%{mboard=mb376emip3|mboard=mb376emisimp3:%(mb376emip3)}\
+%{mboard=mb376emi*:%{!mboard=mb376emi:%{!mboard=mb376emisim:%{!mboard=mb376emip0:%{!mboard=mb376emisimp0:%{!mboard=mb376emip1:%{!mboard=mb376emisimp1:%{!mboard=mb376emip2:%{!mboard=mb376emisimp2:%{!mboard=mb376emip3:%{!mboard=mb376emisimp3:%e-mboard=mb376emi* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb376lmip0|mboard=mb376lmisimp0:%(mb376lmip0)}\
+%{mboard=mb376lmip1|mboard=mb376lmisimp1|mboard=mb376lmi|mboard=mb376lmisim:%(mb376lmip1)}\
+%{mboard=mb376lmip2|mboard=mb376lmisimp2:%(mb376lmip2)}\
+%{mboard=mb376lmip3|mboard=mb376lmisimp3:%(mb376lmip3)}\
+%{mboard=mb376lmi*:%{!mboard=mb376lmi:%{!mboard=mb376lmisim:%{!mboard=mb376lmip0:%{!mboard=mb376lmisimp0:%{!mboard=mb376lmip1:%{!mboard=mb376lmisimp1:%{!mboard=mb376lmip2:%{!mboard=mb376lmisimp2:%{!mboard=mb376lmip3:%{!mboard=mb376lmisimp3:%e-mboard=mb376lmi* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb376p0|mboard=mb376simp0:%(mb376p0)}\
+%{mboard=mb376p1|mboard=mb376simp1|mboard=mb376|mboard=mb376sim:%(mb376p1)}\
+%{mboard=mb376p2|mboard=mb376simp2:%(mb376p2)}\
+%{mboard=mb376p3|mboard=mb376simp3:%(mb376p3)}\
+%{mboard=mb376*:%{!mboard=mb376emi*:%{!mboard=mb376lmi*:%{!mboard=mb376:%{!mboard=mb376sim:%{!mboard=mb376p0:%{!mboard=mb376simp0:%{!mboard=mb376p1:%{!mboard=mb376simp1:%{!mboard=mb376p2:%{!mboard=mb376simp2:%{!mboard=mb376p3:%{!mboard=mb376simp3:%e-mboard=mb376* unrecognised}}}}}}}}}}}}}\
+\
+%{mboard=mb379emip0|mboard=mb379emisimp0:%(mb379emip0)}\
+%{mboard=mb379emip1|mboard=mb379emisimp1|mboard=mb379emi|mboard=mb379emisim:%(mb379emip1)}\
+%{mboard=mb379emip2|mboard=mb379emisimp2:%(mb379emip2)}\
+%{mboard=mb379emip3|mboard=mb379emisimp3:%(mb379emip3)}\
+%{mboard=mb379emi*:%{!mboard=mb379emi:%{!mboard=mb379emisim:%{!mboard=mb379emip0:%{!mboard=mb379emisimp0:%{!mboard=mb379emip1:%{!mboard=mb379emisimp1:%{!mboard=mb379emip2:%{!mboard=mb379emisimp2:%{!mboard=mb379emip3:%{!mboard=mb379emisimp3:%e-mboard=mb379emi* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb379lmip0|mboard=mb379lmisimp0:%(mb379lmip0)}\
+%{mboard=mb379lmip1|mboard=mb379lmisimp1|mboard=mb379lmi|mboard=mb379lmisim:%(mb379lmip1)}\
+%{mboard=mb379lmip2|mboard=mb379lmisimp2:%(mb379lmip2)}\
+%{mboard=mb379lmip3|mboard=mb379lmisimp3:%(mb379lmip3)}\
+%{mboard=mb379lmi*:%{!mboard=mb379lmi:%{!mboard=mb379lmisim:%{!mboard=mb379lmip0:%{!mboard=mb379lmisimp0:%{!mboard=mb379lmip1:%{!mboard=mb379lmisimp1:%{!mboard=mb379lmip2:%{!mboard=mb379lmisimp2:%{!mboard=mb379lmip3:%{!mboard=mb379lmisimp3:%e-mboard=mb379lmi* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb379p0|mboard=mb379simp0:%(mb379p0)}\
+%{mboard=mb379p1|mboard=mb379simp1|mboard=mb379|mboard=mb379sim:%(mb379p1)}\
+%{mboard=mb379p2|mboard=mb379simp2:%(mb379p2)}\
+%{mboard=mb379p3|mboard=mb379simp3:%(mb379p3)}\
+%{mboard=mb379*:%{!mboard=mb379emi*:%{!mboard=mb379lmi*:%{!mboard=mb379:%{!mboard=mb379sim:%{!mboard=mb379p0:%{!mboard=mb379simp0:%{!mboard=mb379p1:%{!mboard=mb379simp1:%{!mboard=mb379p2:%{!mboard=mb379simp2:%{!mboard=mb379p3:%{!mboard=mb379simp3:%e-mboard=mb379* unrecognised}}}}}}}}}}}}}\
+\
+%{mboard=mb392lmip0|mboard=mb392lmisimp0:%(mb392lmip0)}\
+%{mboard=mb392lmip1|mboard=mb392lmisimp1|mboard=mb392lmi|mboard=mb392lmisim:%(mb392lmip1)}\
+%{mboard=mb392lmip2|mboard=mb392lmisimp2:%(mb392lmip2)}\
+%{mboard=mb392lmip3|mboard=mb392lmisimp3:%(mb392lmip3)}\
+%{mboard=mb392lmi*:%{!mboard=mb392lmi:%{!mboard=mb392lmisim:%{!mboard=mb392lmip0:%{!mboard=mb392lmisimp0:%{!mboard=mb392lmip1:%{!mboard=mb392lmisimp1:%{!mboard=mb392lmip2:%{!mboard=mb392lmisimp2:%{!mboard=mb392lmip3:%{!mboard=mb392lmisimp3:%e-mboard=mb392lmi* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb392p0|mboard=mb392simp0:%(mb392p0)}\
+%{mboard=mb392p1|mboard=mb392simp1|mboard=mb392|mboard=mb392sim:%(mb392p1)}\
+%{mboard=mb392p2|mboard=mb392simp2:%(mb392p2)}\
+%{mboard=mb392p3|mboard=mb392simp3:%(mb392p3)}\
+%{mboard=mb392*:%{!mboard=mb392lmi*:%{!mboard=mb392:%{!mboard=mb392sim:%{!mboard=mb392p0:%{!mboard=mb392simp0:%{!mboard=mb392p1:%{!mboard=mb392simp1:%{!mboard=mb392p2:%{!mboard=mb392simp2:%{!mboard=mb392p3:%{!mboard=mb392simp3:%e-mboard=mb392* unrecognised}}}}}}}}}}}}\
+\
+%{mboard=mb411stb7109lmisysp0|mboard=mb411stb7109lmisyssimp0:%(mb411lmisysp0)}\
+%{mboard=mb411stb7109lmisysp1|mboard=mb411stb7109lmisyssimp1|mboard=mb411stb7109lmisys|mboard=mb411stb7109lmisyssim:%(mb411lmisysp1)}\
+%{mboard=mb411stb7109lmisysp2|mboard=mb411stb7109lmisyssimp2:%(mb411lmisysp2)}\
+%{mboard=mb411stb7109lmisysp3|mboard=mb411stb7109lmisyssimp3:%(mb411lmisysp3)}\
+%{mboard=mb411stb7109lmisys*:%{!mboard=mb411stb7109lmisys:%{!mboard=mb411stb7109lmisyssim:%{!mboard=mb411stb7109lmisysp0:%{!mboard=mb411stb7109lmisyssimp0:%{!mboard=mb411stb7109lmisysp1:%{!mboard=mb411stb7109lmisyssimp1:%{!mboard=mb411stb7109lmisysp2:%{!mboard=mb411stb7109lmisyssimp2:%{!mboard=mb411stb7109lmisysp3:%{!mboard=mb411stb7109lmisyssimp3:%e-mboard=mb411stb7109lmisys* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb411stb7109lmividp0|mboard=mb411stb7109lmividsimp0:%(mb411lmividp0)}\
+%{mboard=mb411stb7109lmividp1|mboard=mb411stb7109lmividsimp1|mboard=mb411stb7109lmivid|mboard=mb411stb7109lmividsim:%(mb411lmividp1)}\
+%{mboard=mb411stb7109lmividp2|mboard=mb411stb7109lmividsimp2:%(mb411lmividp2)}\
+%{mboard=mb411stb7109lmividp3|mboard=mb411stb7109lmividsimp3:%(mb411lmividp3)}\
+%{mboard=mb411stb7109lmivid*:%{!mboard=mb411stb7109lmivid:%{!mboard=mb411stb7109lmividsim:%{!mboard=mb411stb7109lmividp0:%{!mboard=mb411stb7109lmividsimp0:%{!mboard=mb411stb7109lmividp1:%{!mboard=mb411stb7109lmividsimp1:%{!mboard=mb411stb7109lmividp2:%{!mboard=mb411stb7109lmividsimp2:%{!mboard=mb411stb7109lmividp3:%{!mboard=mb411stb7109lmividsimp3:%e-mboard=mb411stb7109lmivid* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb411stb7109sysp0|mboard=mb411stb7109syssimp0:%(mb411sysp0)}\
+%{mboard=mb411stb7109sysp1|mboard=mb411stb7109syssimp1|mboard=mb411stb7109sys|mboard=mb411stb7109syssim:%(mb411sysp1)}\
+%{mboard=mb411stb7109sysp2|mboard=mb411stb7109syssimp2:%(mb411sysp2)}\
+%{mboard=mb411stb7109sysp3|mboard=mb411stb7109syssimp3:%(mb411sysp3)}\
+%{mboard=mb411stb7109sys*:%{!mboard=mb411stb7109sys:%{!mboard=mb411stb7109syssim:%{!mboard=mb411stb7109sysp0:%{!mboard=mb411stb7109syssimp0:%{!mboard=mb411stb7109sysp1:%{!mboard=mb411stb7109syssimp1:%{!mboard=mb411stb7109sysp2:%{!mboard=mb411stb7109syssimp2:%{!mboard=mb411stb7109sysp3:%{!mboard=mb411stb7109syssimp3:%e-mboard=mb411stb7109sys* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb411stb7109vidp0|mboard=mb411stb7109vidsimp0:%(mb411vidp0)}\
+%{mboard=mb411stb7109vidp1|mboard=mb411stb7109vidsimp1|mboard=mb411stb7109vid|mboard=mb411stb7109vidsim:%(mb411vidp1)}\
+%{mboard=mb411stb7109vidp2|mboard=mb411stb7109vidsimp2:%(mb411vidp2)}\
+%{mboard=mb411stb7109vidp3|mboard=mb411stb7109vidsimp3:%(mb411vidp3)}\
+%{mboard=mb411stb7109vid*:%{!mboard=mb411stb7109vid:%{!mboard=mb411stb7109vidsim:%{!mboard=mb411stb7109vidp0:%{!mboard=mb411stb7109vidsimp0:%{!mboard=mb411stb7109vidp1:%{!mboard=mb411stb7109vidsimp1:%{!mboard=mb411stb7109vidp2:%{!mboard=mb411stb7109vidsimp2:%{!mboard=mb411stb7109vidp3:%{!mboard=mb411stb7109vidsimp3:%e-mboard=mb411stb7109vid* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb411stb7109p0|mboard=mb411stb7109simp0:%(mb411sysp0)}\
+%{mboard=mb411stb7109p1|mboard=mb411stb7109simp1|mboard=mb411stb7109|mboard=mb411stb7109sim:%(mb411sysp1)}\
+%{mboard=mb411stb7109p2|mboard=mb411stb7109simp2:%(mb411sysp2)}\
+%{mboard=mb411stb7109p3|mboard=mb411stb7109simp3:%(mb411sysp3)}\
+%{mboard=mb411stb7109*:%{!mboard=mb411stb7109sys*:%{!mboard=mb411stb7109vid*:%{!mboard=mb411stb7109lmisys*:%{!mboard=mb411stb7109lmivid*:%{!mboard=mb411stb7109:%{!mboard=mb411stb7109sim:%{!mboard=mb411stb7109p0:%{!mboard=mb411stb7109simp0:%{!mboard=mb411stb7109p1:%{!mboard=mb411stb7109simp1:%{!mboard=mb411stb7109p2:%{!mboard=mb411stb7109simp2:%{!mboard=mb411stb7109p3:%{!mboard=mb411stb7109simp3:%e-mboard=mb411stb7109* unrecognised}}}}}}}}}}}}}}}\
+\
+%{mboard=mb411lmisysp0|mboard=mb411lmisyssimp0:%(mb411lmisysp0)}\
+%{mboard=mb411lmisysp1|mboard=mb411lmisyssimp1|mboard=mb411lmisys|mboard=mb411lmisyssim:%(mb411lmisysp1)}\
+%{mboard=mb411lmisysp2|mboard=mb411lmisyssimp2:%(mb411lmisysp2)}\
+%{mboard=mb411lmisysp3|mboard=mb411lmisyssimp3:%(mb411lmisysp3)}\
+%{mboard=mb411lmisys*:%{!mboard=mb411lmisys:%{!mboard=mb411lmisyssim:%{!mboard=mb411lmisysp0:%{!mboard=mb411lmisyssimp0:%{!mboard=mb411lmisysp1:%{!mboard=mb411lmisyssimp1:%{!mboard=mb411lmisysp2:%{!mboard=mb411lmisyssimp2:%{!mboard=mb411lmisysp3:%{!mboard=mb411lmisyssimp3:%e-mboard=mb411lmisys* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb411lmividp0|mboard=mb411lmividsimp0:%(mb411lmividp0)}\
+%{mboard=mb411lmividp1|mboard=mb411lmividsimp1|mboard=mb411lmivid|mboard=mb411lmividsim:%(mb411lmividp1)}\
+%{mboard=mb411lmividp2|mboard=mb411lmividsimp2:%(mb411lmividp2)}\
+%{mboard=mb411lmividp3|mboard=mb411lmividsimp3:%(mb411lmividp3)}\
+%{mboard=mb411lmivid*:%{!mboard=mb411lmivid:%{!mboard=mb411lmividsim:%{!mboard=mb411lmividp0:%{!mboard=mb411lmividsimp0:%{!mboard=mb411lmividp1:%{!mboard=mb411lmividsimp1:%{!mboard=mb411lmividp2:%{!mboard=mb411lmividsimp2:%{!mboard=mb411lmividp3:%{!mboard=mb411lmividsimp3:%e-mboard=mb411lmivid* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb411sysp0|mboard=mb411syssimp0:%(mb411sysp0)}\
+%{mboard=mb411sysp1|mboard=mb411syssimp1|mboard=mb411sys|mboard=mb411syssim:%(mb411sysp1)}\
+%{mboard=mb411sysp2|mboard=mb411syssimp2:%(mb411sysp2)}\
+%{mboard=mb411sysp3|mboard=mb411syssimp3:%(mb411sysp3)}\
+%{mboard=mb411sys*:%{!mboard=mb411sys:%{!mboard=mb411syssim:%{!mboard=mb411sysp0:%{!mboard=mb411syssimp0:%{!mboard=mb411sysp1:%{!mboard=mb411syssimp1:%{!mboard=mb411sysp2:%{!mboard=mb411syssimp2:%{!mboard=mb411sysp3:%{!mboard=mb411syssimp3:%e-mboard=mb411sys* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb411vidp0|mboard=mb411vidsimp0:%(mb411vidp0)}\
+%{mboard=mb411vidp1|mboard=mb411vidsimp1|mboard=mb411vid|mboard=mb411vidsim:%(mb411vidp1)}\
+%{mboard=mb411vidp2|mboard=mb411vidsimp2:%(mb411vidp2)}\
+%{mboard=mb411vidp3|mboard=mb411vidsimp3:%(mb411vidp3)}\
+%{mboard=mb411vid*:%{!mboard=mb411vid:%{!mboard=mb411vidsim:%{!mboard=mb411vidp0:%{!mboard=mb411vidsimp0:%{!mboard=mb411vidp1:%{!mboard=mb411vidsimp1:%{!mboard=mb411vidp2:%{!mboard=mb411vidsimp2:%{!mboard=mb411vidp3:%{!mboard=mb411vidsimp3:%e-mboard=mb411vid* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb411p0|mboard=mb411simp0:%(mb411sysp0)}\
+%{mboard=mb411p1|mboard=mb411simp1|mboard=mb411|mboard=mb411sim:%(mb411sysp1)}\
+%{mboard=mb411p2|mboard=mb411simp2:%(mb411sysp2)}\
+%{mboard=mb411p3|mboard=mb411simp3:%(mb411sysp3)}\
+%{mboard=mb411*:%{!mboard=mb411stb7109*:%{!mboard=mb411sys*:%{!mboard=mb411vid*:%{!mboard=mb411lmisys*:%{!mboard=mb411lmivid*:%{!mboard=mb411:%{!mboard=mb411sim:%{!mboard=mb411p0:%{!mboard=mb411simp0:%{!mboard=mb411p1:%{!mboard=mb411simp1:%{!mboard=mb411p2:%{!mboard=mb411simp2:%{!mboard=mb411p3:%{!mboard=mb411simp3:%e-mboard=mb411* unrecognised}}}}}}}}}}}}}}}}\
+\
+%{mboard=mb422lmi1p0|mboard=mb422lmi1simp0:%(mb422lmi1p0)}\
+%{mboard=mb422lmi1p1|mboard=mb422lmi1simp1|mboard=mb422lmi1|mboard=mb422lmi1sim:%(mb422lmi1p1)}\
+%{mboard=mb422lmi1p2|mboard=mb422lmi1simp2:%(mb422lmi1p2)}\
+%{mboard=mb422lmi1p3|mboard=mb422lmi1simp3:%(mb422lmi1p3)}\
+%{mboard=mb422lmi1*:%{!mboard=mb422lmi1:%{!mboard=mb422lmi1sim:%{!mboard=mb422lmi1p0:%{!mboard=mb422lmi1simp0:%{!mboard=mb422lmi1p1:%{!mboard=mb422lmi1simp1:%{!mboard=mb422lmi1p2:%{!mboard=mb422lmi1simp2:%{!mboard=mb422lmi1p3:%{!mboard=mb422lmi1simp3:%e-mboard=mb422lmi1* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb422lmi2p0|mboard=mb422lmi2simp0:%(mb422lmi2p0)}\
+%{mboard=mb422lmi2p1|mboard=mb422lmi2simp1|mboard=mb422lmi2|mboard=mb422lmi2sim:%(mb422lmi2p1)}\
+%{mboard=mb422lmi2p2|mboard=mb422lmi2simp2:%(mb422lmi2p2)}\
+%{mboard=mb422lmi2p3|mboard=mb422lmi2simp3:%(mb422lmi2p3)}\
+%{mboard=mb422lmi2*:%{!mboard=mb422lmi2:%{!mboard=mb422lmi2sim:%{!mboard=mb422lmi2p0:%{!mboard=mb422lmi2simp0:%{!mboard=mb422lmi2p1:%{!mboard=mb422lmi2simp1:%{!mboard=mb422lmi2p2:%{!mboard=mb422lmi2simp2:%{!mboard=mb422lmi2p3:%{!mboard=mb422lmi2simp3:%e-mboard=mb422lmi2* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb422p0|mboard=mb422simp0:%(mb422lmi1p0)}\
+%{mboard=mb422p1|mboard=mb422simp1|mboard=mb422|mboard=mb422sim:%(mb422lmi1p1)}\
+%{mboard=mb422p2|mboard=mb422simp2:%(mb422lmi1p2)}\
+%{mboard=mb422p3|mboard=mb422simp3:%(mb422lmi1p3)}\
+%{mboard=mb422*:%{!mboard=mb422lmi1*:%{!mboard=mb422lmi2*:%{!mboard=mb422:%{!mboard=mb422sim:%{!mboard=mb422p0:%{!mboard=mb422simp0:%{!mboard=mb422p1:%{!mboard=mb422simp1:%{!mboard=mb422p2:%{!mboard=mb422simp2:%{!mboard=mb422p3:%{!mboard=mb422simp3:%e-mboard=mb422* unrecognised}}}}}}}}}}}}}\
+\
+%{mboard=mb448lmisysp0|mboard=mb448lmisyssimp0:%(mb448lmisysp0)}\
+%{mboard=mb448lmisysp1|mboard=mb448lmisyssimp1|mboard=mb448lmisys|mboard=mb448lmisyssim:%(mb448lmisysp1)}\
+%{mboard=mb448lmisysp2|mboard=mb448lmisyssimp2:%(mb448lmisysp2)}\
+%{mboard=mb448lmisysp3|mboard=mb448lmisyssimp3:%(mb448lmisysp3)}\
+%{mboard=mb448lmisys*:%{!mboard=mb448lmisys:%{!mboard=mb448lmisyssim:%{!mboard=mb448lmisysp0:%{!mboard=mb448lmisyssimp0:%{!mboard=mb448lmisysp1:%{!mboard=mb448lmisyssimp1:%{!mboard=mb448lmisysp2:%{!mboard=mb448lmisyssimp2:%{!mboard=mb448lmisysp3:%{!mboard=mb448lmisyssimp3:%e-mboard=mb448lmisys* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb448lmividp0|mboard=mb448lmividsimp0:%(mb448lmividp0)}\
+%{mboard=mb448lmividp1|mboard=mb448lmividsimp1|mboard=mb448lmivid|mboard=mb448lmividsim:%(mb448lmividp1)}\
+%{mboard=mb448lmividp2|mboard=mb448lmividsimp2:%(mb448lmividp2)}\
+%{mboard=mb448lmividp3|mboard=mb448lmividsimp3:%(mb448lmividp3)}\
+%{mboard=mb448lmivid*:%{!mboard=mb448lmivid:%{!mboard=mb448lmividsim:%{!mboard=mb448lmividp0:%{!mboard=mb448lmividsimp0:%{!mboard=mb448lmividp1:%{!mboard=mb448lmividsimp1:%{!mboard=mb448lmividp2:%{!mboard=mb448lmividsimp2:%{!mboard=mb448lmividp3:%{!mboard=mb448lmividsimp3:%e-mboard=mb448lmivid* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb448sysp0|mboard=mb448syssimp0:%(mb448sysp0)}\
+%{mboard=mb448sysp1|mboard=mb448syssimp1|mboard=mb448sys|mboard=mb448syssim:%(mb448sysp1)}\
+%{mboard=mb448sysp2|mboard=mb448syssimp2:%(mb448sysp2)}\
+%{mboard=mb448sysp3|mboard=mb448syssimp3:%(mb448sysp3)}\
+%{mboard=mb448sys*:%{!mboard=mb448sys:%{!mboard=mb448syssim:%{!mboard=mb448sysp0:%{!mboard=mb448syssimp0:%{!mboard=mb448sysp1:%{!mboard=mb448syssimp1:%{!mboard=mb448sysp2:%{!mboard=mb448syssimp2:%{!mboard=mb448sysp3:%{!mboard=mb448syssimp3:%e-mboard=mb448sys* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb448vidp0|mboard=mb448vidsimp0:%(mb448vidp0)}\
+%{mboard=mb448vidp1|mboard=mb448vidsimp1|mboard=mb448vid|mboard=mb448vidsim:%(mb448vidp1)}\
+%{mboard=mb448vidp2|mboard=mb448vidsimp2:%(mb448vidp2)}\
+%{mboard=mb448vidp3|mboard=mb448vidsimp3:%(mb448vidp3)}\
+%{mboard=mb448vid*:%{!mboard=mb448vid:%{!mboard=mb448vidsim:%{!mboard=mb448vidp0:%{!mboard=mb448vidsimp0:%{!mboard=mb448vidp1:%{!mboard=mb448vidsimp1:%{!mboard=mb448vidp2:%{!mboard=mb448vidsimp2:%{!mboard=mb448vidp3:%{!mboard=mb448vidsimp3:%e-mboard=mb448vid* unrecognised}}}}}}}}}}}\
+\
+%{mboard=mb448p0|mboard=mb448simp0:%(mb448sysp0)}\
+%{mboard=mb448p1|mboard=mb448simp1|mboard=mb448|mboard=mb448sim:%(mb448sysp1)}\
+%{mboard=mb448p2|mboard=mb448simp2:%(mb448sysp2)}\
+%{mboard=mb448p3|mboard=mb448simp3:%(mb448sysp3)}\
+%{mboard=mb448*:%{!mboard=mb448sys*:%{!mboard=mb448vid*:%{!mboard=mb448lmisys*:%{!mboard=mb448lmivid*:%{!mboard=mb448:%{!mboard=mb448sim:%{!mboard=mb448p0:%{!mboard=mb448simp0:%{!mboard=mb448p1:%{!mboard=mb448simp1:%{!mboard=mb448p2:%{!mboard=mb448simp2:%{!mboard=mb448p3:%{!mboard=mb448simp3:%e-mboard=mb448* unrecognised}}}}}}}}}}}}}}}\
+\
+%{mboard=mediarefp0|mboard=mediarefsimp0:%(mediarefp0)}\
+%{mboard=mediarefp1|mboard=mediarefsimp1|mboard=mediaref|mboard=mediarefsim:%(mediarefp1)}\
+%{mboard=mediarefp2|mboard=mediarefsimp2:%(mediarefp2)}\
+%{mboard=mediarefp3|mboard=mediarefsimp3:%(mediarefp3)}\
+%{mboard=mediaref*:%{!mboard=mediaref:%{!mboard=mediarefsim:%{!mboard=mediarefp0:%{!mboard=mediarefsimp0:%{!mboard=mediarefp1:%{!mboard=mediarefsimp1:%{!mboard=mediarefp2:%{!mboard=mediarefsimp2:%{!mboard=mediarefp3:%{!mboard=mediarefsimp3:%e-mboard=mediaref* unrecognised}}}}}}}}}}}\
+\
+%{mboard=stb7100reflmisysp0|mboard=stb7100reflmisyssimp0:%(stb7100reflmisysp0)}\
+%{mboard=stb7100reflmisysp1|mboard=stb7100reflmisyssimp1|mboard=stb7100reflmisys|mboard=stb7100reflmisyssim:%(stb7100reflmisysp1)}\
+%{mboard=stb7100reflmisysp2|mboard=stb7100reflmisyssimp2:%(stb7100reflmisysp2)}\
+%{mboard=stb7100reflmisysp3|mboard=stb7100reflmisyssimp3:%(stb7100reflmisysp3)}\
+%{mboard=stb7100reflmisys*:%{!mboard=stb7100reflmisys:%{!mboard=stb7100reflmisyssim:%{!mboard=stb7100reflmisysp0:%{!mboard=stb7100reflmisyssimp0:%{!mboard=stb7100reflmisysp1:%{!mboard=stb7100reflmisyssimp1:%{!mboard=stb7100reflmisysp2:%{!mboard=stb7100reflmisyssimp2:%{!mboard=stb7100reflmisysp3:%{!mboard=stb7100reflmisyssimp3:%e-mboard=stb7100reflmisys* unrecognised}}}}}}}}}}}\
+\
+%{mboard=stb7100reflmividp0|mboard=stb7100reflmividsimp0:%(stb7100reflmividp0)}\
+%{mboard=stb7100reflmividp1|mboard=stb7100reflmividsimp1|mboard=stb7100reflmivid|mboard=stb7100reflmividsim:%(stb7100reflmividp1)}\
+%{mboard=stb7100reflmividp2|mboard=stb7100reflmividsimp2:%(stb7100reflmividp2)}\
+%{mboard=stb7100reflmividp3|mboard=stb7100reflmividsimp3:%(stb7100reflmividp3)}\
+%{mboard=stb7100reflmivid*:%{!mboard=stb7100reflmivid:%{!mboard=stb7100reflmividsim:%{!mboard=stb7100reflmividp0:%{!mboard=stb7100reflmividsimp0:%{!mboard=stb7100reflmividp1:%{!mboard=stb7100reflmividsimp1:%{!mboard=stb7100reflmividp2:%{!mboard=stb7100reflmividsimp2:%{!mboard=stb7100reflmividp3:%{!mboard=stb7100reflmividsimp3:%e-mboard=stb7100reflmivid* unrecognised}}}}}}}}}}}\
+\
+%{mboard=stb7100refsysp0|mboard=stb7100refsyssimp0:%(stb7100refsysp0)}\
+%{mboard=stb7100refsysp1|mboard=stb7100refsyssimp1|mboard=stb7100refsys|mboard=stb7100refsyssim:%(stb7100refsysp1)}\
+%{mboard=stb7100refsysp2|mboard=stb7100refsyssimp2:%(stb7100refsysp2)}\
+%{mboard=stb7100refsysp3|mboard=stb7100refsyssimp3:%(stb7100refsysp3)}\
+%{mboard=stb7100refsys*:%{!mboard=stb7100refsys:%{!mboard=stb7100refsyssim:%{!mboard=stb7100refsysp0:%{!mboard=stb7100refsyssimp0:%{!mboard=stb7100refsysp1:%{!mboard=stb7100refsyssimp1:%{!mboard=stb7100refsysp2:%{!mboard=stb7100refsyssimp2:%{!mboard=stb7100refsysp3:%{!mboard=stb7100refsyssimp3:%e-mboard=stb7100refsys* unrecognised}}}}}}}}}}}\
+\
+%{mboard=stb7100refvidp0|mboard=stb7100refvidsimp0:%(stb7100refvidp0)}\
+%{mboard=stb7100refvidp1|mboard=stb7100refvidsimp1|mboard=stb7100refvid|mboard=stb7100refvidsim:%(stb7100refvidp1)}\
+%{mboard=stb7100refvidp2|mboard=stb7100refvidsimp2:%(stb7100refvidp2)}\
+%{mboard=stb7100refvidp3|mboard=stb7100refvidsimp3:%(stb7100refvidp3)}\
+%{mboard=stb7100refvid*:%{!mboard=stb7100refvid:%{!mboard=stb7100refvidsim:%{!mboard=stb7100refvidp0:%{!mboard=stb7100refvidsimp0:%{!mboard=stb7100refvidp1:%{!mboard=stb7100refvidsimp1:%{!mboard=stb7100refvidp2:%{!mboard=stb7100refvidsimp2:%{!mboard=stb7100refvidp3:%{!mboard=stb7100refvidsimp3:%e-mboard=stb7100refvid* unrecognised}}}}}}}}}}}\
+\
+%{mboard=stb7100refp0|mboard=stb7100refsimp0:%(stb7100refsysp0)}\
+%{mboard=stb7100refp1|mboard=stb7100refsimp1|mboard=stb7100ref|mboard=stb7100refsim:%(stb7100refsysp1)}\
+%{mboard=stb7100refp2|mboard=stb7100refsimp2:%(stb7100refsysp2)}\
+%{mboard=stb7100refp3|mboard=stb7100refsimp3:%(stb7100refsysp3)}\
+%{mboard=stb7100ref*:%{!mboard=stb7100refsys*:%{!mboard=stb7100refvid*:%{!mboard=stb7100reflmisys*:%{!mboard=stb7100reflmivid*:%{!mboard=stb7100ref:%{!mboard=stb7100refsim:%{!mboard=stb7100refp0:%{!mboard=stb7100refsimp0:%{!mboard=stb7100refp1:%{!mboard=stb7100refsimp1:%{!mboard=stb7100refp2:%{!mboard=stb7100refsimp2:%{!mboard=stb7100refp3:%{!mboard=stb7100refsimp3:%e-mboard=stb7100ref* unrecognised}}}}}}}}}}}}}}}\
+\
+%{mboard=tmmlr2lmip0|mboard=tmmlr2lmisimp0:%(tmmlr2lmip0)}\
+%{mboard=tmmlr2lmip1|mboard=tmmlr2lmisimp1|mboard=tmmlr2lmi|mboard=tmmlr2lmisim:%(tmmlr2lmip1)}\
+%{mboard=tmmlr2lmip2|mboard=tmmlr2lmisimp2:%(tmmlr2lmip2)}\
+%{mboard=tmmlr2lmip3|mboard=tmmlr2lmisimp3:%(tmmlr2lmip3)}\
+%{mboard=tmmlr2lmi*:%{!mboard=tmmlr2lmi:%{!mboard=tmmlr2lmisim:%{!mboard=tmmlr2lmip0:%{!mboard=tmmlr2lmisimp0:%{!mboard=tmmlr2lmip1:%{!mboard=tmmlr2lmisimp1:%{!mboard=tmmlr2lmip2:%{!mboard=tmmlr2lmisimp2:%{!mboard=tmmlr2lmip3:%{!mboard=tmmlr2lmisimp3:%e-mboard=tmmlr2lmi* unrecognised}}}}}}}}}}}\
+\
+%{mboard=tmmlr2p0|mboard=tmmlr2simp0:%(tmmlr2p0)}\
+%{mboard=tmmlr2p1|mboard=tmmlr2simp1|mboard=tmmlr2|mboard=tmmlr2sim:%(tmmlr2p1)}\
+%{mboard=tmmlr2p2|mboard=tmmlr2simp2:%(tmmlr2p2)}\
+%{mboard=tmmlr2p3|mboard=tmmlr2simp3:%(tmmlr2p3)}\
+%{mboard=tmmlr2*:%{!mboard=tmmlr2lmi*:%{!mboard=tmmlr2:%{!mboard=tmmlr2sim:%{!mboard=tmmlr2p0:%{!mboard=tmmlr2simp0:%{!mboard=tmmlr2p1:%{!mboard=tmmlr2simp1:%{!mboard=tmmlr2p2:%{!mboard=tmmlr2simp2:%{!mboard=tmmlr2p3:%{!mboard=tmmlr2simp3:%e-mboard=tmmlr2* unrecognised}}}}}}}}}}}}\
+\
+%{mboard=*:%{!r:%{!rlib:%{!mboard=gdbsim:%{!mboard=sh4202microdev*:%{!mboard=sh4202microdevfemi*:%{!mboard=sh4202romram*:%{!mboard=sh4202romramfemi*:%{!mboard=sh7750eval*:%{!mboard=sh7751eval*:%{!mboard=sh7751rsystemh*:%{!mboard=db457*:%{!mboard=espresso*:%{!mboard=mb293*:%{!mboard=mb317*:%{!mboard=mb350*:%{!mboard=mb360*:%{!mboard=mb374*:%{!mboard=mb376*:%{!mboard=mb379*:%{!mboard=mb392*:%{!mboard=mb411*:%{!mboard=mb422*:%{!mboard=mb448*:%{!mboard=stb7100ref*:%{!mboard=mediaref*:%{!mboard=tmmlr2*:%e-mboard unrecognised}}}}}}}}}}}}}}}}}}}}}}}}}}}

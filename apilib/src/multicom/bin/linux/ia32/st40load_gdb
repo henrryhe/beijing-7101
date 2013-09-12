@@ -1,0 +1,145 @@
+#!/usr/bin/perl
+
+use Getopt::Std;
+use English;
+
+if ($#ARGV == -1) {
+  print STDERR "usage: st40load_gdb {options}* -t target -c command [--] [arguments]\n";
+  print STDERR "  -b filename         boot file to load\n";
+  print STDERR "  -c command          gdb command to execute; usualy board name\n";
+  print STDERR "  -n                  do not auto start; interactive mode\n";
+  print STDERR "  -t target           target to connect\n";
+  print STDERR "  -z address,filename image file to load\n";
+  print STDERR "  -k                  observe console messages (slow)\n";
+  exit 0;
+}
+
+getopts('b:c:nt:z:k') or die "Illegal command line option\n";
+defined($opt_t) or die "Must specify target\n";
+defined($opt_c) or die "Must specify connect function\n";
+
+if (defined($opt_z)) {
+  ($initrd_addr,$initrd_file) = split /,/, $opt_z;
+  $initrd_addr=oct($initrd_addr);	# Force to a number
+  $script_file = "initrd.lnk.".$PID;
+  $initrd_elf_file = "initrd.".$PID;
+  open(SCRIPT, ">$script_file") or die "Unable to open temporary linker file: $!\n";
+  print SCRIPT "SECTIONS { . = $initrd_addr ; .initrd : { *.(data) }}\n";
+  close(SCRIPT);
+  system("sh4-linux-ld -o $initrd_elf_file -b binary $initrd_file -b elf32-sh-linux -T $script_file") and die "Unable to generate ELF ramdisk image: $!\n";
+  unlink $script_file;
+}
+
+if (defined($opt_b)) {
+  $cmd="sh4-linux-nm ".$opt_b;
+  if (open(NM, $cmd." |")) {
+    while (<NM>) {
+      @fields = split(/\s/);
+      if ($fields[2] eq "empty_zero_page") {
+	$param_addr=hex($fields[0]);
+	break;
+      }
+    }
+    close(NM);
+  } else { die "Command ".$cmd." failed: $!\n"; }
+}
+defined($param_addr) or print "Unable to determine parameter address\nNo parameters or command line will be set\n\n";
+
+$script_file = "gdb." . $PID;
+open(SCRIPT, ">$script_file") or die "Unable to create gdb script file: $!\n";
+my $st40defs = $ENV{"RPC_ROOT"} . "/configs/st40defs.cmd";
+print SCRIPT "source $st40defs\n";
+print SCRIPT "define loadlinux\n";
+defined($opt_z) and print SCRIPT "  load $initrd_elf_file\n"; 
+defined($opt_b) and print SCRIPT "  load $opt_b\n";
+
+if (defined($param_addr)) {
+  $addr=$param_addr+0x100;
+  $first=1;
+  foreach $a (@ARGV) {
+    $first or printf SCRIPT "  set *(unsigned char*)0x%08x = ' '\n", $addr++;
+    $first=0;
+    foreach $c (split //, $a) {
+      printf SCRIPT "  set *(unsigned char*)0x%08x = '$c'\n", $addr++;
+    } 
+  }
+
+  if (defined($opt_z)) {
+    $size = -s $initrd_file;
+    printf SCRIPT "  set *(unsigned long*)0x%08x = 1\n", $param_addr+0x00c;
+    printf SCRIPT "  set *(unsigned long*)0x%08x = 0x%08x\n", $param_addr+0x010, $initrd_addr & 0x03ffffff;
+    printf SCRIPT "  set *(unsigned long*)0x%08x = 0x%08x\n", $param_addr+0x014, $size;
+  } else {
+    printf SCRIPT "  set *(unsigned long*)0x%08x = 0\n", $param_addr+0x00c;
+    printf SCRIPT "  set *(unsigned long*)0x%08x = 0\n", $param_addr+0x010;
+    printf SCRIPT "  set *(unsigned long*)0x%08x = 0\n", $param_addr+0x014;
+  }
+}
+
+print SCRIPT "end\n";
+
+defined($opt_b) and print SCRIPT "file $opt_b\n";
+print SCRIPT "$opt_c $opt_t\n";
+print SCRIPT "loadlinux\n";
+
+# Enter non-interactive mode, continue the target automatically and ensure
+# the runtime load will quit if the target is halted
+# TODO: panics?
+if (defined($opt_k)) {
+  print SCRIPT "# Automatically copy whatever is printk'ed\n";
+  print SCRIPT "set pagination 0\n";
+  #print SCRIPT "break *((&printk)+92)\ncommands\nsilent\nprintf \"%s\", (const char *) 0x84186874\ncontinue\nend\n";
+  print SCRIPT "break printk.c:439\ncommands\nsilent\nprintf \"%s\", (const char *) 0x84186874\ncontinue\nend\n";
+}
+if (not defined($opt_n)) {
+  print SCRIPT <<END_OF_AUTOMATIC_SHUTDOWN_COMMANDS;
+# Automatically exit if the target is halted, rebooted or switched off
+break machine_halt
+commands
+	silent
+	quit
+end
+break machine_restart
+commands
+	silent
+	if (0 == \$r4)
+		quit
+	else
+		printf "%s", \$r4
+		quit 127
+	end
+end
+break machine_power_off
+commands
+	silent
+	quit
+end
+break panic
+commands
+	silent
+	# technically panic takes a printf style argument but this is the best we can do in gdb
+	printf "%s", \$r4
+end
+END_OF_AUTOMATIC_SHUTDOWN_COMMANDS
+
+  print SCRIPT "continue\n";
+}
+
+close(SCRIPT);
+
+system("sh4gdb -q -nw --command $script_file");
+if ($? == -1) {
+  die "Could not execute sh4gdb: $!\n";
+} elsif ($? & 127) {
+  die "sh4gdb died with signal %d, %s coredump\n", ($? & 127), ($? & 128) ? 'with' : 'without';
+} elsif (127 == ($? >> 8)) {
+  print STDERR "ST40 Linux kernel terminated itself\n";
+  unlink $script_file;
+  defined($opt_z) and unlink $initrd_elf_file;
+  exit (127);
+} elsif (0 != ($? >> 8)) {
+  die "Unable to run sh4gdb: $!\n";
+}
+
+unlink $script_file;
+defined($opt_z) and unlink $initrd_elf_file;

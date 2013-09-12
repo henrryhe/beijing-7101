@@ -1,0 +1,188 @@
+; *****************************************************************************
+; File         : dvmevent.MAC
+;                Event tests
+; Requirements : config.mac loaded
+; Author       : JROY - March 2006
+; *****************************************************************************
+;To source this file use the following command
+;source "../../../scripts/dvmevent.mac"
+
+;----------------------------------------------- STDVM_EVT_END_OF_PLAYBACK
+;Need : dvmevent1.trp file recorded for 1 min
+define M_DVM_EVENT1
+    print "---------------------------------------"
+    print "Testing Event STDVM_EVT_END_OF_PLAYBACK"
+    print "---------------------------------------"
+    ENABLE_EVT STDVM_EVT_END_OF_PLAYBACK
+    DVM_RecordStart HDLRC1 TSIN0 "dvm_event_test1" "DD_NEWS" Rec_NumberOfPIDS V_TYPE_1 V_PID_1 A_TYPE_1 A_PID_1 PCR P_PID_1
+    print "Recording ongoing please wait for 1 min"
+    wait 60000
+    DVM_RecordGetTime HDLRC1
+    DVM_RecordStop HDLRC1
+    DVM_PlayStart HDLPL1 "dvm_event_test1" SWTS0 Rec_NumberOfPIDS V_TYPE_1 V_PID_1 A_TYPE_1 A_PID_1 PCR P_PID_1
+    print "playback ongoing please wait for 1 min"
+    wait 63000
+    TEST_EVT STDVM_EVT_END_OF_PLAYBACK
+    wait 3000
+    DISABLE_EVT STDVM_EVT_END_OF_PLAYBACK
+    DVM_PlayStop HDLPL1
+    DVM_RemoveStream HDLRC1 "dvm_event_test1"
+end ;M_DVM_EVENT1
+
+;----------------------------------------------- STDVM_EVT_END_OF_FILE
+;Need : dvmevent1.trp file recorded for 1 min
+define M_DVM_EVENT2
+    print "-----------------------------------"
+    print "Testing Event STDVM_EVT_END_OF_FILE"
+    print "-----------------------------------"
+    ENABLE_EVT STDVM_EVT_END_OF_FILE
+    DVM_RecordStart HDLRC1 TSIN0 "dvm_event_test2" "DD_NEWS" Rec_NumberOfPIDS V_TYPE_1 V_PID_1 A_TYPE_1 A_PID_1 PCR P_PID_1
+    print "Recording ongoing please wait for 1 min"
+    wait 60000
+    DVM_RecordGetTime HDLRC1
+    DVM_RecordStop HDLRC1
+    DVM_PlayStart HDLPL1 "dvm_event_test2" SWTS0 Rec_NumberOfPIDS V_TYPE_1 V_PID_1 A_TYPE_1 A_PID_1 PCR P_PID_1
+    print "playback ongoing please wait for 1 min"
+    wait 60000
+    TEST_EVT STDVM_EVT_END_OF_FILE
+    wait 3000
+    DISABLE_EVT STDVM_EVT_END_OF_FILE
+    DVM_PlayStop HDLPL1
+    DVM_RemoveStream HDLRC1 "dvm_event_test2"
+end ;M_DVM_EVENT2
+
+;----------------------------------------------- STDVM_EVT_WRITE_CLOSE_TO_READ
+;----------------------------------------------- STDVM_EVT_WRITE_TO_READ_MARGIN_OK
+;Need : For STDVM_EVT_WRITE_CLOSE_TO_READ, Start record
+;       And playback the same stream simultaneously
+;Need : For STDVM_EVT_WRITE_TO_READ_MARGIN_OK Pause playback then resume after some time
+define M_DVM_EVENT3
+    print "-------------------------------------------"
+    print "Testing Event STDVM_EVT_WRITE_CLOSE_TO_READ"
+    print "-------------------------------------------"
+    ENABLE_EVT STDVM_EVT_WRITE_CLOSE_TO_READ
+    DVM_RecordStart HDLRC1 TSIN0 "dvm_event_test3" "DD_NEWS" Rec_NumberOfPIDS V_TYPE_1 V_PID_1 A_TYPE_1 A_PID_1 PCR P_PID_1
+    wait 1000
+    DVM_PlayStart HDLPL1 "dvm_event_test3" SWTS0 Rec_NumberOfPIDS V_TYPE_1 V_PID_1 A_TYPE_1 A_PID_1 PCR P_PID_1
+    wait 1000
+    TEST_EVT STDVM_EVT_WRITE_CLOSE_TO_READ
+    wait 1000
+    DISABLE_EVT STDVM_EVT_WRITE_CLOSE_TO_READ
+    print "-----------------------------------------------"
+    print "Testing Event STDVM_EVT_WRITE_TO_READ_MARGIN_OK"
+    print "-----------------------------------------------"
+    ENABLE_EVT STDVM_EVT_WRITE_TO_READ_MARGIN_OK
+    print "please wait for 1 min, play has been paused"
+    DVM_PlayPause  HDLPL1
+    wait 60000
+    DVM_PlayResume HDLPL1
+    wait 1000
+    TEST_EVT STDVM_EVT_WRITE_TO_READ_MARGIN_OK
+    wait 1000
+    DISABLE_EVT STDVM_EVT_WRITE_TO_READ_MARGIN_OK
+    DVM_RecordStop HDLRC1
+    DVM_PlayStop HDLPL1
+    DVM_RemoveStream HDLRC1 "dvm_event_test3"
+end ;M_DVM_EVENT3
+
+;----------------------------------------------- STDVM_EVT_DISK_SPACE_LOW
+;Need : HDD formatted with size 0x44444 blocks,event occured when disk space is not
+;       sufficient to continue recording
+define M_DVM_EVENT4
+    ;If init before then term and then Init
+    ;close and term dvm before doing any operation
+    DVM_Close HDLPL1
+    DVM_Close HDLPL2
+    DVM_Close HDLRC1
+    DVM_Close HDLRC2
+
+    DVM_Term "DVM"
+    DVM_Init "DVM" 100*1024*1024
+
+    HDLRC1 = DVM_Open "DVM" "R" 0
+
+    print "--------------------------------------"
+    print "Testing Event STDVM_EVT_DISK_SPACE_LOW"
+    print "--------------------------------------"
+    ENABLE_EVT STDVM_EVT_DISK_SPACE_LOW
+    DVM_RecordStart HDLRC1 TSIN0 "dvm_event_test4" "DD_NEWS" Rec_NumberOfPIDS V_TYPE_1 V_PID_1 A_TYPE_1 A_PID_1 PCR P_PID_1
+    print "please wait 1.5 min to record some data"
+    for i 1 2
+         wait 45000
+    end
+    TEST_EVT STDVM_EVT_DISK_SPACE_LOW
+    wait 1000
+    DISABLE_EVT STDVM_EVT_DISK_SPACE_LOW
+    DVM_RecordStop HDLRC1
+    DVM_RemoveStream HDLRC1 "dvm_event_test4"
+
+    DVM_Close HDLRC1
+    DVM_Term "DVM"
+
+    DVM_Init "DVM"
+
+    HDLPL1 = DVM_Open "DVM" "P" 0
+    HDLPL2 = DVM_Open "DVM" "P" 1
+    HDLRC1 = DVM_Open "DVM" "R" 0
+    HDLRC2 = DVM_Open "DVM" "R" 1
+ end ;M_DVM_EVENT4
+
+;----------------------------------------------- STDVM_EVT_DISK_FULL
+;Need : HDD formatted with size 0x44444 blocks
+define M_DVM_EVENT5
+    print "---------------------------------"
+    print "Testing Event STDVM_EVT_DISK_FULL"
+    print "---------------------------------"
+    ENABLE_EVT STDVM_EVT_DISK_FULL
+    DVM_RecordStart HDLRC1 TSIN0 "dvm_event_test5" "DD_NEWS" Rec_NumberOfPIDS V_TYPE_1 V_PID_1 A_TYPE_1 A_PID_1 PCR P_PID_1
+    print "Please wait 5 Min to record enugh data to overflow disk"
+    for i 1 5
+         wait 60000
+    end
+    TEST_EVT STDVM_EVT_DISK_FULL
+    wait 1000
+    DISABLE_EVT STDVM_EVT_DISK_FULL
+    DVM_RecordStop HDLRC1
+    DVM_RemoveStream HDLRC1 "dvm_event_test5"
+end ;M_DVM_EVENT5
+
+;----------------------------------------------- STDVM_EVT_ERROR
+;Need : STDVM_PLAY_DECODING_ERROR while decoding a corrupted stream
+define M_DVM_EVENT6
+    print "-----------------------------"
+    print "Testing Event STDVM_EVT_ERROR"
+    print "-----------------------------"
+    ENABLE_EVT STDVM_EVT_ERROR
+    DVM_RecordStart HDLRC1 TSIN0 "dvm_event_test6" "DD_NEWS" Rec_NumberOfPIDS V_TYPE_1 V_PID_1 A_TYPE_1 A_PID_1 PCR P_PID_1
+    print "please wait 30 sec to record some data"
+    wait 30000
+    DVM_PlayStart HDLPL1 "dvm_event_test6" SWTS0 Rec_NumberOfPIDS V_TYPE_1 V_PID_1 A_TYPE_1 A_PID_1 PCR P_PID_1
+    wait 30000
+    TEST_EVT STDVM_EVT_ERROR
+    wait 3000
+    DISABLE_EVT STDVM_EVT_ERROR
+    DVM_RecordStop HDLRC1
+    DVM_PlayStop HDLPL1
+    DVM_RemoveStream HDLRC1 "dvm_event_test6"
+end ;M_DVM_EVENT6
+
+
+define M_DVM_EVENT_ALL
+    ;unsubscribe all events
+    DISABLE_EVT
+
+    M_DVM_EVENT1
+    M_DVM_EVENT2
+    M_DVM_EVENT3
+    M_DVM_EVENT4
+    M_DVM_EVENT5
+    M_DVM_EVENT6
+
+    ;Enable all events before exit
+    ENABLE_EVT
+
+end ;M_DVM_EVENT_ALL
+
+M_DVM_EVENT_ALL
+
+; EOF

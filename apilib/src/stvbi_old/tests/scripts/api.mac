@@ -1,0 +1,464 @@
+;*****************************************************************************
+; File         : API.MAC
+; Requirements :
+; Author       : BS - NOVEMBER 2000
+;*****************************************************************************
+
+; general behavior :
+; driver is assumed to be in a virgin state (no init, no open)
+
+define M_API_TESTS
+    api_report "1.0 API MANUAL TESTS"
+    M_API_CHECK_CAPA
+    M_API_CHECK_REVISION
+    api_report "1.1 API AUTOMATIC TESTS"
+    ;; Create Handles
+    HDLVBI00=0
+    HDLVBI01=0
+    HDLVBI02=0
+    HDLVBI03=0
+    HDLVBI04=0
+    HDLVBI05=0
+    HDLVBI06=0
+    HDLVBI07=0
+    HDLVBI08=0
+    HDLVBI09=0
+    HDLVBI10=0
+    HDLVBI11=0
+    M_API_UNKNOWN_DEVICE
+    M_API_INVALID_HANDLE
+    M_API_ALREADY_INITIALIZED
+    M_API_BAD_PARAMETER
+    M_API_NO_MEMORY
+    M_API_ALREADY_REGISTERED
+    M_API_VBI_ENABLE
+    M_API_VBI_NOT_ENABLE
+    M_API_VBI_UNSUPPORTED
+    M_API_MISCELLANEOUS
+    del HDLVBI*
+end
+
+;;;;;;;;;;;;;;;;; AUTOMATIC TESTS ;;;;;;;;;;;;;;;;;;
+
+; this macro tests the unknown device expected return code
+define M_API_UNKNOWN_DEVICE
+    api_report "1.1.0 API_UNKNOWN_DEVICE TEST"
+    ERRORCOUNT=0
+    print "*** Without any device initialisation ***"
+    vbi_term
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vbi_open
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vbi_capa
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vbi_term VBI_DEVICE_NAME 0
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    print ""
+    print "*** With default device initialized ***"
+    vbi_init , ,DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_capa "BADPARM"
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vbi_open "BADPARM"
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vbi_term "BADPARM"
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vbi_term
+    M_CHECK_RETCODE ERR_NO_ERROR
+    print ""
+    print "*** With all devices initialized ***"
+    for i 0 2
+        DEVSTR= api_int2str i VBI_DEVICE_NAME
+        vbi_init DEVSTR, ,DENC_NAME
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    vbi_capa "BADDEVICE"
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vbi_open "BADDEVICE"
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vbi_term "BADDEVICE"
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    for i 0 2
+        DEVSTR= api_int2str i VBI_DEVICE_NAME
+        vbi_term DEVSTR
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    print ""
+    print "*** With all devices terminated ***"
+    for i 0 2
+        DEVNUM= api_int2str i
+        DEVSTR= VBI_DEVICE_NAME+DEVNUM
+        vbi_capa DEVSTR
+        M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+        vbi_open DEVSTR
+        M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+        vbi_term DEVSTR
+    end
+    api_report "1.1.0 API_UNKNOWN_DEVICE" ERRORCOUNT
+    ; driver is back to a virgin state (no init, no open)
+end
+
+; this macro tests the invalid handle expected return code
+define M_API_INVALID_HANDLE
+    api_report "1.1.1 API_INVALID_HANDLE TEST"
+    ERRORCOUNT=0
+    print "*** Without any device initialisation ***"
+    vbi_close
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vbi_disable
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vbi_enable
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vbi_getconfig
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vbi_setparams
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vbi_getttxsource
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vbi_setttxsource
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vbi_writedata
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    print ""
+    print "*** With all device initialized, handle opened & closed ***"
+    for i 0 2
+        DEVSTR= api_int2str i VBI_DEVICE_NAME
+        vbi_init DEVSTR, ,DENC_NAME
+        RETHDL=vbi_open DEVSTR
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_createsymb "HDLVBI0" i RETHDL
+    end
+    for i 0 2
+        HDLSTR=api_int2str i "HDLVBI"
+        val=api_evalstr HDLSTR
+        vbi_close val
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    for i 0 2
+        HDLSTR=api_int2str i "HDLVBI"
+        val=api_evalstr HDLSTR
+        vbi_disable val
+        M_CHECK_RETCODE ERR_INVALID_HANDLE
+        vbi_enable val
+        M_CHECK_RETCODE ERR_INVALID_HANDLE
+        vbi_getconfig val
+        M_CHECK_RETCODE ERR_INVALID_HANDLE
+        vbi_setparams val
+        M_CHECK_RETCODE ERR_INVALID_HANDLE
+        vbi_getttxsource val
+        M_CHECK_RETCODE ERR_INVALID_HANDLE
+        vbi_setttxsource val
+        M_CHECK_RETCODE ERR_INVALID_HANDLE
+        vbi_writedata 1 1 val
+        M_CHECK_RETCODE ERR_INVALID_HANDLE
+        vbi_close val
+        M_CHECK_RETCODE ERR_INVALID_HANDLE
+    end
+    for i 0 2
+        DEVSTR= api_int2str i VBI_DEVICE_NAME
+        vbi_term DEVSTR
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    api_report "1.1.1 API_INVALID_HANDLE" ERRORCOUNT
+    ; driver is back to a virgin state (no init, no open)
+end
+
+; this macro tests the already initialized expected return code
+define M_API_ALREADY_INITIALIZED
+    api_report "1.1.2 API_ALREADY_INITIALIZED TEST"
+    ERRORCOUNT=0
+    print "*** With all devices initialized ***"
+    for i 0 2
+        DEVSTR= api_int2str i VBI_DEVICE_NAME
+        vbi_init DEVSTR, ,DENC_NAME
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    for i 0 2
+        DEVSTR= api_int2str i VBI_DEVICE_NAME
+        vbi_init DEVSTR, ,DENC_NAME
+        M_CHECK_RETCODE ERR_ALREADY_INITIALIZED
+    end
+    for i 0 2
+        DEVSTR= api_int2str i VBI_DEVICE_NAME
+        vbi_term DEVSTR
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    api_report "1.1.2 API_ALREADY_INITIALIZED" ERRORCOUNT
+    ; driver is back to a virgin state (no init, no open)
+end
+
+; this macro tests the bad parameter expected return code
+define M_API_BAD_PARAMETER
+    api_report "1.1.3 API_BAD_PARAMETER TEST"
+    ERRORCOUNT=0
+    print "*** With common api functions ***"
+    vbi_init "", ,DENC_NAME
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    print "*** With other api functions ***"
+    print "TO ADD HERE TEST"
+
+    api_report "1.1.3 API_BAD_PARAMETER" ERRORCOUNT
+end
+
+; this macro tests the no memory expected return code
+define M_API_NO_MEMORY
+    api_report "1.1.4 API_NO_MEMORY TEST"
+    ERRORCOUNT=0
+    for i 0 2
+        DEVSTR= api_int2str i VBI_DEVICE_NAME
+        vbi_init DEVSTR, ,DENC_NAME
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    vbi_init "LASTDEV", ,DENC_NAME
+    M_CHECK_RETCODE ERR_NO_MEMORY
+    for i 0 2
+        DEVSTR= api_int2str i VBI_DEVICE_NAME
+        vbi_term DEVSTR
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    api_report "1.1.4 API_NO_MEMORY" ERRORCOUNT
+end
+
+; this macro tests the already registered expected return code
+define M_API_ALREADY_REGISTERED
+    api_report "1.1.5 API_ALREADY_REGISTERED TEST"
+    ERRORCOUNT=0
+    print "*** With default device initialized ***"
+    vbi_init , ,DENC_NAME
+    STRCAPA=vbi_capa
+    CAPA=api_evalstr STRCAPA
+    RETHDL=0
+    j=1
+    while j<=MV
+        if CAPA&j
+            RETHDL=vbi_open VBI_DEVICE_NAME j
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vbi_open VBI_DEVICE_NAME j
+            M_CHECK_RETCODE ERR_VBI_ALREADY_REGISTERED
+            vbi_close RETHDL
+            M_CHECK_RETCODE ERR_NO_ERROR
+        end
+        j=j*2
+    end
+    vbi_term
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_report "1.1.5 API_ALREADY_REGISTERED" ERRORCOUNT
+end
+
+
+; this macro tests the vbi enable expected return code
+define M_API_VBI_ENABLE
+    api_report "1.1.6 API_VBI_ENABLE TEST"
+    ERRORCOUNT=0
+    print "*** With default device & all supported VBI ***"
+    vbi_init , ,DENC_NAME
+    STRCAPA=vbi_capa
+    CAPA=api_evalstr STRCAPA
+    j=1
+    while j!=MV
+        if CAPA&j
+            vbi_open VBI_DEVICE_NAME j
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vbi_enable
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vbi_enable
+            M_CHECK_RETCODE ERR_VBI_ENABLE
+            vbi_close
+            M_CHECK_RETCODE ERR_NO_ERROR
+        end
+        j=j*2
+    end
+    vbi_term
+    api_report "1.1.6 API_VBI_ENABLE" ERRORCOUNT
+end
+
+; this macro tests the vbi not enable expected return code
+define M_API_VBI_NOT_ENABLE
+    api_report "1.1.7 API_VBI_NOT_ENABLE TEST"
+    ERRORCOUNT=0
+    print "*** With default device & all supported VBI ***"
+    vbi_init , ,DENC_NAME
+    STRCAPA=vbi_capa
+    CAPA=api_evalstr STRCAPA
+    j=1
+    while j!=MV
+        if CAPA&j
+            vbi_open VBI_DEVICE_NAME j
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vbi_disable
+            M_CHECK_RETCODE ERR_VBI_NOT_ENABLE
+            vbi_enable
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vbi_disable
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vbi_disable
+            M_CHECK_RETCODE ERR_VBI_NOT_ENABLE
+            vbi_close
+            M_CHECK_RETCODE ERR_NO_ERROR
+        end
+        j=j*2
+    end
+    vbi_term
+    api_report "1.1.7 API_VBI_NOT_ENABLE" ERRORCOUNT
+end
+
+; this macro tests the vbi not supported expected return code
+define M_API_VBI_UNSUPPORTED
+    api_report "1.1.8 API_VBI_UNSUPPORTED TEST"
+    ERRORCOUNT=0
+    print "*** With default device & all unsupported VBI ***"
+    vbi_init , ,DENC_NAME
+    STRCAPA=vbi_capa
+    CAPA=api_evalstr STRCAPA
+    j=1
+    while j!=MV
+        if CAPA&j
+        end
+        else
+            vbi_open VBI_DEVICE_NAME j
+            M_CHECK_RETCODE ERR_VBI_UNSUPPORTED_VBI
+        end
+        j=j*2
+    end
+    vbi_term
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_report "1.1.8 API_VBI_UNSUPPORTED" ERRORCOUNT
+end
+
+; this acro contains miscellaneous tests
+define M_API_MISCELLANEOUS
+    api_report "1.1.9 API_MISCELLANEOUS TEST"
+    ERRORCOUNT=0
+    print ""
+    print "*** API calls with default device ****"
+    vbi_init , ,DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+    STRCAPA=vbi_capa
+    CAPA=api_evalstr STRCAPA
+    j=1
+    while j!=MV
+        if CAPA&j
+            HDL=vbi_open VBI_DEVICE_NAME j
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vbi_enable
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vbi_getconfig
+            M_CHECK_RETCODE ERR_NO_ERROR
+            if j==TTX
+                vbi_setparams HDL j 1 2 0
+                M_CHECK_RETCODE ERR_NO_ERROR
+            end
+            else
+                vbi_setparams HDL j
+                M_CHECK_RETCODE ERR_NO_ERROR
+            end
+            vbi_close
+            M_CHECK_RETCODE ERR_NO_ERROR
+        end
+        j=j*2
+    end
+    print ""
+    print "*** Force term with default device & multi opens ****"
+    if CAPA&WSS
+        HDLVBI00=vbi_open VBI_DEVICE_NAME WSS
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    if CAPA&CGMS
+        HDLVBI01=vbi_open VBI_DEVICE_NAME CGMS
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    if CAPA&VPS
+        HDLVBI02=vbi_open VBI_DEVICE_NAME VPS
+    end
+    vbi_term VBI_DEVICE_NAME 1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_close HDLVBI00
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vbi_close HDLVBI01
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vbi_close HDLVBI02
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vbi_capa
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vbi_open
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vbi_term
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    print ""
+    print "*** Init Denc/VBI with open & Force terminate ****"
+    vbi_init , ,DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_open
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_term DENC_NAME, 1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_term , 1
+    M_CHECK_RETCODE ERR_VBI_DENC_OPEN
+    if (CHIPID<>"4629")
+        denc_init ,, DENC_TYPE DENC_ACCESS
+    end
+    else
+        denc_init "AUX_DENC" , 4
+    end
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_init , ,DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_term
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_report "1.1.9 API_MISCELLANEOUS" ERRORCOUNT
+end
+
+;;;;;;;;;;;;;;;;; MANUEL TESTS ;;;;;;;;;;;;;;;;;;
+
+define M_API_CHECK_CAPA
+    api_report "1.0.0 API_CHECK_CAPA TEST"
+    ERRORCOUNT=0
+    vbi_init , ,DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+    STRCAPA=vbi_capa
+    M_CHECK_RETCODE ERR_NO_ERROR
+    CAPAVBI=api_evalstr STRCAPA
+    vbi_term
+    M_CHECK_RETCODE ERR_NO_ERROR
+    print ""
+    print "The capabilities supported should be :"
+    print "Chip         | TTX   |  CC   | WSS   | CGMS  |  VPS  | MV6/7"
+    print "------------------------------------------------------------"
+    print "5510 Cut 1.0 | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "5510 Cut 1.2 | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | FALSE"
+    print "5512 A       | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | FALSE"
+    print "5512 M or S  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "5508         | FALSE | TRUE  | TRUE  | TRUE  | TRUE  | FALSE"
+    print "5518         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "STV0119      | TRUE  | TRUE  | FALSE | TRUE  | FALSE | TRUE"
+    print "7015         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "7020         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "5514         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "5516         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "5517         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "GX1          | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "4629         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "5528         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "5100         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "7710         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "5105         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "7100         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "5301         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "7109         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "5525         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "5188         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print "5107         | TRUE  | TRUE  | TRUE  | TRUE  | TRUE  | TRUE"
+    print ""
+    api_quest "Are the capabilities reflect the chip used [y/n] ?"
+    M_CHECK_RETCODE 0
+    api_report "1.0.0 API_CHECK_CAPA" ERRORCOUNT
+end
+
+define M_API_CHECK_REVISION
+    api_report "1.0.1 API_CHECK_REVISION TEST"
+    ERRORCOUNT=0
+    vbi_rev
+    api_quest "Is the revision correct [y/n] ?"
+    M_CHECK_RETCODE 0
+    api_report "1.0.1 API_CHECK_REVISION" ERRORCOUNT
+end

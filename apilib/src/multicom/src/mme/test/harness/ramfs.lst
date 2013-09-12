@@ -1,0 +1,325 @@
+/:
+total 36
+drwxr-xr-x    2 0        0            4096 Mar 16 16:59 bin
+drwxr-xr-x    2 0        0            4096 Mar 15 17:00 dev
+drwxr-xr-x    3 0        0            4096 Mar 19 15:18 lib
+lrwxrwxrwx    1 0        0              11 Apr 25 10:54 linuxrc -> bin/busybox
+drwxr-xr-x    2 0        0            4096 Mar 15 16:50 proc
+drwxr-xr-x    2 0        0            4096 Mar 16 16:59 sbin
+drwxr-xr-x    3 0        0            4096 Mar 19 15:24 share
+drwxr-xr-x    2 0        0            4096 Mar 15 16:52 tmp
+drwxr-xr-x    4 0        0            4096 Mar 15 16:36 usr
+
+/bin:
+total 208
+-rwxr-xr-x    1 0        0          206476 Mar 16 16:59 /opt/STM/STLinux-2.2/devkit/sh4/target/bin/busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 ash -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 cat -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 chgrp -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 chmod -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 chown -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 cp -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 cpio -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 date -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 dd -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 df -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 dmesg -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 dumpkmap -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 echo -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 false -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 fdflush -> busybox
+-rwxr-xr-x    1 0        0               7 Apr 25 10:54 /opt/STM/STLinux-2.2/devkit/sh4/target/usr/bin/getopt
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 grep -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 gunzip -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 gzip -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 hostname -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 kill -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 lash -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 ln -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 ls -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 mkdir -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 mknod -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 mktemp -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 more -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 mount -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 msh -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 mt -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 mv -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 pidof -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 ping -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 ps -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 pwd -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 rm -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 rmdir -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 sed -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 sh -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 sleep -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 stty -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 sync -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 tar -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 touch -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 true -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 umount -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 uname -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 usleep -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 vi -> busybox
+lrwxrwxrwx    1 0        0               7 Apr 25 10:54 zcat -> busybox
+
+/dev:
+total 0
+crw-------    1 0        0          5,   1 May 21 11:43 console
+lrwxrwxrwx    1 0        0              11 May 21 11:43 core -> /proc/kcore
+crw-rw-rw-    1 0        0        205,   8 May 21 11:43 cusc1
+crw-rw-rw-    1 0        0        205,   9 May 21 11:43 cusc2
+crw-rw-rw-    1 0        0        240,   0 May 21 11:43 embx
+lrwxrwxrwx    1 0        0               3 May 21 11:43 fb -> fb0
+crw-------    1 0        0         29,   0 May 21 11:43 fb0
+crw-------    1 0        0         29,  32 May 21 11:43 fb1
+crw-------    1 0        0         29,  64 May 21 11:43 fb2
+crw-------    1 0        0         29,  96 May 21 11:43 fb3
+brw-rw----    1 0        0          2,   0 May 21 11:43 fd0
+brw-rw----    1 0        0          2,  28 May 21 11:43 fd0H1440
+crw-rw-rw-    1 0        0         44,   0 May 21 11:43 ftla
+crw-rw-rw-    1 0        0         44,   1 May 21 11:43 ftla1
+crw-rw-rw-    1 0        0         44,   2 May 21 11:43 ftla2
+crw-rw-rw-    1 0        0         44,   3 May 21 11:43 ftla3
+crw-rw-rw-    1 0        0         44,   4 May 21 11:43 ftla4
+crw-r--r--    1 0        0          1,   7 May 21 11:43 full
+brw-rw----    1 0        0          3,   0 May 21 11:43 hda
+brw-rw----    1 0        0          3,   1 May 21 11:43 hda1
+brw-rw----    1 0        0          3,   2 May 21 11:43 hda2
+brw-rw----    1 0        0          3,   3 May 21 11:43 hda3
+brw-rw----    1 0        0          3,   4 May 21 11:43 hda4
+brw-rw----    1 0        0          3,   5 May 21 11:43 hda5
+brw-rw----    1 0        0          3,   6 May 21 11:43 hda6
+brw-rw----    1 0        0          3,   7 May 21 11:43 hda7
+brw-rw----    1 0        0          3,   8 May 21 11:43 hda8
+brw-rw----    1 0        0          3,  64 May 21 11:43 hdb
+brw-rw----    1 0        0          3,  65 May 21 11:43 hdb1
+brw-rw----    1 0        0          3,  66 May 21 11:43 hdb2
+brw-rw----    1 0        0          3,  67 May 21 11:43 hdb3
+brw-rw----    1 0        0          3,  68 May 21 11:43 hdb4
+brw-rw----    1 0        0          3,  69 May 21 11:43 hdb5
+brw-rw----    1 0        0          3,  70 May 21 11:43 hdb6
+brw-rw----    1 0        0          3,  71 May 21 11:43 hdb7
+brw-rw----    1 0        0          3,  72 May 21 11:43 hdb8
+brw-rw----    1 0        0         22,   0 May 21 11:43 hdc
+brw-rw----    1 0        0         22,   1 May 21 11:43 hdc1
+brw-rw----    1 0        0         22,   2 May 21 11:43 hdc2
+brw-rw----    1 0        0         22,   3 May 21 11:43 hdc3
+brw-rw----    1 0        0         22,   4 May 21 11:43 hdc4
+brw-rw----    1 0        0         22,   5 May 21 11:43 hdc5
+brw-rw----    1 0        0         22,   6 May 21 11:43 hdc6
+brw-rw----    1 0        0         22,   7 May 21 11:43 hdc7
+brw-rw----    1 0        0         22,   8 May 21 11:43 hdc8
+brw-rw----    1 0        0         22,  64 May 21 11:43 hdd
+brw-rw----    1 0        0         22,  65 May 21 11:43 hdd1
+brw-rw----    1 0        0         22,  66 May 21 11:43 hdd2
+brw-rw----    1 0        0         22,  67 May 21 11:43 hdd3
+brw-rw----    1 0        0         22,  68 May 21 11:43 hdd4
+brw-rw----    1 0        0         22,  69 May 21 11:43 hdd5
+brw-rw----    1 0        0         22,  70 May 21 11:43 hdd6
+brw-rw----    1 0        0         22,  71 May 21 11:43 hdd7
+brw-rw----    1 0        0         22,  72 May 21 11:43 hdd8
+crw-r-----    1 0        0          1,   2 May 21 11:43 kmem
+crw-r-----    1 0        0          1,   1 May 21 11:43 mem
+crw-rw-r--    1 0        0        231,   0 Jul 23 08:57 mme
+crw-rw-r--    1 0        0        241,   0 Jul 23 08:57 mmetest
+lrwxrwxrwx    1 0        0               6 May 21 11:43 mouse -> mouse0
+crw-rw-rw-    1 0        0         13,  32 May 21 11:43 mouse0
+crw-rw-rw-    1 0        0         90,   0 May 21 11:43 mtd0
+crw-rw-rw-    1 0        0         90,   2 May 21 11:43 mtd1
+crw-rw-rw-    1 0        0         90,   4 May 21 11:43 mtd2
+crw-rw-rw-    1 0        0          1,   3 May 21 11:43 null
+crw-r-----    1 0        0          1,   4 May 21 11:43 port
+crw-rw-rw-    1 0        5          2,   0 May 21 11:43 ptyp0
+crw-rw-rw-    1 0        5          2,   1 May 21 11:43 ptyp1
+crw-rw-rw-    1 0        5          2,   2 May 21 11:43 ptyp2
+crw-rw-rw-    1 0        5          2,   3 May 21 11:43 ptyp3
+crw-rw-rw-    1 0        5          2,   4 May 21 11:43 ptyp4
+crw-rw-rw-    1 0        5          2,   5 May 21 11:43 ptyp5
+crw-rw-rw-    1 0        5          2,   6 May 21 11:43 ptyp6
+crw-rw-rw-    1 0        5          2,   7 May 21 11:43 ptyp7
+crw-rw-rw-    1 0        5          2,   8 May 21 11:43 ptyp8
+crw-rw-rw-    1 0        5          2,   9 May 21 11:43 ptyp9
+crw-rw-rw-    1 0        5          2,  10 May 21 11:43 ptypa
+crw-rw-rw-    1 0        5          2,  11 May 21 11:43 ptypb
+crw-rw-rw-    1 0        5          2,  12 May 21 11:43 ptypc
+crw-rw-rw-    1 0        5          2,  13 May 21 11:43 ptypd
+crw-rw-rw-    1 0        5          2,  14 May 21 11:43 ptype
+crw-rw-rw-    1 0        5          2,  15 May 21 11:43 ptypf
+crw-rw-r--    1 0        0        232,   0 Jul 23 08:57 pwm
+lrwxrwxrwx    1 0        0               4 May 21 11:43 ram -> ram1
+brw-rw----    1 0        0          1,   0 May 21 11:43 ram0
+brw-rw----    1 0        0          1,   1 May 21 11:43 ram1
+brw-rw----    1 0        0          1,   2 May 21 11:43 ram2
+brw-rw----    1 0        0          1,   3 May 21 11:43 ram3
+crw-rw-rw-    1 0        0        240, 123 May 21 11:43 strpcs
+crw-------    1 0        0         10,  11 May 21 11:43 tpanel
+crw-rw-rw-    1 0        0          5,   0 May 21 11:43 tty
+crw-------    1 0        0          4,   0 May 21 11:43 tty0
+crw-------    1 0        0          4,   1 May 21 11:43 tty1
+crw-------    1 0        0          4,   2 May 21 11:43 tty2
+crw-------    1 0        0          4,   3 May 21 11:43 tty3
+crw-------    1 0        0          4,   4 May 21 11:43 tty4
+crw-------    1 0        0          4,   5 May 21 11:43 tty5
+crw-------    1 0        0          4,   6 May 21 11:43 tty6
+crw-------    1 0        0          4,   7 May 21 11:43 tty7
+crw-------    1 0        0          4,   8 May 21 11:43 tty8
+crw-------    1 0        5          4,  64 May 21 11:43 ttyS0
+crw-------    1 0        5          4,  65 May 21 11:43 ttyS1
+crw-rw-rw-    1 0        0        204,   8 May 21 11:43 ttySC0
+crw-rw-rw-    1 0        0        204,   9 May 21 11:43 ttySC1
+crw-rw-rw-    1 0        5          3,   0 May 21 11:43 ttyp0
+crw-rw-rw-    1 0        5          3,   1 May 21 11:43 ttyp1
+crw-rw-rw-    1 0        5          3,   2 May 21 11:43 ttyp2
+crw-rw-rw-    1 0        5          3,   3 May 21 11:43 ttyp3
+crw-rw-rw-    1 0        5          3,   4 May 21 11:43 ttyp4
+crw-rw-rw-    1 0        5          3,   5 May 21 11:43 ttyp5
+crw-rw-rw-    1 0        5          3,   6 May 21 11:43 ttyp6
+crw-rw-rw-    1 0        5          3,   7 May 21 11:43 ttyp7
+crw-rw-rw-    1 0        5          3,   8 May 21 11:43 ttyp8
+crw-rw-rw-    1 0        5          3,   9 May 21 11:43 ttyp9
+crw-rw-rw-    1 0        5          3,  10 May 21 11:43 ttypa
+crw-rw-rw-    1 0        5          3,  11 May 21 11:43 ttypb
+crw-rw-rw-    1 0        5          3,  12 May 21 11:43 ttypc
+crw-rw-rw-    1 0        5          3,  13 May 21 11:43 ttypd
+crw-rw-rw-    1 0        5          3,  14 May 21 11:43 ttype
+crw-rw-rw-    1 0        5          3,  15 May 21 11:43 ttypf
+crw-rw-rw-    1 0        0          1,   5 May 21 11:43 zero
+
+/lib:
+total 1596
+-rwxr-xr-x    1 0        0           95488 May  4 12:25 /opt/STM/STLinux-2.2/devkit/sh4/target/lib/ld-2.5.so
+lrwxrwxrwx    1 0        0              11 May  4 12:26 ld-linux.so.2 -> ld-2.5.so
+-rwxr-xr-x    1 0        0         1143828 May  4 12:25 /opt/STM/STLinux-2.2/devkit/sh4/target/lib/libc-2.5.so
+lrwxrwxrwx    1 0        0              13 May  4 12:26 libc.so.6 -> libc-2.5.so
+-rwxr-xr-x    1 0        0           21060 May  4 12:25 /opt/STM/STLinux-2.2/devkit/sh4/target/lib/libcrypt-2.5.so
+lrwxrwxrwx    1 0        0              13 May  4 12:26 libcrypt.so -> libcrypt.so.1
+lrwxrwxrwx    1 0        0              17 May  4 12:26 libcrypt.so.1 -> libcrypt-2.5.so
+-rwxr-xr-x    1 0        0           11172 May  4 12:25 /opt/STM/STLinux-2.2/devkit/sh4/target/lib/libdl-2.5.so
+lrwxrwxrwx    1 0        0              14 May  4 12:26 libdl.so.2 -> libdl-2.5.so
+-rwxr-xr-x    1 0        0          278775 Jan  7 19:43 /opt/STM/STLinux-2.2/devkit/sh4/target/lib/libgcc_s-4.1.1.so.1
+lrwxrwxrwx    1 0        0              19 Jan 17 16:59 libgcc_s.so.1 -> libgcc_s-4.1.1.so.1
+-rwxr-xr-x    1 0        0          175000 May  4 12:25 /opt/STM/STLinux-2.2/devkit/sh4/target/lib/libm-2.5.so
+lrwxrwxrwx    1 0        0              11 May  4 12:26 libm.so -> libm.so.6.1
+lrwxrwxrwx    1 0        0              13 May  4 12:26 libm.so.6 -> libm-2.5.so
+-rwxr-xr-x    1 0        0           90552 May  4 12:25 /opt/STM/STLinux-2.2/devkit/sh4/target/lib/libpthread-2.5.so
+lrwxrwxrwx    1 0        0              15 May  4 12:26 libpthread.so -> libpthread.so.0
+lrwxrwxrwx    1 0        0              17 May  4 12:26 libpthread.so.0 -> libpthread-2.5.so
+-rwxr-xr-x    1 0        0           29656 May  4 12:25 /opt/STM/STLinux-2.2/devkit/sh4/target/lib/librt-2.5.so
+lrwxrwxrwx    1 0        0              14 May  4 12:26 librt.so.1 -> librt-2.5.so
+-rw-r--r--    1 0        0           78833 Jan  7 19:20 /opt/STM/STLinux-2.2/devkit/sh4/target/lib/libthread_db-1.0.so
+lrwxrwxrwx    1 0        0              19 Jan 17 16:59 libthread_db.so.1 -> libthread_db-1.0.so
+drwxr-xr-x    2 0        0            4096 Mar 15 16:52 modules
+
+/lib/modules:
+total 0
+-rwxr-xr-x    1 0        0               0 May  4 12:25 /opt/STM/STLinux-2.2/devkit/sh4/target/sbin/insmod
+
+/proc:
+total 0
+
+/sbin:
+total 0
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 adjtimex -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 freeramdisk -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 fsck.minix -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 halt -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 ifconfig -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 init -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 klogd -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 loadkmap -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 makedevs -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 mkfs.minix -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 mkswap -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 modprobe -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 pivot_root -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 poweroff -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 reboot -> ../bin/busybox
+-rwxr-xr-x    1 0        0               0 May  4 12:25 /opt/STM/STLinux-2.2/devkit/sh4/target/sbin/rmmod
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 route -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 swapoff -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 swapon -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 syslogd -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 update -> ../bin/busybox
+lrwxrwxrwx    1 0        0              14 Apr 25 10:54 watchdog -> ../bin/busybox
+
+/share:
+total 0
+
+/tmp:
+total 0
+
+/usr:
+total 8
+drwxr-xr-x    2 0        0            4096 Mar 16 16:59 bin
+drwxr-xr-x    2 0        0            4096 Mar 16 16:59 sbin
+
+/usr/bin:
+total 68
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 [ -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 ar -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 basename -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 chvt -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 clear -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 cmp -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 cut -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 dc -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 deallocvt -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 dirname -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 dos2unix -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 dpkg -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 dpkg-dep -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 du -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 env -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 expr -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 find -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 free -> ../../bin/busybox
+-rwxr-xr-x    1 0        0          130778 Jan 13 16:27 /opt/STM/STLinux-2.2/devkit/sh4/target/usr/bin/gdbserver
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 head -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 hostid -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 id -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 killall -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 length -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 loadacm -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 loadfont -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 logger -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 logname -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 md5sum -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 mkfifo -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 nc -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 nslookup -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 printf -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 rdate -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 readlink -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 renice -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 reset -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 rpm2cpio -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 setkeycodes -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 sort -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 tail -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 tee -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 telnet -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 test -> ../../bin/busybox
+-rwxr-xr-x    1 0        0              17 Apr 25 10:54 /opt/STM/STLinux-2.2/devkit/sh4/target/usr/bin/tr
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 traceroute -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 tty -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 uniq -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 unix2dos -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 uptime -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 uudecode -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 uuencode -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 wc -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 wget -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 which -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 whoami -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 xargs -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 yes -> ../../bin/busybox
+
+
+/sbin:
+total 0
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 chroot -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 dutmp -> ../../bin/busybox
+lrwxrwxrwx    1 0        0              17 Apr 25 10:54 fbset -> ../../bin/busybox

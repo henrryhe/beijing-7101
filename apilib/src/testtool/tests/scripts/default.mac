@@ -1,0 +1,562 @@
+; ****************************************************************************
+; File         : DEFAULT.COM
+; Goal         : Tests for Testtool
+;              : Updated 26 October 2001
+; ****************************************************************************
+print "Starting execution of DEFAULT.COM file..."
+ERR_NB=0
+; ----------------------------------------------- Sub-program : ask a question
+define M_QUESTION MSG_P
+  print MSG_P
+  KEYCODE=getkey
+  if KEYCODE==89
+    KEYCODE=121
+  end
+  if KEYCODE!=121
+    ERR_NB=ERR_NB+1
+  end
+end
+; ------------------------------------------------- Embedded for x y z ... end
+define M_FORLOOP
+  CNT=0
+  for I 5 25 5
+    for J 5 1 -1
+      print "Loop " I/5 "/" J
+      CNT=CNT+1
+    end
+  end
+end CNT
+; ------------------------------------------- Embedded while condition ... end
+define M_WHILELOOP
+  CNT=0
+  I=5
+  while I<=25
+    J=5
+    while J>0
+      print "Loop " I/5 "/" J
+      CNT=CNT+1
+      J=J-1
+    end
+    I=I+5
+  end
+end CNT
+; ------------------------------------------------------------ Recursive calls
+define M_FACTORIAL VALUE
+  RES=0
+  define RECURSION NUM
+    if NUM>1
+      RES=RECURSION NUM-1
+      RES=RES*NUM
+      print "NUM " NUM " RES " RES
+    end
+    else
+      RES=NUM
+    end
+  end RES
+  RES=RECURSION VALUE
+end RES
+; ------------------------------------------------------------ If .. else
+define M_IF_ELIF_ELSE
+  RES=0
+  VAL=123
+  if VAL==123
+    RES=RES
+  end
+  elif VAL==456
+    RES=RES+1
+  end
+  elif VAL==456
+    RES=RES+1
+  end
+  else
+    RES=RES+1
+  end
+
+  VAL=147
+  if VAL==123
+    RES=RES+1
+  end
+  elif VAL==147
+    RES=RES
+  end
+  elif VAL==456
+    RES=RES+1
+  end
+  else
+    RES=RES+1
+  end
+
+  VAL=258
+  if VAL==123
+    RES=RES+1
+  end
+  elif VAL==147
+    RES=RES+1
+  end
+  elif VAL==258
+    RES=RES
+  end
+  else
+    RES=RES+1
+  end
+
+  VAL=369
+  if VAL==123
+    RES=RES+1
+  end
+  elif VAL==147
+    RES=RES+1
+  end
+  elif VAL==258
+    RES=RES+1
+  end
+  else
+    RES=RES
+  end
+
+  VAL=654
+  if VAL==123
+    RES=RES+1
+  end
+  elif VAL==654
+    if VAL==124
+      RES=RES+1
+    end
+    elif VAL==654
+      if VAL==125
+        RES=RES+1
+      end
+      elif VAL==655
+        RES=RES+1
+      end
+      else
+        if VAL==654
+          RES=RES
+        end
+        else
+          RES=RES+1
+        end
+      end
+    end
+    else
+      RES=RES+1
+    end
+  end
+  else
+    RES=RES+1
+  end
+end RES
+; ------------------------------------------------------------ comparison
+define M_COMPARISON
+  RES=0
+  x=753
+  y=1
+  z=52
+  if (x==75)
+    RES=RES+1
+  end
+  if (x!=753)
+    RES=RES+1
+  end
+  if !y
+    RES=RES+1
+  end
+  if !(x==753)
+    RES=RES+1
+  end
+  if (x==7)||(x==75)||(x==53)||(x==3)
+    RES=RES+1
+  end
+  if (x==753)&&(!y)||(x==753)&&(x==53)
+    RES=RES+1
+  end
+  if (x+y)<z
+    RES=RES+1
+  end
+  if (z-y)>x
+    RES=RES+1
+  end
+  if ((x+y)<z)||(x==0)
+    RES=RES+1
+  end
+end RES
+; ------------------------------------------------------------ macro return
+define M_RETURN VALUE
+end VALUE
+; ---------------------------------------------------------------- Macro tests
+define M_TEST1
+  print
+  print "------ M_TEST1 ------"
+  print "Test 2 embedded loops for ... end"
+  RET=M_FORLOOP
+  if RET==25
+    print "RESULT: M_FORLOOP SUCCESSFUL (" RET " loops done)"
+  end
+  else
+    print "RESULT: M_FORLOOP FAILURE ! (" RET " loops done instead of 25)"
+    ERR_NB=ERR_NB+1
+  end
+  print
+  print "Test 2 embedded loops while ... end"
+  RET=M_WHILELOOP
+  if RET==25
+    print "RESULT: M_WHILELOOP SUCCESSFUL (" RET " loops done)"
+  end
+  else
+    print "RESULT: M_WHILELOOP FAILURE ! (" RET " loops done instead of 25)"
+    ERR_NB=ERR_NB+1
+  end
+  print
+  print "Test a recursive function : factorial 12"
+  RET=M_FACTORIAL 12
+  if RET==479001600
+    print "RESULT: M_FACTORIAL SUCCESSFUL"
+  end
+  else
+    print "RESULT: M_FACTORIAL FAILURE ! (479001600 expected)"
+    ERR_NB=ERR_NB+1
+  end
+  print
+  print "Test if .. elif .. elif .. else .. end "
+  RET=M_IF_ELIF_ELSE
+  if RET==0
+    print "RESULT: M_IF_ELIF_ELSE SUCCESSFUL"
+  end
+  else
+    print "RESULT: M_IF_ELIF_ELSE FAILURE !"
+    ERR_NB=ERR_NB+1
+  end
+  print
+  print "Test macro return assignment "
+  STR="<-  10  -><-  10  -><-  10  -><-  10  -><-  10  -><-  10  -><-  10  -><-  10  -><-  10  ->"
+  RET2=M_RETURN STR
+  if RET2==STR
+    print "RESULT: M_RETURN SUCCESSFUL"
+  end
+  else
+    print "RESULT: M_RETURN FAILURE !"
+    ERR_NB=ERR_NB+1
+  end
+
+end
+; ---------------------------------------------------------------- Input tests
+define M_TEST2
+  print
+  print "------ M_TEST2 ------"
+  print "Press on space bar to continue the test sequence"
+  J=0
+  KEYCODE=0
+  while J<64000
+    KEYCODE=POLLKEY
+    if KEYCODE!=0
+      J=64000
+    end
+  end
+  print "You have pressed on " KEYCODE " key (code for space bar is 32)"
+  if KEYCODE==32
+    print "RESULT: POLLKEY SUCCESSFUL"
+  end
+  else
+    print "RESULT: POLLKEY FAILURE !"
+    ERR_NB=ERR_NB+1
+  end
+  print
+  print "Press on 'a' key (minus case)"
+  KEYCODE=GETKEY
+  print "You have pressed on " KEYCODE " key (code for letter 'a' is 97)"
+  if KEYCODE==97
+    print "RESULT: GETKEY SUCCESSFUL"
+  end
+  else
+    ERR_NB=ERR_NB+1
+    print "RESULT: GETKEY FAILURE !"
+  end
+end
+; -------------------------------------------------------------- Help and show
+define M_TEST3
+  print
+  print "------ M_TEST3 ------"
+  I=ERR_NB
+  help M_*
+  M_QUESTION "There is 16 command macros in the list : is it ok (Y/N) ?"
+  print
+  KEYCODE=121
+  STR="HELLO"
+  show
+  print "The list above should contain :"
+  print " 0: TRUE: 1 - integer constant"
+  print " 1: KEYCODE: 121 - integer variable"
+  print " 2: STR: "HELLO" - string variable"
+  M_QUESTION "Is it ok (Y/N) ?"
+  if ERR_NB==I
+    print "RESULT : HELP and SHOW tests sucessful"
+  end
+  else
+    print "RESULT : HELP and SHOW tests FAILURE !"
+  end
+end
+; --------------------------- Calculation, evaluation, comparison, base change
+define SIMPLE_MACRO
+  print "SIMPLE_MACRO macro execution success"
+end
+
+define M_TEST4
+  print
+  print "------ M_TEST4 ------"
+  I=ERR_NB
+  print "Expressions evaluation..."
+  X=((1+2)*3)/4
+  print "((1+2)*3)/4=" X
+  if X!=2
+    print "Wrong calculation !"
+    ERR_NB=ERR_NB+1
+  end
+  X=5+6*7%8
+  print "5+6*7%%8=" X
+  if X!=47
+    print "Wrong calculation !"
+    ERR_NB=ERR_NB+1
+  end
+  X=$10+o10+10+#10
+  print "$10+o10+10+#10=" X
+  if X!=36
+    print "Wrong evaluation !"
+    ERR_NB=ERR_NB+1
+  end
+  X=b10+o10+10+h10
+  print "b10+o10+10+h10=" X
+  if X!=36
+    print "Wrong evaluation !"
+    ERR_NB=ERR_NB+1
+  end
+  X=$10*O10*10*#10
+  print "$10*O10*10*#10=" X
+  if X!=2560
+    print "Wrong evaluation !"
+    ERR_NB=ERR_NB+1
+  end
+  X=B10*O10*10*H10
+  print "B10*O10*10*H10=" X
+  if X!=2560
+    print "Wrong evaluation !"
+    ERR_NB=ERR_NB+1
+  end
+  STR="This "+"string "+"is "+"the "+"concatenation "+"of "+"8 "+"chains"
+  print STR
+  if STR!="This string is the concatenation of 8 chains"
+    print "Bad !"
+    ERR_NB=ERR_NB+1
+  end
+  X=32564
+  STR="This bug is "
+  STR=STR+X+" millimeter long"
+  if STR!="This bug is 32564 millimeter long"
+    print "Bad !"
+    ERR_NB=ERR_NB+1
+  end
+
+  X=(b100|b111)+(b100^b111)+(b100&b111)
+  print "(b100|b111)+(b100^b111)+(b100&b111)=7+3+4=" X
+  if X!=14
+    print "Wrong logical operation!"
+    ERR_NB=ERR_NB+1
+  end
+  X=(~b00000000)+(~b11111111)+b01111111+b11111111+!b11111111
+  print "(~b00000000)+(~b11111111)+b01111111+b11111111+!b11111111=-1-256+127+255+0=" X
+  if X!=125
+    print "Wrong logical operation!"
+    ERR_NB=ERR_NB+1
+  end
+  print "Limit values assignments in each base ..."
+  hello=h80000000
+  hello=hCFFFFFF8
+  hello=hCFFFFFF7
+  hello=b11111111111111111111111111111101
+  hello=b11111111111111111111111111111110
+  hello=4294967295
+  hello=-1
+  hello=o37777777777
+  hello2=o37777777777
+  hello3=b11111111111111111111111111111111
+  hello4=hFFFFFFFF
+  M_QUESTION "Is it ok (no error message) (Y/N) ?"
+
+  EVAL "UNDEFINED_MACRO"
+  M_QUESTION "Is there exactly 1 error message above (Y/N) ?"
+  EVAL "SIMPLE_MACRO"
+  print "SIMPLE_MACRO macro execution success"
+  M_QUESTION "Are the two previous lines identical (Y/N) ?"
+  EVAL "print \"PRINT command execution succeeded\""
+  print "PRINT command execution succeeded"
+  M_QUESTION "Are the two previous lines identical (Y/N) ?"
+  EVAL "X=10+20+30"
+  if X!=60
+    print "Wrong evaluation !"
+    print "10+20+30=" X
+    ERR_NB=ERR_NB+1
+  end
+  X=30+40+50
+  eval "print \"30+40+50=\" X"
+  print "30+40+50=120"
+  M_QUESTION "Are the two previous lines identical (Y/N) ?"
+
+  print
+  print "Test comparison with OR (||), AND (&&), NOT (!) "
+  RET=M_COMPARISON
+  if RET==0
+    print "RESULT: M_COMPARISON SUCCESSFUL"
+  end
+  else
+    print "RESULT: M_COMPARISON FAILURE !"
+    ERR_NB=ERR_NB+1
+  end
+  print
+
+  if ERR_NB==I
+    print "RESULT : evaluation SUCCESSFUL"
+  end
+  else
+    print "RESULT : evaluation FAILURE !"
+  end
+end
+; ---------------------------------------------------------- Assignment errors
+define M_TEST5
+  print
+  print "------ M_TEST5 ------"
+  I=ERR_NB
+  print "Try to make a too big string..."
+  STR="<-  10  -><-  10  -><-  10  -><-  10  -><-  10  -><-  10  -><-  10  -><-  10  -><-  10  -><-  10  ->"
+  STR=STR+STR
+  STR=STR+STR
+  M_QUESTION "Is there exactly 1 error message above (Y/N) ?"
+
+  if ERR_NB==I
+    print "RESULT : error test SUCCESSFUL"
+  end
+  else
+    print "RESULT : error test FAILURE !"
+  end
+end
+; ------------------------------------------------------------------------ delete
+define M_TEST6
+  print
+  print "------ M_TEST6 ------"
+  I=ERR_NB
+  print "Use delete in nested macros..."
+  define DELETION_TEST
+    def NESTED_MACRO
+      print "dummy"
+    end
+    del NESTED_MAC*
+  end
+  DELETION_TEST
+  del DELETION_TEST
+  define DELETION_TEST
+    def NESTED_MACRO
+      print "dummy"
+    end
+    del NESTED_MAC*
+  end
+  DELETION_TEST
+  M_QUESTION "Is nested macro deleted twice (Y/N) ?"
+
+  if ERR_NB==I
+    print "RESULT : deletion test SUCCESSFUL"
+  end
+  else
+    print "RESULT : deletion test FAILURE !"
+  end
+end
+; ------------------------------------------------------------------------ strings
+define M_TEST7
+  print
+  print "------ M_TEST7 ------"
+  I=ERR_NB
+  print "Strings print tests ..."
+  STREAM_NAME="../../../scripts/susie.m1v"
+  print " 3 - Init.+open+start playing " STREAM_NAME " from memory"
+  print " 3 - Init.+open+start playing ../../../scripts/susie.m1v from memory"
+  M_QUESTION "Are the two previous lines identical (Y/N) ?"
+
+  STR="<-  10  -><-  10  -><-  10  -><-  10  -><-  10  ->"
+  STR=STR+STR+STR+STR+STR+"Ok"
+  print STR
+  M_QUESTION "Does the previous line ends by 'Ok' (Y/N) ?"
+
+  if ERR_NB==I
+    print "RESULT : strings test SUCCESSFUL"
+  end
+  else
+    print "RESULT : strings test FAILURE !"
+  end
+end
+; ------------------------------------------------------------------------ memory leak
+define M_TEST8
+  print
+  print "------ M_TEST8 ------"
+  I=ERR_NB
+  print "Memory leak tests ..."
+  LOOP_CPT=0
+  print " "
+  print "### START of test memory statistics"
+  STAT
+    while LOOP_CPT<10
+      T_CPT=1
+      while (T_CPT<100)
+        T_CPT=T_CPT+1
+        if (LOOP_CPT==9)&&(T_CPT==99)
+          print " "
+          print "### MIDDLE of test memory statistics"
+          STAT
+        end
+      end
+      LOOP_CPT=LOOP_CPT+1
+    end
+  print " "
+  print "### END of test memory statistics"
+  STAT
+  M_QUESTION "Does free blocks size sum and number of symbols at START and END of test the same (Y/N) ?"
+
+  if ERR_NB==I
+    print "RESULT : Memory leak test SUCCESSFUL"
+  end
+  else
+    print "RESULT : Memory leak test FAILURE !"
+  end
+end
+; ------------------------------------------------------------------------ End
+define M_END
+  print
+  print "------ END of TESTTOOL's tests ------"
+  print
+  TST_REVISION
+  print
+  if ERR_NB==0
+    print "RESULT : *** PASSED ***"
+  end
+  else
+    print "RESULT : *** FAILED ! ***"
+  end
+end
+; ----------------------------------------------------------------------- Main
+		print "Starting the tests sequence..."  ;do not remove tabulations on this line : DDTS GNBvd10434 fix checking
+KEYCODE=0
+LOG "default.log" "AO"
+M_TEST1
+M_TEST2
+M_TEST3
+M_TEST4
+M_TEST5
+M_TEST6
+M_TEST7
+M_TEST8
+print
+print "-------------------------------------------------"
+print "Now test with STTST_KEEP_CONTROL_VARIABLE_MODE..."
+print
+STTST_MODE=STTST_MODE|STTST_KEEP_CONTROL_VARIABLE_MODE
+TST_SetMode STTST_MODE
+M_TEST1
+M_END
+close
+; ****************************************************************************

@@ -1,0 +1,18 @@
+#!/bin/busybox sh
+
+# enable the proc filesystem
+mount -t proc none /proc
+
+# ensure the root filesystem is mounted read/write
+mount -o remount,rw /
+ 
+# move any libraries into /usr/lib (so the dynamic linker will find them)
+mkdir /usr/lib
+if [ -e /libmme_host.so ]
+then
+	mv /lib*.so /usr/lib
+fi
+
+#
+# automatically generated from this point onwards
+#

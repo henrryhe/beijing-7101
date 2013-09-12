@@ -1,0 +1,1513 @@
+;*******************************************************************************
+; File   :  DVMFUNC.MAC
+;           Macros to test STDVM/STPRM functionlity
+; Author :  JROY - MARCH 2006
+;*******************************************************************************
+;To source this file use the following command
+;source "../../../scripts/dvmfunc.mac"
+
+
+;*******************************************************************************
+;Name        : M_DVM_EXIT
+;Description : Exits From Test Application
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;*******************************************************************************
+
+define M_DVM_EXIT
+
+    print " "
+    print "**********************************************************************"
+    print "             !!!!!!!!!!! EXITING TEST !!!!!!!!!!!"
+    print "**********************************************************************"
+
+    print "Unmounting file system from storage device"
+    dvm_shut
+
+end ;M_DVM_EXIT
+
+
+;*******************************************************************************
+;Name        : M_DVM_INIT
+;Description : Initialize DVM, Opens Single Handle For Both Play And Record
+;              Locks The Tuner
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;*******************************************************************************
+
+define M_DVM_INIT
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_INIT >>>"
+    print "**********************************************************************"
+    print " "
+
+    ;Locking Tuner
+
+    print "Locking Tuners"
+    print " "
+    ERRORCOUNT=0
+
+;    wait 2400
+;    TUNER_LOCK 0 Tuner_FREQ Tuner_BandNum Tuner_FEC Tuner_MOD
+
+;    wait 2400
+;    TUNER_LOCK 1 Tuner_FREQ1 Tuner_BandNum1 Tuner_FEC1 Tuner_MOD1
+;    M_CHECK_RETCODE ERR_NO_ERROR
+
+;    if ERRORCOUNT!=0
+;        print "Error Occured In Locking Tuner"
+;        dvm_term DeviceName 1
+;        M_DVM_EXIT
+;    end
+
+;    if ERRORCOUNT==0
+;        print " "
+;        print "Tuners Successfully Locked"
+;        print " "
+;    end
+
+    ;Initializing DVM
+
+    print "Initializing  DVM"
+    print " "
+    ERRORCOUNT=0
+    DVM_Init DeviceName
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print "Error Occured Initializing DVM"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        print "DVM Initialized Successfully"
+        print " "
+    end
+
+    ;Opening Handle For Play
+
+    print "Opening Handles For Play"
+    print " "
+
+    if ERRORCOUNT==0
+        HDLPL1 = 0
+        HDLPL1=DVM_Open DeviceName "P" 0
+        M_CHECK_RETCODE ERR_NO_ERROR
+        HDLPL2 = 0
+        HDLPL2=DVM_Open DeviceName "P" 1
+        M_CHECK_RETCODE ERR_NO_ERROR
+        if ERRORCOUNT!=0
+            print "Error Occured In Opening Play Handles"
+            DVM_Term DeviceName 1
+            M_DVM_EXIT
+        end
+        if ERRORCOUNT==0
+            print "Handles Opened Successfully"
+            print " "
+        end
+    end
+
+    ;Opening Handle For Record
+
+    print "Opening Handles For Record"
+    print " "
+
+    if ERRORCOUNT==0
+        HDLRC1 = 0
+        HDLRC1=DVM_Open DeviceName "R" 0
+        M_CHECK_RETCODE ERR_NO_ERROR
+        HDLRC2 = 0
+        HDLRC2=DVM_Open DeviceName "R" 1
+        M_CHECK_RETCODE ERR_NO_ERROR
+        if ERRORCOUNT!=0
+            print "Error Occured In Opening Record Handle"
+            DVM_Term DeviceName 1
+            M_DVM_EXIT
+        end
+        if ERRORCOUNT==0
+            print "Handle Opened Successfully"
+            print " "
+        end
+    end
+end ;M_DVM_INIT
+
+
+;*******************************************************************************
+;Name        : M_DVM_MAIN_MENU
+;Description : Gives Interactive Menu
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;*******************************************************************************
+
+define M_DVM_MAIN_MENU
+
+    ERRORCOUNT=0
+    m=1
+
+    while m==1
+
+        print " "
+        print "**********************************************************************"
+        print "                     <<< M_DVM_MAIN_MENU >>>"
+        print "**********************************************************************"
+        print " "
+        print "Enter 1 To Test Basic A/V Decode Functionality"
+        print " "
+        print "Enter 2 To Test Single Record Functionality"
+        print " "
+        print "Enter 3 To Test Single PlayBack Functionality"
+        print " "
+        print "Enter 4 To Test Single Record Single Play Functionality"
+        print " "
+        print "Enter 5 To Test Dual Live Play"
+        print " "
+        print "Enter 6 To Test Dual Record Functionality"
+        print " "
+        print "Enter 7 To Test Dual Playback Functionality"
+        print " "
+        print "Enter 8 To Test Pause And Resume On Single Record"
+        print " "
+        print "Enter 9 To Test Pause And Resume On Single PlayBack"
+        print " "
+        print "Enter 10 To Test Time Shift Play"
+        print " "
+        print "Enter 11 To Test Play Change Pid Functionality"
+        print " "
+        print "Enter 12 To Test Record Change Pid Functuionality"
+        print " "
+        print "Enter 13 To Test Play Step Functionality"
+        print " "
+        print "Enter 14 To Test Audio Only Stream"
+        print " "
+        print "Enter 15 For Stress Test"
+        print " "
+        print "Enter 16 To Exit MainMenu"
+        print " "
+        print "Enter 17 To Term and Exit Application"
+        print " "
+        print "Please enter Your Choice"
+        print " "
+        ch=getstring
+
+        if ch=="1"
+            M_DVM_LIVEPLAY
+        end
+
+        if ch=="2"
+            M_DVM_SREC
+        end
+
+        if ch=="3"
+            M_DVM_SPLAY
+        end
+
+        if ch=="4"
+            M_DVM_SRECPLAY
+        end
+
+        if ch=="5"
+            M_DVM_DUAL_LIVEPLAY
+        end
+
+        if ch=="6"
+            M_DVM_DUAL_REC
+        end
+
+        if ch=="7"
+            M_DVM_DUAL_PLAY
+        end
+
+        if ch=="8"
+            M_DVM_REC_PAUSE
+        end
+
+        if ch=="9"
+            M_DVM_PLAY_PAUSE
+        end
+
+        if ch=="10"
+            M_DVM_TS_PLAY
+        end
+
+        if ch=="11"
+            M_DVM_PLAY_CH_PID
+        end
+
+        if ch=="12"
+            M_DVM_REC_CH_PID
+        end
+
+        if ch=="13"
+            M_DVM_PLAY_STEP
+        end
+
+        if ch=="14"
+            M_DVM_AUD_ONLY
+        end
+
+        if ch=="15"
+            M_DVM_STRESS
+        end
+
+        if ch=="16"
+            m=0
+        end
+
+        if ch=="17"
+            M_DVM_EXIT
+        end
+    end ;for
+end ;M_DVM_MAIN_MENU
+
+
+;*******************************************************************************
+;Name        : M_DVM_LIVEPLAY
+;Description : Testing Basic A/V Functioning
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 1
+;*******************************************************************************
+
+define M_DVM_LIVEPLAY
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_LIVEPLAY >>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "Testing Basic A/V Functioning. !!PLEASE WAIT!!"
+    print "**********************************************************************"
+    print " "
+
+    DVM_PlayStart HDLPL1 TSIN0 SWTS0 Play_NoOfPID_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    wait 2000
+
+    if ERRORCOUNT!=0
+        print "Basic A/V Not Functioning Properly"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        for i 1 i1
+            wait 1000
+        end
+        print "Basic A/V Functioning Properly"
+        DVM_PlayStop HDLPL1
+    end
+end ;M_DVM_LIVEPLAY
+
+
+;*******************************************************************************
+;Name        : M_DVM_SREC
+;Description : Tests Single Record Functionality
+;
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 2
+;*******************************************************************************
+
+define M_DVM_SREC
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_SREC >>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "Testing Single Record Functionality. !!PLEASE WAIT!!"
+    print "**********************************************************************"
+    print " "
+
+    ;Remove the streams if already exist
+    DVM_RemoveStream HDLRC1 Rec_StreamName_1
+
+    DVM_RecordStart HDLRC1 TSIN0 Rec_StreamName_1 Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print "Single Record Not Functioning Properly"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        print "Recording Started"
+        print " "
+        for i 1 i1
+            wait 1000
+            DVM_PrintRecordTime HDLRC1
+        end
+        DVM_RecordStop HDLRC1
+        if ERRORCOUNT==0
+            print "Single Record Working Properly"
+        end
+    end
+end ;M_DVM_SREC
+
+
+;*******************************************************************************
+;Name        : M_DVM_SPLAY
+;Description : Tests Single PlayBack Functionality
+;
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 3
+;*******************************************************************************
+
+define M_DVM_SPLAY
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_SPlay >>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "Testing Single playback Functionality. !!PLEASE WAIT!!"
+    print "**********************************************************************"
+    print " "
+
+    DVM_PlayStart HDLPL1 Rec_StreamName_1 SWTS0 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print "Single Play Back Not Functioning Properly"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+   end
+
+    if ERRORCOUNT==0
+        print "Play Back Started"
+        print " "
+        for i 1 i1
+            DVM_PrintPlayTime HDLPL1
+            wait 1000
+        end
+
+        if ERRORCOUNT==0
+            print "Single Play Back Working Properly"
+        end
+
+        DVM_PlayStop HDLPL1
+    end
+end ;M_DVM_SPLAY
+
+
+;*******************************************************************************
+;Name        : M_DVM_SRECPLAY
+;Description : Tests Single Record Single Playback Functionality
+;              Tests Pause And Resume On Single Playback And Single Record
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 4
+;*******************************************************************************
+
+define M_DVM_SRECPLAY
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_SRECPLAY >>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "Testing Single Record and single playback Functionality. !!PLEASE WAIT!!"
+    print "**********************************************************************"
+    print " "
+
+    M_DVM_SREC
+
+    M_DVM_SPLAY
+
+end ;M_DVM_SRECPLAY
+
+
+;*******************************************************************************
+;Name        : M_DVM_DUAL_LIVEPLAY
+;Description : Tests Dual A/V Functionality
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 5
+;*******************************************************************************
+
+define M_DVM_DUAL_LIVEPLAY
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_DUAL_LIVEPLAY >>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "Testing Dual A/V Functionality"
+    print "**********************************************************************"
+    print " "
+
+    DVM_PlayStart HDLPL1 TSIN0 SWTS0 Play_NoOfPID_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1 Play_StartSpeed
+
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    DVM_PlayStart HDLPL2 TSIN1 SWTS0 Play_NoOfPID_2 V_Type_2 V_PID_2 A_Type_2 A_PID_2 PCR P_PID_2 Play_StartSpeed
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print "Dual A/V Not Functioning Properly"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        for i 1 i1
+            wait 1000
+        end
+        print "Dual A/V Functioning Properly"
+        DVM_PlayStop HDLPL1
+        DVM_PlayStop HDLPL2
+    end
+end ;M_DVM_DUAL_LIVEPLAY
+
+
+;*******************************************************************************
+;Name        : M_DVM_DUAL_REC
+;Description : Tests Dual Record Functionality
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 6
+;*******************************************************************************
+
+define M_DVM_DUAL_REC
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_DUAL_REC >>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "Testing Dual Record Functionality"
+    print "**********************************************************************"
+    print " "
+
+    ;Remove the streams if already exist
+    DVM_RemoveStream HDLRC1 Rec_StreamName_1
+    DVM_RemoveStream HDLRC1 Rec_StreamName_2
+
+    DVM_RecordStart HDLRC1 TSIN0 Rec_StreamName_1 Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1 Rec_FileSizeInPack Rec_IsCircular Rec_EnableCrypt Rec_CryptKey
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    DVM_RecordStart HDLRC2 TSIN1 Rec_StreamName_2 Rec_ChannelName_2 Rec_NumberOfPIDS_2 V_Type_2 V_PID_2 A_Type_2 A_PID_2 PCR P_PID_2 Rec_FileSizeInPack Rec_IsCircular Rec_EnableCrypt Rec_CryptKey
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print "Dual Record Not Functioning Properly"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        print "Recording Started"
+        print " "
+        for i 1 i1
+            wait 1000
+        end
+
+        DVM_RecordStop HDLRC1
+        DVM_RecordStop HDLRC2
+
+        if ERRORCOUNT==0
+            print "Dual Record Working Properly"
+        end
+    end
+end ;M_DVM_DUAL_REC
+
+
+;*******************************************************************************
+;Name        : M_DVM_DUAL_PLAY
+;Description : Tests Dual Play Back Functionality
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 7
+;*******************************************************************************
+
+define M_DVM_DUAL_PLAY
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_DUAL_PLAY >>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "Testing Dual Play Back Functionality"
+    print "**********************************************************************"
+    print " "
+
+    DVM_PlayStart HDLPL1 Rec_StreamName_1 SWTS0 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1 Play_StartPosInMS Play_StartSpeed Play_EnableCrypt Play_CryptKey
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    DVM_PlayStart HDLPL2 Rec_StreamName_2 SWTS0 Rec_NumberOfPIDS_2 V_Type_2 V_PID_2 A_Type_2 A_PID_2 PCR P_PID_2 Play_StartPosInMS Play_StartSpeed Play_EnableCrypt Play_CryptKey
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print "Dual A/V Not Functioning Properly"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        for i 1 i1
+            wait 1000
+        end
+        print "Dual Play Back Functioning Properly"
+        DVM_PlayStop HDLPL1
+        DVM_PlayStop HDLPL2
+    end
+end ;M_DVM_DUAL_PLAY
+
+
+;*******************************************************************************
+;Name        : M_DVM_REC_PAUSE
+;Description : Tests Pause And Resume On Single Record
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 8
+;*******************************************************************************
+
+define M_DVM_REC_PAUSE
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_REC_PAUSE>>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "Testing Pause And Resume On Single Record"
+    print "**********************************************************************"
+    print " "
+
+    ;Remove the streams if already exist
+    DVM_RemoveStream HDLRC1 Rec_StreamName_1
+
+    DVM_RecordStart HDLRC1 TSIN0 Rec_StreamName_1 Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    for i 1 2
+        print "Testing Pause On Single Record"
+        print " "
+        DVM_RecordPause HDLRC1
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+        if ERRORCOUNT!=0
+            print "Pause On Single Record Not Functioning Properly"
+            DVM_Term DeviceName 1
+            M_DVM_EXIT
+        end
+
+        if ERRORCOUNT==0
+            for i 1 i2
+                wait 1000
+            end
+        end
+
+        print " "
+        print "Testing Resume On Single Record"
+        print " "
+        DVM_RecordResume HDLRC1
+        M_CHECK_RETCODE ERR_NO_ERROR
+        if ERRORCOUNT!=0
+            print "Resume On Single Record Not Functioning Properly"
+            DVM_Term DeviceName 1
+            M_DVM_EXIT
+        end
+
+        print " "
+        if ERRORCOUNT==0
+            for i 1 i2
+                wait 1000
+                DVM_PrintRecordTime HDLRC1
+            end
+        end
+
+        if i==2
+            if ERRORCOUNT==0
+                print " "
+                print "Pause On Single Record Functioning Properly"
+                print " "
+                print "Resume On Single Record Functioning Properly"
+                print " "
+                print "Status After Single Record :"
+                DVM_RecordGetStatus HDLRC1
+                DVM_RecordGetTime HDLRC1
+                print " "
+            end
+        end
+    end
+
+    print " "
+    if ERRORCOUNT==0
+        print "Pause And Resume On Single Record Working Properly"
+    end
+
+    if ERRORCOUNT!=0
+        print "Pause And Resume On Single Record Not Working Properly"
+    end
+
+    DVM_RecordStop HDLRC1
+
+end ;M_DVM_REC_PAUSE
+
+
+
+;*******************************************************************************
+;Name        : M_DVM_PLAY_PAUSE
+;Description : Tests Pause And Resume On Single Playback
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 9
+;*******************************************************************************
+
+define M_DVM_PLAY_PAUSE
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_PLAY_PAUSE>>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "Testing Pause And Resume On Single PlayBack"
+    print "**********************************************************************"
+    print " "
+
+    print "Please Wait While Stream is Being Recorded"
+    print " "
+
+    ;Remove the streams if already exist
+    DVM_RemoveStream HDLRC1 Rec_StreamName_1
+
+    DVM_RecordStart HDLRC1 TSIN0 Rec_StreamName_1 Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print "!!! ERROR In Recording !!!"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        for i 1 30
+            wait 1500
+            DVM_PrintRecordTime HDLRC1
+        end
+        DVM_RecordStop HDLRC1
+        print " "
+        print "Recording Completed Successfully"
+        print " "
+    end
+
+    DVM_PlayStart HDLPL1 Rec_StreamName_1 SWTS0 Play_NoOfPID_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+
+    for i 1 2
+        print "Testing Pause On Single Play Back"
+        print " "
+
+        DVM_PlayPause HDLPL1
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+        if ERRORCOUNT!=0
+            print "Pause On Single Play Back Not Functioning Properly"
+            DVM_Term DeviceName 1
+            M_DVM_EXIT
+        end
+
+        if ERRORCOUNT==0
+            for i 1 i2
+                wait 1000
+            end
+        end
+
+        print "Testing Resume On Single Play Back"
+        print " "
+
+        DVM_PlayResume HDLPL1
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+        if ERRORCOUNT!=0
+            print "Resume Single Play Back Not Functioning Properly"
+            DVM_Term DeviceName 1
+            M_DVM_EXIT
+        end
+
+        print " "
+        if ERRORCOUNT==0
+            for j 1 i2
+                wait 1000
+            end
+        end
+
+        if i==2
+            if ERRORCOUNT==0
+                print " "
+                print "Pause On Single Play Back Functioning Properly"
+                print " "
+                print "Resume On Single Play Back Functioning Properly"
+                print " "
+                print "Status After Single PlayBack is :"
+                DVM_PlayGetStatus HDLPL1
+                DVM_PlayGetTime HDLPL1
+                print " "
+            end
+        end
+    end ;For Loop
+
+    if ERRORCOUNT==0
+        print "Pause And Resume On Single Playback Working Properly"
+    end
+
+    if ERRORCOUNT!=0
+        print "Pause And Resume On Single Playback Not Working Properly"
+    end
+
+    DVM_PlayStop HDLPL1
+
+end ;M_DVM_PLAY_PAUSE
+
+
+;*******************************************************************************
+;Name        : M_DVM_TS_PLAY
+;Description : Tests Time Shift Play
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 10
+;*******************************************************************************
+
+define M_DVM_TS_PLAY
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_TS_PLAY >>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "Testing Time Shift Play"
+    print "**********************************************************************"
+    print " "
+
+    DVM_PlayStart HDLPL1 TSIN0 SWTS0 Play_NoOfPID_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print "!!! ERROR IN LIVE PLAY !!!"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        print " "
+        print "Stream Being Played Live"
+        print " "
+
+        for j 1 12
+            wait 1000
+        end
+
+        ;Remove the streams if already exist
+        DVM_RemoveStream HDLRC1 Rec_StreamName_1
+
+        DVM_PlayPauseRecord HDLPL1 HDLRC1 TSIN0 Rec_StreamName_1 Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+        print " "
+        print "Live Play Back is Now Paused"
+        print " "
+        print "Please Wait Stream is Being Recorded"
+        print " "
+
+        M_CHECK_RETCODE ERR_NO_ERROR
+        if ERRORCOUNT!=0
+            print "!!! Time Shift Play Not Working Properly !!!"
+            DVM_Term DeviceName 1
+            M_DVM_EXIT
+        end
+
+        if ERRORCOUNT==0
+            for j 1 12
+                wait 1000
+                DVM_PrintRecordTime HDLRC1
+            end
+            print " "
+            print "Playing Recorded Stream With Recording Still In Progress"
+            print " "
+
+            DVM_PlayResume HDLPL1
+            M_CHECK_RETCODE ERR_NO_ERROR
+            print " "
+            for j 1 6
+                wait 1000
+                DVM_PrintPlayTime HDLPL1
+            end
+
+            print " "
+            print "Recording Stopped Playing Recorded Stream"
+            print " "
+
+            DVM_RecordStop HDLRC1
+            M_CHECK_RETCODE ERR_NO_ERROR
+
+            for j 1 14
+                wait 1000
+                DVM_PrintPlayTime HDLPL1
+            end
+
+            print "Recorded Stream Played Fully"
+            print " "
+
+            DVM_PlayStop HDLPL1
+        end
+    end
+
+    if ERRORCOUNT==0
+        print " "
+        print "Time Shift Play Working Properly"
+    end
+
+    if ERRORCOUNT!=0
+        print "!!! Time Shift Play Not Working Properly !!!"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+end ;DVM_TS_PLAY
+
+
+;*******************************************************************************
+;Name        : M_DVM_PLAY_CH_PID
+;Description : Tests Play Change PID Functionality
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 11
+;*******************************************************************************
+
+define M_DVM_PLAY_CH_PID
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_PLAY_CH_PID >>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "Testing Play Change PID Functionality"
+    print "**********************************************************************"
+    print " "
+
+    DVM_PlayStart HDLPL1 TSIN0 SWTS0 Play_NoOfPID_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print "!!! ERROR IN LIVE PLAY !!!"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        print " "
+        print "Stream Being Played Live With 1st Set Of Pids"
+        print " "
+
+        for j 1 6
+            wait 1000
+        end
+    end
+
+    DVM_PlayChangePids HDLPL1 Play_NoOfPID_1 NEW_V_Type NEW_V_PID NEW_A_Type NEW_A_PID PCR NEW_P_PID
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print "!!! ERROR IN PLAY Change PIDS !!!"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        print " "
+        print "Stream Being Played Live With 2st Set Of Pids"
+        print " "
+
+        for j 1 6
+            wait 1000
+        end
+    end
+
+    if ERRORCOUNT==0
+        print " "
+        print "Play Change PID Functionaing Properly"
+        print " "
+        DVM_PlayStop HDLPL1
+    end
+end ;M_DVM_PLAY_CH_PID
+
+
+;*******************************************************************************
+;Name        : M_DVM_REC_CH_PID
+;Description : Tests Record Change PID Functionality
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 12
+;*******************************************************************************
+
+define M_DVM_REC_CH_PID
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_REC_CH_PID >>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "Testing Record Change PID Functionality"
+    print "**********************************************************************"
+    print " "
+
+    ;Remove the streams if already exist
+    DVM_RemoveStream HDLRC1 "dvm_rec_change_pid_test"
+
+    DVM_RecordStart HDLRC1 TSIN0 "dvm_rec_change_pid_test" Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print "!!! ERROR IN RECORDING !!!"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        print " "
+        print "Stream Being Recorded With 1st Set Of Pids"
+        print " "
+
+        for j 1 6
+            wait 1000
+            DVM_PrintRecordTime HDLRC1
+        end
+    end
+
+    DVM_RecordChangePids HDLRC1 Rec_NumberOfPIDS_1 NEW_V_Type NEW_V_PID NEW_A_Type NEW_A_PID PCR NEW_P_PID
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print "!!! ERROR IN RECORD CHANGE PIDS !!!"
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        print " "
+        print "Stream Being Recorded With 2st Set Of Pids"
+        print " "
+
+        for j 1 6
+            wait 1000
+            DVM_PrintRecordTime HDLRC1
+        end
+    end
+
+    DVM_RecordStop HDLRC1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print "!!! ERROR IN RECORD CHANGE PIDS !!!"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    DVM_PlayStart HDLPL1 "dvm_rec_change_pid_test" SWTS0 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print "!!! ERROR IN RECORD CHANGE PIDS PLAYBACK !!!"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        for j 1 12
+            wait 1000
+        end
+        print " "
+        print "Record Change PID Functionaing Properly"
+        print " "
+        DVM_PlayStop HDLPL1
+    end
+end ;M_DVM_REC_CH_PID
+
+
+;*******************************************************************************
+;Name        : M_DVM_PLAY_STEP
+;Description : Tests Play Step Functionality
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 13
+;*******************************************************************************
+
+define M_DVM_PLAY_STEP
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_PLAY_STEP >>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "Testing Play Step Functionality"
+    print "**********************************************************************"
+    print " "
+
+    print "Please Wait While Stream is Being Recorded"
+
+    ;Remove the streams if already exist
+    DVM_RemoveStream HDLRC1 Rec_StreamName_1
+
+    DVM_RecordStart HDLRC1 TSIN0 Rec_StreamName_1 Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    if ERRORCOUNT!=0
+        print " "
+        print "!!! ERROR IN RECORDING  !!!"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        print " "
+
+        for i 1 6
+            wait 1000
+            DVM_PrintRecordTime HDLRC1
+        end
+
+        DVM_RecordStop HDLRC1
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+        print " "
+        print "Playing Recorded Stream"
+        print " "
+
+        DVM_PlayStart HDLPL1 Rec_StreamName_1 SWTS0 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+        DVM_PlayPause HDLPL1
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+        if ERRORCOUNT==0
+            print "Play Paused"
+            print " "
+            print "Starting Forward Step Play"
+            print " "
+
+            DVM_PlayStep HDLPL1
+            M_CHECK_RETCODE ERR_NO_ERROR
+
+            if ERRORCOUNT==0
+                for i 1 160
+                    wait 1000
+                    DVM_PlayStep HDLPL1
+                    M_CHECK_RETCODE ERR_NO_ERROR
+                end
+            end
+        end
+
+        DVM_PlayResume HDLPL1
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+        DVM_PlaySetSpeed HDLPL1 -100
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+        DVM_PlayPause HDLPL1
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+        if ERRORCOUNT==0
+            print "Play Paused"
+            print " "
+            print "Starting Backward Step Play"
+            print " "
+
+            DVM_PlayStep HDLPL1
+            M_CHECK_RETCODE ERR_NO_ERROR
+
+            if ERRORCOUNT==0
+                for i 1 160
+                    wait 1000
+                    DVM_PlayStep HDLPL1
+                    M_CHECK_RETCODE ERR_NO_ERROR
+                end
+            end
+        end
+    end
+
+    if ERRORCOUNT==0
+        DVM_PlayStop HDLPL1
+        print " "
+        print "Play Step Functionaing Properly"
+        print " "
+    end
+end ;M_DVM_PLAY_STEP
+
+
+;*******************************************************************************
+;Name        : M_DVM_AUD_ONLY
+;Description : For Audio Stream Only
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 14
+;*******************************************************************************
+
+define M_DVM_AUD_ONLY
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_AUD_ONLY >>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "Testing Audio Only Functionality On Live Play"
+    print "**********************************************************************"
+    print " "
+
+    DVM_PlayStart HDLPL1 TSIN0 SWTS0 2 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    for i 1 i4
+        wait 1000
+    end
+
+    if ERRORCOUNT==0
+        print "Audio Only Live Play Working Properly"
+        print " "
+    end
+
+    DVM_PlayStop HDLPL1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    print "**********************************************************************"
+    print "Testing Audio Only Functionality On Single Record"
+    print "**********************************************************************"
+    print " "
+
+    ;Remove the streams if already exist
+    DVM_RemoveStream HDLRC1 Rec_StreamName_1
+
+    DVM_RecordStart HDLRC1 TSIN0 Rec_StreamName_1 Rec_ChannelName_1 2 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    for i 1 i4
+        wait 1000
+        DVM_PrintRecordTime HDLRC1
+    end
+
+    if ERRORCOUNT==0
+        print "Audio Only On Single Record Working Properly"
+        print " "
+        DVM_RecordStop HDLRC1
+    end
+
+
+    print "**********************************************************************"
+    print "Testing Audio Only Functionality On Single Play Back"
+    print "**********************************************************************"
+    print " "
+
+    DVM_PlayStart HDLPL1 Rec_StreamName_1 SWTS0 2 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    for i 1 i4
+        wait 1000
+        DVM_PrintPlayTime HDLRC1
+    end
+
+    if ERRORCOUNT==0
+        DVM_PlayStop HDLPL1
+        print "Audio Only On Single Play Back Working Properly"
+        print " "
+    end
+
+    if ERRORCOUNT!=0
+        DVM_PlayStop HDLPL1
+        print "Audio Only Functionality Not Working Properly"
+        print " "
+        M_DVM_EXIT
+    end
+end ;M_DVM_AUD_ONLY
+
+
+;*******************************************************************************
+;Name        : M_DVM_STRESS
+;Description : Stress Test
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   : 15
+;*******************************************************************************
+
+define M_DVM_STRESS
+
+    ERRORCOUNT=0
+
+    print " "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_STRESS >>>"
+    print "**********************************************************************"
+    print " "
+
+    print "**********************************************************************"
+    print "STRESS TEST"
+    print "**********************************************************************"
+    print " "
+
+    print "Please Wait While Stream is Being Recorded"
+    print " "
+
+    ;Remove the streams if already exist
+    DVM_RemoveStream HDLRC1 Rec_StreamName_1
+
+    DVM_RecordStart HDLRC1 TSIN0 Rec_StreamName_1 Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+
+    if ERRORCOUNT!=0
+        print "!!! ERROR In Recording !!!"
+        DVM_Term DeviceName 1
+        M_DVM_EXIT
+    end
+
+    if ERRORCOUNT==0
+        for i 1 i3
+            wait 1000
+            DVM_PrintRecordTime HDLRC1
+        end
+        DVM_RecordStop HDLRC1
+        print " "
+        print "Recording Completed Successfully"
+        print " "
+    end
+
+    ERRORCOUNT=0
+    DVM_PlayStart HDLPL1 Rec_StreamName_1 SWTS0 Play_NoOfPID_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    for i 1 30
+        Rand=TIME_NOW
+        play=Rand%6
+        play=play+1
+
+        if play==1
+            Rand=TIME_NOW
+            speed=Rand%128 +1
+            speed=speed*100
+            if speed==0
+                speed = 100
+            end
+
+             DVM_PlaySeek HDLPL1 0 0 59
+             DVM_PlaySetSpeed HDLPL1 speed
+             DVM_PlayGetSpeed HDLPL1
+             Rand=TIME_NOW
+             wait_play=Rand%40*2000
+             m = wait_play%30
+             m = m+5
+
+            for i 0 m
+                wait 10000
+                DVM_PlayGetTime HDLPL1
+                TIME_Left=ENDTIME-Rand
+                if Time_Left<=0
+                    DVM_PlaySeek HDLPL1 TSIN0 0 100
+                    ;DVM_PrintPlayTime HDLPL1
+                end
+            end
+        end
+
+        if play==2
+            Rand=TIME_NOW
+            speed=Rand%128+1
+            speed=1/(speed*10)
+            speed=speed
+            if speed==0
+                speed=100
+            end
+
+            DVM_PlaySetSpeed HDLPL1 speed
+            DVM_PlayGetSpeed HDLPL1
+            DVM_PlayGetTime HDLPL1
+            Rand=TIME_NOW
+            wait_play=Rand%40*2000
+            print "wait_play 0" wait_play
+            m = wait_play%20 +1
+            m=m+5
+            for i 0 m
+                wait 1000
+                DVM_PlayGetTime HDLPL1
+                TIME_Left=ENDTIME-Rand
+                if Time_Left<=0
+                    DVM_PlaySeek HDLPL1 TSIN0 0 100
+                    ;DVM_PrintPlayTime HDLPL1
+                end
+            end
+        end
+
+        if play==3
+            Rand=TIME_NOW
+            speed=Rand%128+1
+            speed=-speed*100
+            if speed==0
+                speed=100
+            end
+            DVM_PlaySeek HDLPL1 0 50 40
+            DVM_PlaySetSpeed HDLPL1 speed
+            DVM_PlayGetSpeed HDLPL1
+            DVM_PlayGetTime HDLPL1
+            Rand=TIME_NOW
+            wait_play=Rand%40*2000
+            m = wait_play%30 +1
+            m=m+5
+            for i 0 m
+                DVM_PlayGetTime HDLPL1
+                TIME_Left=ENDTIME-Rand
+                if Time_Left<=12000
+                    DVM_PlaySeek HDLPL1 TSIN0 0 100
+                    ;DVM_PrintPlayTime HDLPL1
+                end
+            end
+        end
+
+        if play==4
+            Rand=TIME_NOW
+            speed=Rand%128+1
+            speed=-1/(speed*10)
+            if speed==0
+                speed=100
+            end
+            DVM_PlaySeek HDLPL1 0 0 59
+            DVM_PlaySetSpeed HDLPL1 speed
+            DVM_PlayGetSpeed HDLPL1
+            DVM_PlayGetTime HDLPL1
+            Rand=TIME_NOW
+            wait_play=Rand%40*2000
+            m = wait_play%30 +1
+            m=m+5
+            for i 0 m
+                DVM_PlayGetTime HDLPL1
+                TIME_Left=ENDTIME-Rand
+                if Time_Left<=12000
+                    DVM_PlaySeek HDLPL1 TSIN0 0 100
+                    ;DVM_PrintPlayTime HDLPL1
+                end
+            end
+        end
+
+        if play==5
+            Rand=TIME_NOW
+            Rand=Rand/1000
+            Hours=Rand/3600
+            Rand=Rand%3600
+            Mins=Rand/60
+            Secs=Rand%60
+            DVM_PlaySeek HDLPL1 Hours Mins Secs
+        end
+
+        if play==6
+            Rand=TIME_NOW
+            m = Rand*100
+            print "Starting Step Play"
+            DVM_PlayPause HDLPL1
+            for i 0 m
+                DVM_PlayStep HDLPL1
+            end
+            DVM_PlayResume HDLPL1
+        end
+    end
+
+    DVM_PlayStop HDLPL1
+    if ERRORCOUNT==0
+        print "Stress Test Completed Successfully"
+        print " "
+    end
+
+    if ERRORCOUNT!=0
+        print "Stress Test Not Completed Successfully"
+        print " "
+        M_DVM_EXIT
+    end
+end ;M_DVM_STRESS
+
+;M_DVM_INIT
+
+M_DVM_MAIN_MENU
+
+;EOF

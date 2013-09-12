@@ -1,0 +1,127 @@
+;*****************************************************************************
+; File   :  VMIX11.MAC
+;           Test flicker filter feature
+;           See STVMIX component test specification document for use
+;*****************************************************************************
+
+
+
+
+;*******************************************************************************
+;Name        : M_VMIX11_5100
+;Description : Test flicker filter feature for 5100/5105/5301/5188, various layers
+;*******************************************************************************
+define M_VMIX11_5100
+    api_report "M_VMIX11_5100: Test flicker filter feature"
+    api_checkerr
+
+    ; Init DENC, VTG & VOUT
+    M_COMMON_BEIO "ON"
+
+    ; Init all possible layer
+
+    ; Layer OSD
+    layer_init "OSD" COMPOSITOR
+    HDLOSD=layer_open "OSD"
+
+    if (API_CHIPID=="5188")||((API_CHIPID=="5105")&&(DEVICE_SELECTED_5118==1))
+        HDLVPOSD=layer_openvp HDLOSD 5 STAPIGATDATA+"bateauCLUT8.gam" 0 0
+    end
+    else
+        HDLVPOSD=layer_openvp HDLOSD 2 0 0
+    end
+    layer_enable HDLVPOSD
+
+    ; Layer LVIDEO
+    layer_init "LVIDEO" COMPOSITOR
+    HDLVID1=layer_open "LVIDEO"
+    HDLVPVID1=layer_openvp HDLVID1 5 STAPIGATDATA+"5528pictyuv.gam" 0 0
+    layer_enable HDLVPVID1
+
+
+    ; Init mixer
+    vmix_init
+    HDLVMIX1 = vmix_open
+    vmix_enable
+    ; code related to the chroma luma delay WA
+    if (API_CHIPID=="5100")
+        STRMODE=vtg_getmode HDLVTGMAIN
+        Mode=api_evalstr STRMODE 1
+        VMIX_CLDelayWA HDLVMIX1 Mode  ; if WA_CLDELAY_USED is not defined this function do nothing
+    end
+
+
+    vmix_connect , "OSD"
+    api_quest "Is OSD on screen, flickring?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    lay_ena_flt HDLVPOSD
+    api_quest "Is flicker filter enabled?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+    lay_dis_flt HDLVPOSD
+    api_quest "Is flicker filter disabled?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    layer_svpalpha HDLVPOSD 75
+    vmix_con , "LVIDEO" "OSD"
+
+    api_quest "Is Video on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+    lay_ena_flt HDLVPOSD
+    api_quest "Is flicker filter enabled?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+    lay_dis_flt HDLVPOSD
+    api_quest "Is flicker filter disabled?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+    ;  Term all possible layer
+    ; Layer OSD
+    layer_disable HDLVPOSD
+    layer_closevp HDLVPOSD
+    layer_close HDLOSD
+    layer_term "OSD" 1
+
+    ; Layer Video
+    layer_disable HDLVPVID1
+    layer_closevp HDLVPVID1
+    layer_close HDLVID1
+    layer_term "LVIDEO" 1
+
+    ; Term mixer
+    vmix_disable
+    vmix_close
+    vmix_term
+
+    ;  Term DENC, VTG & VOUT
+    M_COMMON_BEIO "OFF"
+
+    api_report "M_VMIX1_5100" ERRORCOUNT
+end  ;M_VMIX1_5100
+
+
+
+
+;*******************************************************************************
+;Name        : M_VMIX11_MAIN
+;Description : Main function redirect to specific targetting sub macros
+;*******************************************************************************
+define M_VMIX11_MAIN
+    ERRORCOUNT = 0
+    print ""
+    print "Starting M_VMIX11..."
+    RET=MC_CHECK_TYPE
+    if RET&32  ; 5100/5105/5301/5188
+        M_VMIX11_5100
+    end
+
+    MC_CHECK_ERROR
+    ERR_VMIX11=GLOBERR
+end ; M_VMIX11_MAIN
+

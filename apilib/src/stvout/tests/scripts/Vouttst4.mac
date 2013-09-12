@@ -1,0 +1,110 @@
+; ****************************************************************************
+; File         : VOUTTST4.MAC
+; Requirements :
+; Author       : Imen Cheikh-Ali - May 2005
+; ****************************************************************************
+; M_TEST_SWITCHMODE :Test for STi7710 and STi7100
+; M_TEST9_OUTPUTS ALL_TEST1:Test for STi7710 and STi7100
+; general behavior :
+; driver is assumed to be not initialized before starting these file tests
+
+; test switch modes
+
+define M_TEST_SWITCHMODE
+
+   print " ----------------------------------"
+   print " test DAC YUV value,"
+   print " Switch 1080i and 480i modes"
+   print " ----------------------------------"
+  ; set HD mode 1080i
+    if (API_CHIPID=="7710")
+      if (CHIP_CUT=="STI7710_CUT2x")
+        vtg_init "VTG1" 5 h20103000
+      end
+      else
+        vtg_init "VTG1" 5 h20103c00
+      end
+    end
+    else
+       vtg_init "VTG1"
+    end
+    hdl_vtg1=vtg_open "VTG1"
+    vtg_setmode hdl_vtg1 "MODE_1080I60000_74250"
+    if HDDACS==1
+     vout_init "VoutYuvHd" DEVICETYPE "HD_YUV" , , , , , 1
+    end
+    else
+     vout_init "VoutYuvHd" DEVICETYPE "HD_YUV"
+    end
+    hndl_yuvhd=vout_open "VoutYuvHd"
+    vout_setparams hndl_yuvhd "HD_YUV"
+    vout_enable hndl_yuvhd
+    if HDDACS==1
+       vtg_so hdl_vtg1 0 1
+       vout_setemb hndl_yuvhd "HD_YUV" 1 0 4
+    end
+    print "  --> HD Display ok?"
+    api_quest
+    vout_close hndl_yuv
+    vout_term "VoutYuvHd"
+
+    ;set SD mode 480i
+    denc_init
+    str=denc_capa
+    DENCVERSION=api_evalstr str 5
+    HDLDENC=denc_open
+    denc_setmode HDLDENC "NTSCM"
+    vtg_setmode hdl_vtg1 "MODE_480I59940_13500"
+    vout_init "VOUT1" DEVICETYPE "YUV" , , , , , 1
+    hndl_yuv=vout_open "VOUT1"
+    vout_enable hndl_yuv
+
+    VOUTSetDenc
+    api_quest  "is 480I on TV ok?"
+    vout_close hndl_yuv
+    vout_term "VOUT1"
+    vtg_close hdl_vtg1
+    vtg_term "VTG1"
+    denc_close HDLDENC
+    denc_term
+
+
+end
+
+define M_TEST9_OUTPUTS ALL_TEST1
+  loop=0
+  swchoice=""
+  while loop==0
+    if ALL_TEST1==1
+      swchoice="all"
+    end
+    else
+      print "-------------------------------------------------"
+      print "Test SWITCHING HD(1080i) and SD(480i) modes "
+      choice=""
+      print " 1  - test case M_TEST_SWITCHMODE       "
+      if (ST_OS=="LINUX")
+        print " x - to Quit this menu"
+      end
+      else
+        print " hit return to Quit this menu"
+      end
+      print " Enter your choice :"
+      swchoice=getstring
+    end
+    if swchoice==""
+        loop=1
+    end
+
+    if (ST_OS=="LINUX")
+        if swchoice=="x"
+          print "exit"
+          loop=1
+        end
+    end
+
+    if swchoice=="1"
+        M_TEST_SWITCHMODE
+    end
+  end
+end

@@ -1,0 +1,169 @@
+; ****************************************************************************
+; File         : HDMISINK.MAC
+; Requirements :
+; Author       : Adel Chaouch - May 2005
+; ****************************************************************************
+; Test :
+; M_HDMI_PARSE_EDID
+
+define M_HDMI_PARSE_EDID
+STVOUT_HDCP = 0
+STVOUT_HPD = 0
+  api_checkerr
+  hndl_hdmi=0
+  ;if HDOUT==0
+  ;  print " capabilities not available! "
+  ;end
+  ;else
+    OUTPUTTYPE="HDMI_RGB888"
+    HD_MODE="MODE_1080I60000_74250"
+    print " -----------------------------------------------"
+    print "               EDID RETRIEVAL TEST              "
+    print " Retrieve and Parse the capabilities of the SINK"
+    print " -----------------------------------------------"
+    print " "
+    ERRORCOUNT=0
+    M_BEIO_ON "HD"
+    api_checkerr
+    M_LAYER1_ON 1920 1080
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+    ; for linux
+    if (ST_OS=="LINUX")
+    vid_setup HDLVID1 1 LMI_VID
+    end
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 0
+    print " Please Wait For few minutes..."
+    vout_start
+    vout_enable
+    if (API_CHIPID=="7200")
+        poke hfd10c380 h02330233
+        poke hfd10c388 h04270417
+        poke hfd10C384 h02320232
+        poke hfd10c38C h08730863
+        ;poke hfd10c37c h7f004f
+        poke hfd10c37c h4f001f
+    end
+    if API_CHIPID=="7710"
+    aud_init
+    end
+    if (ST_OS=="LINUX")
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"atsc_05c.m2v"
+    end
+    else
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"MELCO2B.M2V"
+    end
+    vid_start , 0 1 1
+    vid_inject -1
+    print "   --- Set HDMI on ---"
+    hdmi_init "HDMI" DEVICETYPE OUTPUTTYPE
+    hnd=hdmi_open "HDMI"
+    hdmi_snkcapa "HDMI"
+    vout_getstate
+    hdmi_filledid hnd
+    hdmi_freememory hnd
+    api_quest "Is the Sink EDID retrieved?"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest "Mode 1080I OK on HDMI TV ?"
+    print "   --- Set HDMI off ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    M_ALL_OFF
+    print "--- end -------------------------------"
+    M_CHECK_TEST_ERROR 0
+    ERR_BAS=GLOBERR
+ ;end
+end
+
+
+define M_TEST_HDMI_CEC
+api_checkerr
+  hndl_hdmi=0
+    OUTPUTTYPE="HDMI_RGB888"
+    ;HD_MODE="MODE_1080I60000_74250"
+    ;HD_MODE="MODE_1080I59940_74176"
+    ;not working;HD_MODE="MODE_1080I50000_72000"
+    HD_MODE="MODE_1080I50000_74250_1"
+    print " -----------------------------------------------"
+    print "                   CEC  TEST                    "
+    print "    test CEC Addressing and Commands            "
+    print " -----------------------------------------------"
+    print " "
+    ERRORCOUNT=0
+    api_checkerr
+    M_LAYER1_ON 1920 1080
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+    ; for linux
+    if (ST_OS=="LINUX")
+    vid_setup HDLVID1 1 LMI_VID
+    end
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 STVOUT_HDCP
+    ;1 is Force DVI
+    print "HDMI on output Params"
+    ;vout_setparams , OUTPUTTYPE 1 STVOUT_HDCP
+    print " Please Wait For few minutes..."
+    vout_start
+    vout_enable
+    if (ST_OS=="LINUX")
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"atsc_05c.m2v"
+    end
+    else
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"MELCO2B.M2V"
+    end
+    vid_inject -1
+    vid_start , 0 1 1
+    vid_seto
+    vid_setio HDLVP1VID1 0 0  1920 1080 0 0 1920 1080
+    print "   --- Set HDMI on ---"
+    hdmi_init "HDMI"
+    hnd=hdmi_open "HDMI"
+    hdmi_srccapa "HDMI"
+    ; send AUDIO info frame
+    hdmi_fillaudio hnd
+    hdmi_fillavi hndl_hdmi
+    hdmi_fillspd hndl_hdmi
+    hdmi_fillms hndl_hdmi
+    hdmi_fillvs hndl_hdmi
+
+    api_quest "Start by retriving EDID, then Allocating L@ ?"
+    hdmi_filledid hnd
+    hdmi_freememory hnd
+
+    print "Then Send the <Abort> Message directly addressed and check <Feature Abort> answer!"
+
+    api_quest "Send ImageViewOn from @3 to TV ?"
+    HDMI_CECSendCommand , 3 0 0
+
+    api_quest "Send Two Successive TextViewOn from @3 to TV ?"
+    HDMI_CECSendCommand , 3 0 1
+
+    api_quest "One Touch Play from @3 to TV ?"
+    HDMI_CECSendCommand , 3 0 3
+
+    api_quest "Send Standby from @3 to TV ?"
+    HDMI_CECSendCommand , 3 0 2
+
+    api_quest "Exit ?"
+    M_CHECK_RETCODE 0
+    print "--- End of HDMI CEC ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    M_ALL_OFF
+
+end
+

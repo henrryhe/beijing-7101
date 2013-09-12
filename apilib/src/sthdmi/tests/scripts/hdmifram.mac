@@ -1,0 +1,527 @@
+; ****************************************************************************
+; File         : HDMIINFOFRAME.MAC
+; Requirements :
+; Author       : Adel Chaouch - May 2005
+; ****************************************************************************
+; Test :
+; M_TEST_HDMI_AVI_INFOFRAME
+; M_TEST_HDMI_SPD_INFOFRAME
+; M_TEST_HDMI_AUD_INFOFRAME
+; M_TEST_HDMI_MS_INFOFRAME
+; M_TEST_HDMI_VS_INFOFRAME
+
+define M_HDMI_INFOFRAME  ALL_TEST
+; This macro is used for STi7710, STb7100 and STi7200.
+STVOUT_HDCP = 0
+STVOUT_HPD = 0
+  loop=0
+  infoframetype=""
+  while loop==0
+    if ALL_TEST==1
+      infoframetype="all"
+    end
+    else
+      print "-------------------------------------------"
+      print "     HDMI Info Frames Transmission         "
+      print "-------------------------------------------"
+      print " 1  - AVI Info Frame                       "
+      print " 2  - SPD Info Frame                       "
+      print " 3  - AUDIO Info Frame                     "
+      print " 4  - MS Info Frame                        "
+      print " 5  - VS Info Frame                        "
+      print " 6  - All Info Frames                      "
+      print " all- All tests                            "
+      print " 7  - To Exit                              "
+      print " Enter your choice :"
+      infoframetype=getstring
+    end
+
+    if infoframetype=="7"
+          loop=1
+    end
+    if infoframetype==""
+          loop=1
+    end
+    else
+          M_BEIO_ON "HD"
+    end
+    if infoframetype=="1"
+       HDOUT=1
+       M_TEST_HDMI_AVI_INFOFRAME
+    end
+    if infoframetype=="2"
+        HDOUT=1
+        M_TEST_HDMI_SPD_INFOFRAME
+    end
+    if infoframetype=="3"
+       HDOUT=1
+       M_TEST_HDMI_AUD_INFOFRAME
+    end
+    if infoframetype=="4"
+       HDOUT=1
+       M_TEST_HDMI_MS_INFOFRAME
+    end
+    if infoframetype=="5"
+       HDOUT=1
+       M_TEST_HDMI_VS_INFOFRAME
+    end
+    if infoframetype=="6"
+       HDOUT=1
+       M_TEST_HDMI_ALL_INFOFRAME
+    end
+    if infoframetype=="all"
+        ERR_T300=FALSE_
+        ERR_T301=FALSE_
+        ERR_T302=FALSE_
+        ERR_T303=FALSE_
+        ERR_T304=FALSE_
+        M_TEST_HDMI_AVI_INFOFRAME
+        M_TEST_HDMI_SPD_INFOFRAME
+        M_TEST_HDMI_AUD_INFOFRAME
+        M_TEST_HDMI_MS_INFOFRAME
+        M_TEST_HDMI_VS_INFOFRAME
+
+        if ALL_TEST!=1
+          M_CHECK_TEST2_ERR ERR_T300 ERR_T301 ERR_T302 ERR_T303 ERR_T304
+        end
+        loop=1
+    end
+    if infoframetype!=""
+        M_BEIO_OFF
+    end
+  end
+end
+
+define M_TEST_HDMI_AVI_INFOFRAME
+  api_checkerr
+  hndl_hdmi=0
+  if HDOUT==0
+    print " capabilities not available! "
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    print " -----------------------------------------------"
+    print "               AVI INFO FRAME TEST            "
+    print "  test HDMI OUTPUT RGB888 24 bits Components    "
+    print " -----------------------------------------------"
+    print " "
+    ERRORCOUNT=0
+    api_checkerr
+    M_LAYER1_ON 1920 1080
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+    ; for linux
+    if (ST_OS=="LINUX")
+    vid_setup HDLVID1 1 LMI_VID
+    end
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 DEFAULT_HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 0
+    vout_start
+    vout_enable
+    if (API_CHIPID=="7200")
+        poke hfd10c380 h02330233
+        poke hfd10c388 h04270417
+        poke hfd10C384 h02320232
+        poke hfd10c38C h08730863
+       ; poke hfd10c37c h7f004f
+        poke hfd10c37c h4f001f
+    end
+    if API_CHIPID=="7710"
+    aud_init
+    end
+    if (ST_OS=="LINUX")
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"atsc_05c.m2v"
+    end
+    else
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"MELCO2B.M2V"
+    end
+    print "   --- Set HDMI on ---"
+    hdmi_init "HDMI" DEVICETYPE OUTPUTTYPE AVITYPE
+    hndl_hdmi=hdmi_open "HDMI"
+    vid_inject -1
+    vid_start , 0 1 1
+    hdmi_fillavi hndl_hdmi
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest " Is AVI info Frame was sent with Success ?"
+    print "   --- Set HDMI off ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    M_ALL_OFF
+    print "--- end -------------------------------"
+    M_CHECK_TEST_ERROR 0
+    ERR_BAS=GLOBERR
+  end
+end
+
+
+define M_TEST_HDMI_SPD_INFOFRAME
+ api_checkerr
+  hndl_hdmi=0
+  if HDOUT==0
+    print " capabilities not available! "
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    print " -----------------------------------------------"
+    print "               SPD INFO FRAME TEST            "
+    print "  test HDMI OUTPUT RGB888 24 bits Components    "
+    print " -----------------------------------------------"
+    print " "
+    ERRORCOUNT=0
+    api_checkerr
+    M_LAYER1_ON 1920 1080
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+  ; for linux
+    if (ST_OS=="LINUX")
+    vid_setup HDLVID1 1 LMI_VID
+    end
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 DEFAULT_HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 0
+    vout_start
+    vout_enable
+    if (API_CHIPID=="7200")
+        poke hfd10c380 h02330233
+        poke hfd10c388 h04270417
+        poke hfd10C384 h02320232
+        poke hfd10c38C h08730863
+        ;poke hfd10c37c h7f004f
+        poke hfd10c37c h4f001f
+    end
+    if API_CHIPID=="7710"
+      aud_init
+    end
+    if (ST_OS=="LINUX")
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"atsc_05c.m2v"
+    end
+    else
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"MELCO2B.M2V"
+    end
+    print "   --- Set HDMI on ---"
+    hdmi_init "HDMI" DEVICETYPE OUTPUTTYPE AVITYPE SPDTYPE
+    hndl_hdmi=hdmi_open "HDMI"
+    vid_inject -1
+    vid_start , 0 1 1
+    hdmi_fillspd hndl_hdmi
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest " Is SPD info Frame was sent with Success ?"
+    print "   --- Set HDMI off ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    M_ALL_OFF
+    if API_CHIPID=="7710"
+      aud_term
+    end
+    print "--- end -------------------------------"
+    M_CHECK_TEST_ERROR 0
+    ERR_BAS=GLOBERR
+   end
+end
+
+
+define M_TEST_HDMI_MS_INFOFRAME
+  api_checkerr
+  hndl_hdmi=0
+  if HDOUT==0
+    print " capabilities not available! "
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    print " -----------------------------------------------"
+    print "               MS INFO FRAME TEST               "
+    print "  test HDMI OUTPUT RGB888 24 bits Components    "
+    print " -----------------------------------------------"
+    print " "
+    ERRORCOUNT=0
+    api_checkerr
+    M_LAYER1_ON 1920 1080
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+   ; for linux
+    if (ST_OS=="LINUX")
+    vid_setup HDLVID1 1 LMI_VID
+    end
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 DEFAULT_HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 0
+    vout_start
+    vout_enable
+    if (API_CHIPID=="7200")
+        poke hfd10c380 h02330233
+        poke hfd10c388 h04270417
+        poke hfd10C384 h02320232
+        poke hfd10c38C h08730863
+        ;poke hfd10c37c h7f004f
+        poke hfd10c37c h4f001f
+    end
+    if API_CHIPID=="7710"
+     aud_init
+    end
+    if (ST_OS=="LINUX")
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"atsc_05c.m2v"
+    end
+    else
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"MELCO2B.M2V"
+    end
+    print "   --- Set HDMI on ---"
+    hdmi_init "HDMI" DEVICETYPE OUTPUTTYPE AVITYPE SPDTYPE MSTYPE
+    hndl_hdmi=hdmi_open "HDMI"
+    vid_inject -1
+    vid_start , 0 1 1
+    hdmi_fillms hndl_hdmi
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest " Is MS info Frame was sent with Success ?"
+    print "   --- Set HDMI off ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    M_ALL_OFF
+    if API_CHIPID=="7710"
+     aud_term
+    end
+    print "--- end -------------------------------"
+    M_CHECK_TEST_ERROR 0
+    ERR_BAS=GLOBERR
+   end
+end
+
+define M_TEST_HDMI_VS_INFOFRAME
+  api_checkerr
+  hndl_hdmi=0
+  if HDOUT==0
+    print " capabilities not available! "
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    print " -----------------------------------------------"
+    print "               VS INFO FRAME TEST               "
+    print "  test HDMI OUTPUT RGB888 24 bits Components    "
+    print " -----------------------------------------------"
+    print " "
+    ERRORCOUNT=0
+    api_checkerr
+    M_LAYER1_ON 1920 1080
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+  ; for linux
+    if (ST_OS=="LINUX")
+    vid_setup HDLVID1 1 LMI_VID
+    end
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 DEFAULT_HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 0
+    vout_start
+    vout_enable
+    if (API_CHIPID=="7200")
+        poke hfd10c380 h02330233
+        poke hfd10c388 h04270417
+        poke hfd10C384 h02320232
+        poke hfd10c38C h08730863
+        ;poke hfd10c37c h7f004f
+        poke hfd10c37c h4f001f
+    end
+    if API_CHIPID=="7710"
+     aud_init
+    end
+    if (ST_OS=="LINUX")
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"atsc_05c.m2v"
+    end
+    else
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"MELCO2B.M2V"
+    end
+    print "   --- Set HDMI on ---"
+    hdmi_init "HDMI" DEVICETYPE OUTPUTTYPE AVITYPE SPDTYPE MSTYPE AUDIOTYPE VSTYPE
+    hndl_hdmi=hdmi_open "HDMI"
+    vid_inject -1
+    vid_start , 0 1 1
+    hdmi_fillvs hndl_hdmi
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest " Is VS info Frame was sent with Success ?"
+    print "   --- Set HDMI off ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    M_ALL_OFF
+    if API_CHIPID=="7710"
+     aud_term
+    end
+    print "--- end -------------------------------"
+    M_CHECK_TEST_ERROR 0
+    ERR_BAS=GLOBERR
+   end
+
+end
+
+define M_TEST_HDMI_AUD_INFOFRAME
+  api_checkerr
+  hndl_hdmi=0
+  if HDOUT==0
+    print " capabilities not available! "
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    print " -----------------------------------------------"
+    print "               AUDIO INFO FRAME TEST            "
+    print "  test HDMI OUTPUT RGB888 24 bits Components    "
+    print " -----------------------------------------------"
+    print " "
+    ERRORCOUNT=0
+    api_checkerr
+    M_LAYER1_ON 1920 1080
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+   ; for linux
+    if (ST_OS=="LINUX")
+    vid_setup HDLVID1 1 LMI_VID
+    end
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 DEFAULT_HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 0
+    vout_start
+    vout_enable
+    if (API_CHIPID=="7200")
+        poke hfd10c380 h02330233
+        poke hfd10c388 h04270417
+        poke hfd10C384 h02320232
+        poke hfd10c38C h08730863
+        ;poke hfd10c37c h7f004f
+        poke hfd10c37c h4f001f
+    end
+    if (ST_OS=="LINUX")
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"atsc_05c.m2v"
+    end
+    else
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"MELCO2B.M2V"
+    end
+    vid_inject -1
+    vid_start , 0 1 1
+    if (API_CHIPID=="7710")
+    aud_init , , 2
+    aud_open
+    aud_opunmute OBJ_OPMULTI
+    aud_opunmute OBJ_OPSPDIF
+    ;aud_getfile "C:/CELIN_nor.PCM"
+    aud_getfile HDMIAUDIODATA+"CELIN_nor.PCM"
+    aud_inject 20
+    aud_drstart PCM ES 48000 OBJ_DRCOMP
+    aud_opsetdigout 1,OBJ_OPMULTI,COPYRIGHT_FREE,0
+    end
+    print "   --- Set HDMI on ---"
+    hdmi_init "HDMI" DEVICETYPE OUTPUTTYPE AVITYPE SPDTYPE MSTYPE AUDIOTYPE VSTYPE
+    hndl_hdmi=hdmi_open "HDMI"
+    hdmi_fillaudio hndl_hdmi
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest " Is Audio info Frame was sent with Success ?"
+    print "   --- Set HDMI off ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    M_ALL_OFF
+    if API_CHIPID=="7710"
+       aud_term , 1
+    end
+    print "--- end -------------------------------"
+    M_CHECK_TEST_ERROR 0
+    ERR_BAS=GLOBERR
+   end
+end
+define M_TEST_HDMI_ALL_INFOFRAME
+   api_checkerr
+  hndl_hdmi=0
+  if HDOUT==0
+    print " capabilities not available! "
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    print " -----------------------------------------------"
+    print "               ALL INFO FRAME TEST            "
+    print "  test HDMI OUTPUT RGB888 24 bits Components    "
+    print " -----------------------------------------------"
+    print " "
+    ERRORCOUNT=0
+    api_checkerr
+    M_LAYER1_ON 1920 1080
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 DEFAULT_HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 0
+    vout_start
+    vout_enable
+    if (API_CHIPID=="7200")
+        poke hfd10c380 h02330233
+        poke hfd10c388 h04270417
+        poke hfd10C384 h02320232
+        poke hfd10c38C h08730863
+        ;poke hfd10c37c h7f004f
+        poke hfd10c37c h4f001f
+    end
+    if API_CHIPID=="7710"
+    aud_init
+    end
+    if (ST_OS=="LINUX")
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"atsc_05c.m2v"
+    end
+    else
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"MELCO2B.M2V"
+    end
+    ;vid_load "Z:\bistrim\video\es\1080i\30_00fps\MELCO2B.M2V"
+    print "   --- Set HDMI on ---"
+    hdmi_init "HDMI" DEVICETYPE OUTPUTTYPE AVITYPE
+    hndl_hdmi=hdmi_open "HDMI"
+    vid_inject -1
+    vid_start , 0 1 1
+    ; send AVI info frame
+    hdmi_fillavi hndl_hdmi
+    ; send AUDIO info frame
+    hdmi_fillaudio hndl_hdmi
+    ; send SPD info frame
+    hdmi_fillspd hndl_hdmi
+    ; send MS info frame
+    hdmi_fillms hndl_hdmi
+    ; send VS info frame
+    hdmi_fillvs hndl_hdmi
+
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest " Is AVI info Frame was sent with Success ?"
+    print "   --- Set HDMI off ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    M_ALL_OFF
+    print "--- end -------------------------------"
+    M_CHECK_TEST_ERROR 0
+    ERR_BAS=GLOBERR
+   end
+end
+
+
+

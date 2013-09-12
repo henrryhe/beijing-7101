@@ -1,0 +1,27 @@
+#!/bin/sh
+status=0
+
+if [ "$ST200ROOT" = "" ]
+then
+    echo No ST200ROOT set, assuming toolchain is unavailable
+    exit 1
+fi
+
+if [ $# -ne 2 ]
+then
+    echo Usage $0 "[st210 | st220]" target
+    exit 1
+fi
+
+for i in framework_*
+do
+    echo Running $i tests
+    st200run -t $2 $i/obj/os21/$1/$i.out
+    if [ $? -ne 0 ]
+    then
+        echo $i Failed
+        status=1
+    fi
+done
+
+exit $status

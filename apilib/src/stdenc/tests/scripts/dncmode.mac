@@ -1,0 +1,393 @@
+; ****************************************************************************
+; File         : DNCMODE.MAC
+; Tests        : DENC encoding modes on an analog TV
+; Author       : HSM - BS - January 2001
+; ****************************************************************************
+
+define M_MODE_ALPHA
+    ERRORTOT=0
+    HDLDENCSAVE=HDLDENC
+    DENCNAMESAVE=DENC_NAME
+    HDLVTGSTV=0
+    HDLVOUTSTV=0
+    api_report "MODE_TESTS"
+    M_MODE_ENCODING
+    api_report "MODE_TESTS" ERRORTOT
+end
+
+
+; Test to check DENC encoding modes on an analog TV
+define M_MODE_TESTS
+    ERRORTOT=0
+    HDLDENCSAVE=HDLDENC
+    DENCNAMESAVE=DENC_NAME
+    HDLVTGSTV=0
+    HDLVOUTSTV=0
+    api_report "MODE_TESTS"
+    CAPADENC=denc_capa DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest "Are the capabilities correct for this denc ? [y/n]"
+    M_CHECK_RETCODE 0
+    CAPAMODE=api_evalstr CAPADENC
+    CAPASQUARE=api_evalstr CAPADENC 2
+    CAPA_NON_INTERLACED=api_evalstr CAPADENC 3
+    CAPASIXTY=api_evalstr CAPADENC 4
+    if CAPAMODE != 0
+        M_MODE_ENCODING
+        ERRORTOT=ERRORTOT+ERRORCOUNT
+    end
+    if VTGPROG==0
+        ; VTG cannot be reprogrammed
+        CAPASQUARE=0
+        CAPASIXTY=0
+    end
+    if CAPASQUARE != 0
+        M_MODE_SQUARE
+        ERRORTOT=ERRORTOT+ERRORCOUNT
+    end
+    if CAPA_NON_INTERLACED != 0
+        M_MODE_NON_INTERLACED
+        ERRORTOT=ERRORTOT+ERRORCOUNT
+    end
+    if CAPASIXTY != 0
+        M_MODE_SIXTY_HERTZ
+        ERRORTOT=ERRORTOT+ERRORCOUNT
+    end
+    DENC_NAME=DENCNAMESAVE
+    HDLDENC=HDLDENCSAVE
+    api_report "MODE_TESTS" ERRORTOT
+end
+
+define M_MODE_ENC_ALPHA
+    api_report "MODE_ENCODING_TESTS"
+    ERRORCOUNT=0
+    vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_480I59940_13500"
+    denc_setmode HDLDENC 1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest "Is the image correct? [y/n]"
+    M_CHECK_RETCODE 0
+    denc_cb
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest "Is color bar correct? [y/n]"
+    M_CHECK_RETCODE 0
+    denc_cb ,0
+    M_CHECK_RETCODE ERR_NO_ERROR
+end
+
+define M_MODE_ENCODING
+    api_report "MODE_ENCODING_TESTS"
+
+
+    ERRORCOUNT=0
+    i=0
+    j=1
+    while j!=512
+        if CAPAMODE&j
+            if i<4
+                if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE DENC_SELECT+1 "MODE_480I59940_13500"
+                end
+                else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_480I59940_13500"
+                end
+            end
+            else
+                if i==5
+                    ; Mode PALM -> VTG in NTSC
+                    if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE DENC_SELECT+1 "MODE_480I59940_13500"
+                    end
+                    else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_480I59940_13500"
+                    end
+                end
+                else
+                    if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE DENC_SELECT+1 "MODE_576I50000_13500"
+                    end
+                    else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_576I50000_13500"
+                    end
+                end
+            end
+            denc_setmode HDLDENC i
+            M_CHECK_RETCODE ERR_NO_ERROR
+            CONFIG=denc_getmode
+            M_CHECK_RETCODE ERR_NO_ERROR
+            MODE=api_evalstr CONFIG 1
+            if MODE!=i
+                M_CHECK_RETCODE 1
+            end
+            if i<5
+                api_quest "Is the image correct in color ? [y/n]"
+                M_CHECK_RETCODE 0
+            end
+            else
+                if i>7
+                    api_quest "Is the image correct in color ? [y/n]"
+                    M_CHECK_RETCODE 0
+                end
+                else
+                    api_quest "Is the image correct in black & white ? [y/n]"
+                    M_CHECK_RETCODE 0
+                end
+            end
+            denc_cb
+            M_CHECK_RETCODE ERR_NO_ERROR
+            if i<5
+                api_quest "Is the image correct in color ? [y/n]"
+                M_CHECK_RETCODE 0
+            end
+            else
+                if i>7
+                    api_quest "Is the image correct in color ? [y/n]"
+                    M_CHECK_RETCODE 0
+                end
+                else
+                    api_quest "Is the image correct in black & white ? [y/n]"
+                    M_CHECK_RETCODE 0
+                end
+            end
+            denc_cb ,0
+            M_CHECK_RETCODE ERR_NO_ERROR
+
+        end
+        j=j*2
+        i=i+1
+    end
+    api_report "MODE_ENCODING" ERRORCOUNT
+end
+
+
+; Test to check DENC square mode on an analog TV
+define M_MODE_SQUARE
+    api_report "MODE_SQUARE_TESTS"
+    ERRORCOUNT=0
+    i=0
+    j=1
+    ; 256 because of cannot configure Secam in square with encoding
+    while j!=256
+        if CAPASQUARE&j
+            if i<4
+                ; Mode NTSC SQUARE
+                 if (API_CHIPID=="5100")||(API_CHIPID=="5301")||(API_CHIPID=="5525") ;Reset the Xstart
+                        Gdma_ChgXDO 0
+                 end
+                if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE DENC_SELECT+1 "MODE_480I59940_12273"
+                end
+                else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_480I59940_12273"
+                end
+                denc_setmode HDLDENC i 1
+            end
+            else
+                if i==5
+                    ; Mode PALM -> VTG in NTSC square
+                    if (API_CHIPID=="5100")||(API_CHIPID=="5301")||(API_CHIPID=="5525") ;Reset the Xstart
+                        Gdma_ChgXDO 0
+                    end
+                    if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE DENC_SELECT+1 "MODE_480I59940_12273"
+                    end
+                    else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_480I59940_12273"
+                    end
+                    denc_setmode HDLDENC i 1
+                end
+                else
+                    ; Mode PAL SQUARE
+                     if (API_CHIPID=="5100")||(API_CHIPID=="5301")||(API_CHIPID=="5525");Update the Xstart of picture
+                                Gdma_ChgXDO 1
+                     end
+                    if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE DENC_SELECT+1 "MODE_576I50000_14750"
+                    end
+                    else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_576I50000_14750"
+                    end
+                    if (SET_EXTERNAL==1)
+                        denc_setmode HDLDENC i 1 , 1
+                    end
+                    else
+                        denc_setmode HDLDENC i 1
+                    end
+                end
+            end
+            M_CHECK_RETCODE ERR_NO_ERROR
+            CONFIG=denc_getmode
+            M_CHECK_RETCODE ERR_NO_ERROR
+            OPTIONCONFIG=denc_goption , "SQUARE_PIXEL"
+            M_CHECK_RETCODE ERR_NO_ERROR
+            MODE=api_evalstr CONFIG 1
+            if MODE!=i
+                M_CHECK_RETCODE 1
+            end
+            SQUARECONF=api_evalstr CONFIG 2
+            SQUAREOPTION=api_evalstr OPTIONCONFIG
+            if SQUARECONF!=1
+                M_CHECK_RETCODE 1
+            end
+            if SQUAREOPTION!=1
+                M_CHECK_RETCODE 1
+            end
+            if i<5
+                api_quest "Is the image correct in color ? [y/n]"
+                M_CHECK_RETCODE 0
+            end
+            else
+                if i>7
+                    api_quest "Is the image correct in color ? [y/n]"
+                    M_CHECK_RETCODE 0
+                end
+                else
+                    api_quest "Is the image correct in black & white ? [y/n]"
+                    M_CHECK_RETCODE 0
+                end
+            end
+        end
+        j=j*2
+        i=i+1
+    end
+    if (API_CHIPID=="5100")||(API_CHIPID=="5301")||(API_CHIPID=="5525") ;Reset the Xstart
+        Gdma_ChgXDO 0
+    end
+    api_report "MODE_SQUARE" ERRORCOUNT
+end
+
+; Test to check interlaced/noninterlaced mode
+define M_MODE_NON_INTERLACED
+    api_report "MODE_NON_INTERLACED_TESTS"
+    ERRORCOUNT=0
+    i=0
+    j=1
+    while j!=512
+        if CAPA_NON_INTERLACED&j
+            if i<4
+                ; Mode NTSC
+                if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE DENC_SELECT+1 "MODE_480I59940_13500"
+                end
+                else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_480I59940_13500"
+                end
+            end
+            else
+                if i==5
+                    ; Mode PALM -> VTG in NTSC
+                    if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE DENC_SELECT+1 "MODE_480I59940_13500"
+                    end
+                    else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_480I59940_13500"
+                    end
+                end
+                else
+                    if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE DENC_SELECT+1 "MODE_576I50000_13500"
+                    end
+                    else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_576I50000_13500"
+                    end
+                end
+            end
+            denc_setmode HDLDENC i , 0
+            M_CHECK_RETCODE ERR_NO_ERROR
+            CONFIG=denc_getmode
+            M_CHECK_RETCODE ERR_NO_ERROR
+            OPTIONCONFIG=denc_goption , "NON_INTERLACED"
+            M_CHECK_RETCODE ERR_NO_ERROR
+            MODE=api_evalstr CONFIG 1
+            if MODE!=i
+                M_CHECK_RETCODE 1
+            end
+            INTERCONF=api_evalstr CONFIG 3
+            INTEROPTION=api_evalstr OPTIONCONFIG
+            if INTERCONF!=0
+                M_CHECK_RETCODE 1
+            end
+            if INTEROPTION!=0
+                M_CHECK_RETCODE 1
+            end
+            denc_setmode HDLDENC i , 1
+            M_CHECK_RETCODE ERR_NO_ERROR
+            CONFIG=denc_getmode
+            M_CHECK_RETCODE ERR_NO_ERROR
+            OPTIONCONFIG=denc_goption , "NON_INTERLACED"
+            M_CHECK_RETCODE ERR_NO_ERROR
+            MODE=api_evalstr CONFIG 1
+            INTERCONF=api_evalstr CONFIG 3
+            INTEROPTION=api_evalstr OPTIONCONFIG
+            if INTERCONF!=1
+                M_CHECK_RETCODE 1
+            end
+            if INTEROPTION!=1
+                M_CHECK_RETCODE 1
+            end
+        end
+        j=j*2
+        i=i+1
+    end
+    api_report "MODE_NON_INTERLACED" ERRORCOUNT
+
+end
+
+
+; Test to check DENC 60Hz mode on an analog TV if vtg permit it
+define M_MODE_SIXTY_HERTZ
+    api_report "MODE_SIXTY_HERTZ_TESTS"
+    ERRORCOUNT=0
+    i=0
+    j=1
+    if (API_CHIPID=="7200")
+        vtgsim_set HDLMAINDENC VTGSIM_TYPE DENC_SELECT+1 "MODE_480I60000_13514"
+    end
+    else
+        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_480I60000_13514"
+    end
+    if ERRORCODE==ERR_NO_ERROR
+        while j!=512
+            if CAPASIXTY&j
+                denc_setmode HDLDENC i 0 1 1
+                M_CHECK_RETCODE ERR_NO_ERROR
+                CONFIG=denc_getmode
+                M_CHECK_RETCODE ERR_NO_ERROR
+                OPTIONCONFIG=denc_goption , "RATE_60HZ"
+                M_CHECK_RETCODE ERR_NO_ERROR
+                MODE=api_evalstr CONFIG 1
+                SIXTYOPTION=api_evalstr OPTIONCONFIG
+                if MODE!=i
+                    M_CHECK_RETCODE 1
+                end
+                SQUARE=api_evalstr CONFIG 2
+                if SQUARE!=0
+                    M_CHECK_RETCODE 1
+                end
+                SIXTYCONF=api_evalstr CONFIG 4
+                if SIXTYCONF!=1
+                    M_CHECK_RETCODE 1
+                end
+                if SIXTYOPTION!=1
+                    M_CHECK_RETCODE 1
+                end
+                if i<5
+                    api_quest "Is the image correct in color ? [y/n]"
+                    M_CHECK_RETCODE 0
+                end
+                else
+                    if i>7
+                        api_quest "Is the image correct in color ? [y/n]"
+                        M_CHECK_RETCODE 0
+                    end
+                    else
+                        api_quest "Is the image correct in black & white ? [y/n]"
+                        M_CHECK_RETCODE 0
+                    end
+                end
+            end
+        j=j*2
+        i=i+1
+        end
+    end
+    api_report "MODE_SIXTY_HERTZ" ERRORCOUNT
+end

@@ -1,0 +1,73 @@
+;*****************************************************************************
+; File         : CGMS.MAC
+; Requirements :
+; Author       : BS - NOVEMBER 2000
+;*****************************************************************************
+
+; general behavior :
+; driver is assumed to be in a virgin state (no init, no open)
+
+define M_CGMS_TESTS
+    if CAPAVBI&CGMS
+        ; api_report "5.0 CGMS MANUAL TESTS"
+        api_report "5.1 CGMS_AUTOMATIC TESTS"
+        M_ENC_INIT "PAL"
+        ; Init/Open/Config VBI for CGMS
+        vbi_init , ,DENC_NAME
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_open VBI_DEVICE_NAME CGMS
+        M_CHECK_RETCODE ERR_NO_ERROR
+        ; Start Tests
+        M_CGMS_REGISTERS
+        vbi_close
+        vbi_term
+        M_ENC_TERM
+    end
+end
+
+
+;;;;;;;;;;;;;;;;; AUTOMATIC TESTS ;;;;;;;;;;;;;;;;;;
+
+; CGMS REGISTERS TEST
+define M_CGMS_REGISTERS
+    api_report "5.1.0 CGMS_REGISTERS TEST"
+    ERRORCOUNT=0
+    vbi_enable
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_writedata , 3 h00 h00 h00                 ; All to zero
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CGMS EXT_CHIP h00 h00 h00
+    M_CHECK_RETCODE 0
+    vbi_writedata , 3 hFF hFF hFF                 ; All to one
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CGMS EXT_CHIP hFF hFF hFF
+    M_CHECK_RETCODE 0
+    vbi_writedata , 3 hAB hCD h56                 ; Different values
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CGMS EXT_CHIP hAB hCD h56
+    M_CHECK_RETCODE 0
+    api_report "5.1.0 CGMS_REGISTERS" ERRORCOUNT
+end
+
+
+;;;;;;;;;;;;;;;;; MANUEL TESTS ;;;;;;;;;;;;;;;;;;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

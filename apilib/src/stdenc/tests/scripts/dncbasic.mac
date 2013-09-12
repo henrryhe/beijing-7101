@@ -1,0 +1,60 @@
+; ****************************************************************************
+; File         : DNCBASIC.MAC
+; Requirements :
+; Author       : BS - January 2001
+; ****************************************************************************
+
+; Test to check basic features.
+define M_BASIC_TESTS
+    api_report "M_BASIC_TESTS"
+    ERRORCOUNT=0
+    denc_rev
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if (API_CHIPID=="7200")
+            ckg_init
+            denc_init DENC_NAME 5 DENC_CHOSEN DENC_ACCESS DENC_BA
+    end
+    else
+            denc_init DENC_NAME 5 DENC_CHOSEN DENC_ACCESS
+    end
+    M_CHECK_RETCODE ERR_NO_ERROR
+    str=denc_capa DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+    Mode=api_evalstr str 1
+    CellVersion=api_evalstr str 5
+    if CellVersion<6
+        if Mode!=254
+            print "!!!!!!!!!!!! TEST FAILED !!!!!!!!!!!!"
+            ERRORCOUNT=ERRORCOUNT+1
+        end
+    end
+    ; If denc is STi4629 or CellVersion<12
+    elif (CellVersion<12)||((EXTERNAL_DENC_TYPE==4)&&(SET_EXTERNAL==1))
+        if Mode!=510
+            print "!!!!!!!!!!!! TEST FAILED !!!!!!!!!!!!"
+            ERRORCOUNT=ERRORCOUNT+1
+        end
+    end
+    else
+        if Mode!=1022
+            print "!!!!!!!!!!!! TEST FAILED !!!!!!!!!!!!"
+            ERRORCOUNT=ERRORCOUNT+1
+        end
+    end
+    denc_open DENC_NAME SET_AUX ,SET_EXTERNAL
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_setmode
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_getmode
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_goption
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_soption
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_close
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_term DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_report "M_BASIC_TESTS" ERRORCOUNT
+end
+

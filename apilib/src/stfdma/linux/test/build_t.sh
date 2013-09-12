@@ -1,0 +1,1 @@
+sh4-linux-gcc -I"/dvd-vob/stbgr-prj-stos/" -I"/dvd-vob/dvdbr-prj-stcommon/" -I"/dvd-vob/dvdbr-prj-stfdma/" -I"/dvd-vob/dvdbr-prj-stfdma/linux/test" -I"/dvd-vob/dvdbr-prj-stfdma/src" -I"/dvd-vob/dvdbr-prj-include" -D"ST_7109" -D"ST_OSLINUX" -o testapp t.c

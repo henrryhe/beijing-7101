@@ -1,0 +1,26 @@
+#!/bin/sh
+status=0
+if [ "$ST20ROOT" = "" ]
+then
+    echo No ST20ROOT set, assuming toolchain is unavailable
+    exit 1
+fi
+
+if [ "$1" = "" ]
+then
+    echo Usage $0 target
+    exit 1
+fi
+
+for i in framework_*
+do
+    echo Running $i tests
+    st20run -l ../../../../configs -i rpc_st20.cfg -t $1 $i/obj/os20/st20/$i.lku
+    if [ ! "(" $? -eq 0 ")" ]
+    then
+        echo $i Failed
+        status=1
+    fi
+done
+
+exit $status

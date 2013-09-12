@@ -1,0 +1,275 @@
+; ****************************************************************************
+; File         : DEFAULT.MAC
+; Requirements :
+; Author       : Adel Chaouch - December 2003
+; ****************************************************************************
+; Test
+
+; general behavior :
+; driver is assumed to be not initialized before starting these file tests
+
+
+source OSPATH+DRV_PATH_VOUT+"utility.mac"
+
+define M_TEST_MENU
+    EXEC_ALL_TEST=0
+    M_CHECK_PLATFORM
+    api_error 0
+    print ""
+    print "    0 - API BASIC TESTS"
+    print "    1 - RETURNS TESTS"
+    if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+      print "    2 - SD TESTS"
+      if HDOUT==1
+         print "    3 - HD TESTS"
+      end
+    end
+    if (API_CHIPID=="5107")||((DEVICETYPE!=VOUT_DEVICE_TYPE_4629)&&(DEVICETYPE!=VOUT_DEVICE_TYPE_V13)&&(DEVICETYPE!=VOUT_DEVICE_TYPE_7020)&&(DEVICETYPE!=VOUT_DEVICE_TYPE_7710)&&(DEVICETYPE!=VOUT_DEVICE_TYPE_7100)&&(DEVICETYPE!=VOUT_DEVICE_TYPE_5525))
+        print "    3 - DIGITAL OUTPUT TEST"
+    end
+    if (DEVICETYPE!=VOUT_DEVICE_TYPE_7200)&&(API_CHIPID!="5162")
+        print "    3 - DIGITAL OUTPUT TEST"
+    end
+    if (DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT)
+      print "    4 - MULTI INSTANCE TESTS"
+    end
+    if ((DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_4629)||(DEVICETYPE==VOUT_DEVICE_TYPE_DENC_ENHANCED)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)||(DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100))
+    print "    5 - TRIDAC CONFIGURATION"
+    end
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_7200)||(DEVICETYPE==VOUT_DEVICE_TYPE_5525)
+        print "    5 - TRIDAC CONFIGURATION"
+    end
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100)||(DEVICETYPE==VOUT_DEVICE_TYPE_7200)
+    print "    6 - DVI/HDMI TESTS"
+    print "    7 - SWITCH HD AND SD MODES"
+    end
+    print "    8 - EXECUTE ALL TESTS"
+    print ""
+    print "    Enter your choice :"
+    x=getkey
+    if x>=48
+       x=x-48
+    end
+    choice=1
+    if x>7  ;5
+       choice=0
+    end
+    if x==8   ;5
+        EXEC_ALL_TEST=1
+        choice=31
+    end
+    else
+        while x!=0
+           choice=choice*2
+           x=x-1
+        end
+    end
+    if choice&1
+        ; API BASIC TESTS
+        source OSPATH+DRV_PATH_VOUT+"voutbas.mac"
+        M_BASIC
+        del M_BASIC
+    end
+    if choice&2
+        ; RETURNS TESTS
+        source OSPATH+DRV_PATH_VOUT+"returns.mac"
+        M_RET_ALL EXEC_ALL_TEST
+        del M_RET_*
+    end
+    if choice&4
+      if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+        ; SD TESTS
+        source OSPATH+DRV_PATH_VOUT+"voutana.mac"
+        source OSPATH+DRV_PATH_VOUT+"voutbcs.mac"
+        source OSPATH+DRV_PATH_VOUT+"voutchrl.mac"
+        source OSPATH+DRV_PATH_VOUT+"vouttst1.mac"
+        if DENCVERSION >11
+            source OSPATH+DRV_PATH_VOUT+"voutopt.mac"
+        end
+        if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+           M_LAYER_INIT
+           VOUT_GamSet
+        end
+
+        M_TEST1_OUTPUTS EXEC_ALL_TEST
+        if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+           M_LAYER_TERM
+        end
+        del M_TEST_*
+      end
+    end
+    if choice&8
+      if (API_CHIPID=="5528")
+        source OSPATH+DRV_PATH_VOUT+"vouttst2.mac"
+        M_5528_DIGITAL_OUTPUT_TEST
+        del M_TEST_*
+      end
+      if (API_CHIPID=="5107")
+        source OSPATH+DRV_PATH_VOUT+"vouttst2.mac"
+        M_5107_DIGITAL_OUTPUT_TEST
+        del M_TEST_*
+      end
+      if (HDOUT==1)||(DEVICETYPE==VOUT_DEVICE_TYPE_DIGOUT)
+        ; HD TESTS
+        source OSPATH+DRV_PATH_VOUT+"voutghd.mac"
+        source OSPATH+DRV_PATH_VOUT+"vouttst2.mac"
+
+        if (DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100)||(DEVICETYPE==VOUT_DEVICE_TYPE_7200)
+           if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+             M_LAYER_INIT
+             VOUT_GamSet
+           end
+           if (API_CHIPID=="7109")
+              VTG_EnableHVSync
+           end
+           M_7710_HD_OUTPUT_TEST EXEC_ALL_TEST
+           if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+             M_LAYER_TERM
+           end
+        end
+        else
+           M_TEST2_OUTPUTS EXEC_ALL_TEST
+        end
+        del M_PRNT_SVM
+        del M_TEST_*
+      end
+    end
+    if choice&h10
+      if (DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT)
+        ; MULTI INSTANCE TESTS
+        source OSPATH+DRV_PATH_VOUT+"voutmult.mac"
+        if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+           M_LAYER_INIT
+           VOUT_GamSet
+        end
+        if (API_CHIPID=="7109")
+              VTG_EnableHVSync
+        end
+        M_TEST_MULTI_INSTANCES
+        if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+           M_LAYER_TERM
+        end
+        del M_TEST_*
+        del M_DIS*
+      end
+    end
+    if choice&h20
+      if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+        ; SD TESTS WITH DACS CONFIGURATION
+        source OSPATH+DRV_PATH_VOUT+"vouttridac.mac"
+        source OSPATH+DRV_PATH_VOUT+"vouttst3.mac"
+        if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)||(DEVICETYPE==VOUT_DEVICE_TYPE_5525)
+        M_TEST3_OUTPUTS EXEC_ALL_TEST
+        end
+        if (DEVICETYPE==VOUT_DEVICE_TYPE_4629)
+        M_TEST4_OUTPUTS EXEC_ALL_TEST
+        end
+        if (DEVICETYPE==VOUT_DEVICE_TYPE_DENC_ENHANCED)
+        M_TEST5_OUTPUTS EXEC_ALL_TEST
+        end
+        if (DEVICETYPE==VOUT_DEVICE_TYPE_7710)
+        M_TEST6_OUTPUTS EXEC_ALL_TEST
+        end
+       if (DEVICETYPE==VOUT_DEVICE_TYPE_7100)
+          M_LAYER_INIT
+          VOUT_GamSet
+          M_TEST8_OUTPUTS EXEC_ALL_TEST
+          M_LAYER_TERM
+       end
+        del M_TEST_*
+      end
+    end
+    if choice&h40
+       ;DVI/HDMI Tests
+       if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+           HDMI_OFFSET=1000
+           M_LAYER_INIT
+           VOUT_GamSet
+       end
+       source OSPATH+DRV_PATH_VOUT+"vouthdmi.mac"
+       if (API_CHIPID=="7100")||(API_CHIPID=="7710")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+           M_TEST7_OUTPUTS EXEC_ALL_TEST
+       end
+       else
+           print "NOT TESTED"
+       end
+       del M_TEST_*
+    end
+     if choice&h80
+       ;SWITCH HD and SD mode Tests
+       source OSPATH+DRV_PATH_VOUT+"Vouttst4.mac"
+       if ((DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100)||(DEVICETYPE==VOUT_DEVICE_TYPE_7200))
+       if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+           M_LAYER_INIT
+           VOUT_GamSet
+       end
+       if (API_CHIPID=="7109")
+              VTG_EnableHVSync
+       end
+       M_TEST9_OUTPUTS EXEC_ALL_TEST
+       if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+           M_LAYER_TERM
+        end
+       end
+       del M_TEST_*
+    end
+
+    if EXEC_ALL_TEST==1
+        M_CHECK_BAS_ERR ERR_BAS
+        if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+          M_CHECK_RET_ERR ERR_ALRIN ERR_BADP ERR_NOMEM ERR_DENCA ERR_INVHN ERR_NOFRE ERR_OPENH ERR_UNKDE ERR_VNOTA ERR_VNOTE ERR_VENAB ERR_VINCO
+          M_CHECK_TEST1_ERR ERR_T100 ERR_T101 ERR_T102 ERR_T103 ERR_T104 ERR_T105 ERR_T106 ERR_T107 ERR_T108 ERR_T109 ERR_T110 ERR_T111
+          M_CHECK_TEST2_ERR ERR_T200 ERR_T201 ERR_T202 ERR_T203 ERR_T204 ERR_T205 ERR_T206
+          M_CHECK_TEST3_ERR ERR_T300 ERR_T301 ERR_T302 ERR_T303 ERR_T304 ERR_T305 ERR_T306 ERR_T307 ERR_T308 ERR_T309 ERR_T310 ERR_T311
+          M_CHECK_TEST4_ERR ERR_T400 ERR_T401 ERR_T402 ERR_T403
+          M_CHECK_TEST5_ERR ERR_T500 ERR_T501 ERR_T502 ERR_T503 ERR_T504 ERR_T505
+          M_CHECK_TEST6_ERR ERR_T600 ERR_T601 ERR_T602
+          M_CHECK_MUL_ERR ERR_MULT
+        end
+    end
+end
+
+if (API_CHIPID=="7015")||(API_CHIPID=="7020")||(API_CHIPID=="GX1")||(API_CHIPID=="5528")||(API_CHIPID=="7710")
+    GammaDisplay
+    VTGPROG=1
+end
+elif (API_CHIPID=="7200")
+    GammaDisplay
+    VTGPROG=1
+end
+elif (API_CHIPID=="5100")||(API_CHIPID=="5301")||(API_CHIPID=="5525")
+    if (API_CHIPID=="5301")
+       poke h20d00004 h18000 ; write in ctrl-d register
+    end
+    if (API_CHIPID=="5525")
+       poke h1980002C hc00000
+    end
+    GDMADisplay , 1
+    VTGPROG=1
+end
+elif (API_CHIPID=="5107")||(API_CHIPID=="5105")||(API_CHIPID=="5188")||(API_CHIPID=="5162")
+    GDMADisplay
+    VTGPROG=1
+end
+elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+if (ST_OS=="LINUX")
+    if (API_CHIPID=="7100")
+        layer_init "LAYVID1" "HDDISPO2_VIDEO1" 720 576
+    end
+    elif (API_CHIPID=="7109")
+        layer_init "LAYVID1" "VDP_VIDEO1" 720 576
+    end
+end
+     RET_STR = displayvideo
+     BUFF_ADD = api_evalstr RET_STR 1
+end
+else
+    OSDDisplay
+end
+
+M_TEST_MENU
+
+
+
+
+

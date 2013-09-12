@@ -1,0 +1,44 @@
+# Sample ST20/ST40/ST200 makefile
+
+DVD_MAKE_VERSION := 2
+ifdef IN_OBJECT_DIR
+
+include $(DVD_MAKE)/generic.mak
+
+COMPONENT_NAME := <component name>
+ST20_TARGETS := $(COMPONENT_NAME).lib
+ST20_EXPORTS := $(COMPONENT_NAME).h $(COMPONENT_NAME).lib
+
+ST40_TARGETS := $(call ST20LIB_TO_ST40LIB,$(ST20_TARGETS))
+ST40_EXPORTS := $(call ST20LIB_TO_ST40LIB,$(ST20_EXPORTS))
+
+ST200_TARGETS := $(call ST20LIB_TO_ST200LIB,$(ST20_TARGETS))
+ST200_EXPORTS := $(call ST20LIB_TO_ST200LIB,$(ST20_EXPORTS))
+
+include $(DVD_MAKE)/defrules.mak
+
+FULLDIR := $(DVD_BUILD_DIR)/src/objs/$(OBJECT_DIRECTORY)
+
+$($(ARCHITECTURE)_TARGETS): $(FULLDIR)/$($(ARCHITECTURE)_TARGETS)
+	$(CP) $(subst $(BAD_SLASH),$(GOOD_SLASH),$<) $@ > $(NULL)
+
+$(FULLDIR)/$($(ARCHITECTURE)_TARGETS): FORCE
+	@$(ECHO) Entering SRC directory
+	$(MAKE) -C $(DVD_BUILD_DIR)/src
+
+clean: subdir_clean
+	@$(ECHO) Cleaning $($(ARCHITECTURE)_TARGETS)
+	$(RM) $($(ARCHITECTURE)_TARGETS)
+
+subdir_clean:
+	$(MAKE) -C $(DVD_BUILD_DIR)/src clean
+
+FORCE:
+
+else
+
+include $(DVD_MAKE)/builddir.mak
+
+endif
+
+# End of sample ST20/ST40/ST200 makefile

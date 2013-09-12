@@ -1,0 +1,366 @@
+; ****************************************************************************
+; File         : RETURNS.MAC
+; Requirements :
+; Author       : Hubert Salle de La Marnierre - November 2000
+; ****************************************************************************
+; Test returned error codes
+
+; general behavior :
+; driver is assumed to be not initialized before starting these file tests
+; all the M_RET_xxx macros set the driver closed and terminated when they leave
+
+
+; Test to check DENC driver error codes returned
+define M_RET_TESTS
+    if API_CHIPID=="7200"
+        ckg_init
+    end
+    M_RET_ALREADY_INITIALIZED
+    M_RET_BAD_PARAMETER
+    M_RET_INVALID_HANDLE
+    M_RET_INVALID_MODE
+    M_RET_NO_MEMORY
+    M_RET_OPEN_HANDLE
+    M_RET_NO_FREE_HANDLE
+    M_RET_UNKNOWN_DEVICE
+    M_RET_FEATURE_SUPPORT
+end
+
+; this macro tests the unknown device return code
+define M_RET_UNKNOWN_DEVICE
+    api_report "RET_UNKNOWN_DEVICE"
+    print "Functions called for a non initialized device."
+    print "Expected error : ST_ERROR_UNKNOWN_DEVICE"
+    ERRORCOUNT=0
+    denc_term DENC_NAME
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    denc_open DENC_NAME ,SET_AUX
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    denc_capa DENC_NAME
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    if API_CHIPID=="7200"
+        denc_init DENC_NAME 5 DENC_CHOSEN DENC_ACCESS DENC_BA
+    end
+    else
+        denc_init DENC_NAME 5 DENC_CHOSEN DENC_ACCESS
+    end
+    denc_capa "BADPARAM"
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    denc_term DENC_NAME
+    api_report "RET_UNKNOWN_DEVICE" ERRORCOUNT
+end
+
+
+; this macro tests the invalid handle return code
+define M_RET_INVALID_HANDLE
+    api_report "RET_INVALID_HANDLE"
+    ERRORCOUNT=0
+    if API_CHIPID=="7200"
+        denc_init DENC_NAME 5 DENC_CHOSEN DENC_ACCESS DENC_BA
+    end
+    else
+        denc_init DENC_NAME 5 DENC_CHOSEN DENC_ACCESS
+    end
+    M_CHECK_RETCODE ERR_NO_ERROR
+    BADHANDLE=-1
+    denc_close BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    denc_setmode BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    denc_getmode BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    denc_cb BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    denc_soption BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    denc_goption BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    denc_term DENC_NAME
+    api_report "RET_INVALID_HANDLE" ERRORCOUNT
+end
+
+; this macro tests the bad parameter return code
+define M_RET_BAD_PARAMETER
+    ERRORCOUNT=0
+    api_report "RET_BAD_PARAMETER"
+    ; give a DeviceName longer than max allowed : ST_MAX_DEVICE_NAME (16) in stddefs.h
+    ; give a MaxOpen parameter greater than STDENC_MAX_OPEN(12) : 13
+    BADNAME="12345678901234567890"
+    TOO_BIG_MAX_OPEN = 13
+    if API_CHIPID=="7200"
+        denc_init BADNAME 5 DENC_CHOSEN DENC_ACCESS DENC_BA
+    end
+    else
+        denc_init BADNAME 5 DENC_CHOSEN DENC_ACCESS
+    end
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    denc_capa BADNAME
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    denc_open BADNAME,,SET_AUX
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    denc_term BADNAME
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    if API_CHIPID=="7200"
+        denc_init "DENC0" TOO_BIG_MAX_OPEN DENC_CHOSEN DENC_ACCESS DENC_BA
+    end
+    else
+        denc_init "DENC0" TOO_BIG_MAX_OPEN DENC_CHOSEN DENC_ACCESS
+    end
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    denc_nullpt
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    if API_CHIPID=="7200"
+        denc_init DENC_NAME ,DENC_CHOSEN ,DENC_BA
+    end
+    else
+        denc_init ,,DENC_CHOSEN
+    end
+    denc_open DENC_NAME ,SET_AUX
+    denc_soption , 15
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    denc_goption , 15
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    CAPADENC=denc_capa DENC_NAME
+    CAPACHROMMIN=api_evalstr CAPADENC 6
+    CAPACHROMMAX=api_evalstr CAPADENC 7
+    CAPACHROMSTEP=api_evalstr CAPADENC 8
+    LOOP=1
+    if (AUXDENC==1)&&(SET_EXTERNAL==0)
+        LOOP=2
+    end
+    for I 1 LOOP 1
+        OPTION="CHROMA_DELAY"
+        if I==2
+            OPTION="CHROMA_DELAY_AUX"
+        end
+         TEMP=CAPACHROMMIN-1
+         denc_soption , OPTION TEMP
+         M_CHECK_RETCODE ERR_BAD_PARAMETER
+         TEMP=CAPACHROMMAX+1
+         denc_soption , OPTION TEMP
+         M_CHECK_RETCODE ERR_BAD_PARAMETER
+         TEMP=CAPACHROMMAX-CAPACHROMSTEP
+         denc_soption , OPTION TEMP
+         M_CHECK_RETCODE ERR_NO_ERROR
+         TEMP=CAPACHROMMIN+CAPACHROMSTEP
+         denc_soption , OPTION TEMP
+         M_CHECK_RETCODE ERR_NO_ERROR
+         if CAPACHROMSTEP>1
+            TEMP=CAPACHROMMIN+1
+            denc_soption , OPTION TEMP
+            M_CHECK_RETCODE ERR_BAD_PARAMETER
+            denc_soption , OPTION 1
+            M_CHECK_RETCODE ERR_BAD_PARAMETER
+            TEMP=CAPACHROMMAX-1
+            denc_soption , OPTION TEMP
+            M_CHECK_RETCODE ERR_BAD_PARAMETER
+         end
+    end
+    denc_close
+    denc_term DENC_NAME
+    api_report "RET_BAD_PARAMETER" ERRORCOUNT
+end
+
+
+; this macro tests the already initialized return code
+define M_RET_ALREADY_INITIALIZED
+    api_report "RET_ALREADY_INITIALIZED"
+    ERRORCOUNT=0
+    print "First STDencinit call. ST_NO_ERROR expected"
+    if API_CHIPID=="7200"
+        denc_init DENC_NAME 5 DENC_CHOSEN DENC_ACCESS DENC_BA
+    end
+    else
+        denc_init DENC_NAME 5 DENC_CHOSEN DENC_ACCESS
+    end
+    M_CHECK_RETCODE ERR_NO_ERROR
+    print "Second STDencinit call with same DeviceName."
+    if API_CHIPID=="7200"
+        denc_init DENC_NAME 5 DENC_CHOSEN DENC_ACCESS DENC_BA
+    end
+    else
+        denc_init DENC_NAME 5 DENC_CHOSEN DENC_ACCESS
+    end
+    M_CHECK_RETCODE ERR_ALREADY_INITIALIZED
+    denc_term DENC_NAME
+    api_report "RET_ALREADY_INITIALIZED" ERRORCOUNT
+end
+
+; this macro tests the no memory return code
+define M_RET_NO_MEMORY
+    api_report "RET_NO_MEMORY"
+    ERRORCOUNT=0
+    print " !!! TEST IS ACCURATE ONLY IF : STDENC_MAX_DEVICE = 4"
+    if SET_EXTERNAL==1
+        print "External DENC chosen : main_DENC already initialised!!"
+        print "STDencinit called 4 times with right parameters."
+    end
+    else
+        print "STDencinit called 5 times with right parameters."
+    end
+    print "Expected error the last time: ST_ERROR_NO_MEMORY ."
+    print " "
+    if API_CHIPID=="7200"
+        denc_init "DENC0" , DENC_CHOSEN DENC_ACCESS DENC_BA
+    end
+    else
+        denc_init "DENC0" , DENC_CHOSEN DENC_ACCESS
+    end
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if API_CHIPID=="7200"
+        denc_init "DENC1" , DENC_CHOSEN DENC_ACCESS DENC_BA
+    end
+    else
+        denc_init "DENC1" , DENC_CHOSEN DENC_ACCESS
+    end
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if API_CHIPID=="7200"
+        denc_init "DENC2" , DENC_CHOSEN DENC_ACCESS DENC_BA
+    end
+    else
+        denc_init "DENC2" , DENC_CHOSEN DENC_ACCESS
+    end
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if SET_EXTERNAL==0
+        if API_CHIPID=="7200"
+                denc_init "DENC3" , DENC_CHOSEN DENC_ACCESS DENC_BA
+        end
+        else
+                denc_init "DENC3" , DENC_CHOSEN DENC_ACCESS
+        end
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    if API_CHIPID=="7200"
+        denc_init "DENCMAX" , DENC_CHOSEN DENC_ACCESS DENC_BA
+    end
+    else
+        denc_init "DENCMAX" , DENC_CHOSEN DENC_ACCESS
+    end
+    M_CHECK_RETCODE ERR_NO_MEMORY
+    ; driver must be terminated before leaving
+    denc_term "DENC0"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_term "DENC1"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_term "DENC2"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if SET_EXTERNAL==0
+        denc_term "DENC3"
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    api_report "RET_NO_MEMORY" ERRORCOUNT
+end
+
+; this macro tests the open handle return code
+define M_RET_OPEN_HANDLE
+    ERRORCOUNT=0
+    api_report "RET_OPEN_HANDLE"
+    print "STDencterm called when an opened handle and ForceTerminate false."
+    print "Expected error : ST_ERROR_OPEN_HANDLE ."
+    if API_CHIPID=="7200"
+        denc_init "DENC1" 5 DENC_CHOSEN DENC_ACCESS DENC_BA
+    end
+    else
+        denc_init "DENC1" 5 DENC_CHOSEN DENC_ACCESS
+    end
+    hnd=denc_open "DENC1",,SET_AUX
+    denc_term "DENC1"
+    M_CHECK_RETCODE ERR_OPEN_HANDLE
+    ; driver must be terminated before leaving
+    denc_close hnd
+    denc_term "DENC1"
+    api_report "RET_OPEN_HANDLE" ERRORCOUNT
+end
+
+; this macro tests the no free handle return code
+define M_RET_NO_FREE_HANDLE
+    ERRORCOUNT=0
+    api_report "RET_NO_FREE_HANDLE"
+    print "STDencopen called more times than allowed on same device."
+    print "Expected error : ST_ERROR_NO_FREE_HANDLES ."
+    print " "
+    if API_CHIPID=="7200"
+        denc_init "DENC0" 1 DENC_CHOSEN DENC_ACCESS DENC_BA
+    end
+    else
+        denc_init "DENC0" 1 DENC_CHOSEN DENC_ACCESS
+    end
+    hnd = denc_open "DENC0",,SET_AUX
+    hnd2 = denc_open "DENC0",,SET_AUX
+    M_CHECK_RETCODE ERR_NO_FREE_HANDLES
+    print " "
+    denc_close hnd
+    denc_term "DENC0"
+    api_report "RET_NO_FREE_HANDLE" ERRORCOUNT
+end
+
+
+; this macro tests the STDENC_ERROR_INVALID_ENCODING_MODE return code
+; if a mode is defined but not allowed, add the following test and define NOT_ALLOWED_MODE in denc_test.c
+;    print " "
+;    print "STDENC_SetEncodingMode called with not allowed mode. STDENC_ERROR_INVALID_ENCODING_MODE expected"
+;    denc_setmode hnd NOT_ALLOWED_MODE
+;    M_CHECK_RETCODE ERR_INVALID_MODE
+define M_RET_INVALID_MODE
+    ERRORCOUNT=0
+    api_report "RET_INVALID_MODE"
+    print "STDENC_SetEncodingMode called with unknown mode."
+    print "Expected error : STDENC_ERROR_INVALID_ENCODING_MODE"
+    if API_CHIPID=="7200"
+        denc_init DENC_NAME 5 DENC_CHOSEN DENC_ACCESS DENC_BA
+    end
+    else
+        denc_init DENC_NAME 5 DENC_CHOSEN DENC_ACCESS
+    end
+    hnd=denc_open DENC_NAME ,SET_AUX
+    denc_setmode hnd -1
+    M_CHECK_RETCODE ERR_DENC_INVALID_ENCODING_MODE
+    if AUXDENC==0
+    denc_set , "SECAM_AUX"
+    M_CHECK_RETCODE ERR_DENC_INVALID_ENCODING_MODE
+    end
+    ; driver must be terminated before leaving
+    denc_close hnd
+    denc_term DENC_NAME
+    api_report "RET_INVALID_MODE" ERRORCOUNT
+end
+
+define M_RET_FEATURE_SUPPORT
+    ERRORCOUNT=0
+    api_report "RET_FEATURE_SUPPORT"
+    if API_CHIPID=="7200"
+        denc_init DENC_NAME ,DENC_CHOSEN ,DENC_BA
+    end
+    else
+        denc_init ,,DENC_CHOSEN
+    end
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_open DENC_NAME ,SET_AUX
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_set , "SECAM"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_soption , "TRAP_FILTER" 0
+    M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    denc_soption , "NON_INTERLACED" 0
+    M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    denc_setmode
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_soption , "RATE_60HZ" 1
+    M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+   if AUXDENC==0
+       denc_soption , "TRAP_FILTER_AUX" 0
+       M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+       denc_soption , "CHROMA_DELAY_AUX" 0
+       M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+       denc_soption , "LEVEL_PEDESTAL_AUX" 0
+       M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    end
+    denc_close
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_term DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_report "RET_FEATURE_SUPPORT" ERRORCOUNT
+end

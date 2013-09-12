@@ -1,0 +1,153 @@
+;*****************************************************************************
+; File   :  VMIX9.MAC
+;           Connect various vout on MIXER2 with rtidac configuration
+;           See STVMIX component test specification document for use
+; Author :  Adel Chaouch - December 2003
+;*****************************************************************************
+
+
+;*******************************************************************************
+;Name        : M_VMIX9_5528
+;Description : Connecting on 5528 & external DENC output on mixer2
+;*******************************************************************************
+define M_VMIX9_5528 T_BASEADD VOUT_TYPE
+    HDLVOUTTEST =0
+
+    ;Init vout, vtg & denc
+    M_MB376_BEIO "ON" "AUX"
+
+    ;init layers GDP1&GDP2
+    M_GAMMA_LAYER "START" h8 720 480
+
+    ;wa LAYVID1&LAYVID2
+    M_GAMMA_LAYER "WA_SVPARAMS" h3 720 480
+
+     ; Init mixer2
+    vmix_init "VMIX2" , G_MIX2_BA  VTG_NAME ,, VOUT_NAME
+    HDLVMIX2=vmix_open "VMIX2"
+    M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX2 HDLDENC HDLVOUT "4629"
+
+    vmix_enable HDLVMIX2
+
+    api_report "1) Test Mixer2 on CVBS "
+    vmix_sback HDLVMIX2 , 250 250 0
+    vmix_connect HDLVMIX2  "LAYVID1"
+    api_quest "Is video 1 displayed on CVBS output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_dconnect HDLVMIX2
+
+    api_report "2) Test Mixer2 on YC "
+    vmix_sback HDLVMIX2 , 0 0 0
+    vmix_connect HDLVMIX2  "GDP2" "LAYVID2"
+    api_quest "Are Video 2 & graphical merou on YC output  ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Term mixer2
+    vmix_dconnect HDLVMIX2
+    vmix_close
+    vmix_term "VMIX2"
+
+    ; stop layers
+    M_GAMMA_LAYER "STOP" hB
+
+    ; Term vout, vtg & denc
+    M_MB376_BEIO "OFF" "AUX"
+
+    api_report "M_VMIX9_5528" ERRORCOUNT
+end  ;M_VMIX9_5528
+
+
+;*******************************************************************************
+;Name        : M_VMIX9_5100
+;Description : Connecting on 5100;5301 & external DENC output on mixer2
+;*******************************************************************************
+define M_VMIX9_5100 T_BASEADD
+    HDLVOUTTEST =0
+
+    ; Init DENC, VTG & VOUT(CVBS)
+    M_COMMON_BEIO "ON"
+
+    ; Init VOUT (YC)
+    vout_init "VOUTYC" , "YC" , , , 3 0
+    HDLVOUTYC=vout_open "VOUTYC"
+    vout_setparams HDLVOUTYC
+    vout_enable HDLVOUTYC
+
+    ; Init all possible layer
+    M_5100_LAYER "START" 7
+
+    ; Init mixer2
+    vmix_init "VMIX2" , G_MIX2_BA  VTG_NAME ,, VOUT_NAME "VOUTYC"
+    HDLVMIX2=vmix_open "VMIX2"
+
+    M_COMMON_SETMODE "PAL" HDLVTGMAIN HDLVMIX2 HDLDENC HDLVOUT
+    vmix_enable HDLVMIX2
+
+    api_report "1) Test Mixer2 on CVBS "
+    vmix_sback HDLVMIX2 , 250 250 0
+    vmix_connect HDLVMIX2  "LVIDEO"
+    api_quest "Is video 1 displayed on CVBS output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_dconnect HDLVMIX2
+
+
+    api_report "2) Test Mixer2 on YC "
+    vmix_sback HDLVMIX2 , 0 0 0
+    vmix_connect HDLVMIX2  "OSD"
+    api_quest "Is OSD on YC output  ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX2
+
+    M_5100_LAYER "STOP" 7
+
+    ; stop mixer2
+    vmix_disable
+    vmix_close
+    vmix_term "VMIX2"
+
+    ;  Term DENC, VTG & VOUT
+    M_COMMON_BEIO "OFF"
+
+    api_report "M_VMIX9_5100" ERRORCOUNT
+end  ;M_VMIX9_5100
+
+
+;*******************************************************************************
+;Name        : M_VMIX9_MAIN
+;Description : Main function redirect to specific targetting sub macros
+;*******************************************************************************
+define M_VMIX9_MAIN
+    ERRORCOUNT = 0
+    print ""
+    print "Starting M_VMIX9..."
+
+    RET=MC_CHECK_TYPE
+    if RET&16
+        api_report "M_VMIX9_5528: Various VOUTs on MIXER2"
+       ;only CVBS and YC output types are tested on mixer 2 because it is the external denc that is used
+       ;RGB and YUV nead at least 4 dacs
+
+        M_VMIX9_5528 G_MIX2_BA "CVBS"
+        TESTVMIX9=FALSE_
+    end
+    if RET&32 ;5100;5301
+      if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+        api_report "M_VMIX9_5100: Various VOUTs on MIXER2"
+       ;only CVBS and YC output types are tested on mixer 2 because it is the external denc that is used
+
+        M_VMIX9_5100 G_MIX2_BA
+        TESTVMIX9=FALSE_
+      end
+      else
+        print "5105/5188/5107/5162 chip has only one GDMA : no mixer2 defined"
+      end
+    end
+    MC_CHECK_ERROR
+    ERR_VMIX9=GLOBERR
+end ;M_VMIX9_MAIN
+
+
+
+
+

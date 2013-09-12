@@ -1,0 +1,352 @@
+;*****************************************************************************
+; File         : FULLCGMS.MAC
+; Requirements :
+; Author       : SBEBA - DECEMBER 2005
+;*****************************************************************************
+
+
+HDVBI1=0
+HDLVMIX1=0
+HDLGDP1=0
+HDLGDP2=0
+
+
+; general behavior :
+; driver is assumed to be in a virgin state (no init, no open)
+
+define M_FULL_CGMS_TESTS
+
+                        print "**********************************"
+                        print "*   FULL-CGMS 1080I TYPE B MODE  *"
+                        print "**********************************"
+
+                        M_CGMS_INIT "1080I" "YUV"
+                        VBI_init "VBI" VIEWPORT "GDP1"
+                        HDVBI1=VBI_Open "VBI" CGMSFULL M1080I_B
+                        VBI_Enable HDVBI1
+                        vmix_sback HDLVMIX1 , 0 250 150
+                        vmix_connect HDLVMIX1 "GDP1" "GDP2"
+                        print "Update CGMS-HD Data "
+                        VBI_WriteData HDVBI1 17 h45 h08 h0a haa h00 h00 h00 hff hff h00 haa haa haa haa haa haa h01
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        print "Update CGMS-HD Data "
+                        VBI_WriteData HDVBI1 17 h45 h08 h0a haa h00 h55 h00 hff hf7 h00 haa haa haa haa haa haa h01
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        print "Disable CGMS Data "
+                        VBI_Disable HDVBI1
+                        api_quest "Does Cgms disabled ?"
+                        M_CHECK_RETCODE 0
+                        print "Enable CGMS Data "
+                        VBI_Enable HDVBI1
+                        api_quest "Does Cgms  Enabled?"
+                        M_CHECK_RETCODE 0
+                        print "Update CGMS-HD Data "
+                        VBI_WriteData HDVBI1 17 h45 h08 h0a haa h00 h55 h00 hff hf7 h00 haa hdd hdd hff hff haa h01
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        M_CGMS_CLOSE
+
+
+                        print "**********************************"
+                        print "*   FULL-CGMS 720P TYPE B MODE   *"
+                        print "**********************************"
+                        M_CGMS_INIT "720P" "YUV"
+                        VBI_init "VBI" VIEWPORT "GDP1"
+                        HDVBI1=VBI_Open "VBI" CGMSFULL M720P_B ; M720P_B
+                        VBI_Enable HDVBI1
+                        vmix_sback HDLVMIX1 , 0 250 150
+                        vmix_connect HDLVMIX1 "GDP1" "GDP2"
+                        print "Update CGMS Data "
+                        VBI_WriteData HDVBI1 17 hff h00 h00 h00 h00 h00 h00 hff hff hff haa haa haa haa haa haa h01
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        print "Disable CGMS Data "
+                        VBI_Disable HDVBI1
+                        api_quest "Does Cgms disabled ?"
+                        M_CHECK_RETCODE 0
+                        print "Enable CGMS Data "
+                        VBI_Enable HDVBI1
+                        api_quest "Does Cgms  Enabled?"
+                        M_CHECK_RETCODE 0
+                        print "Update CGMS Data "
+                        VBI_WriteData HDVBI1 17 hff haa hff hff h00 h00 h00 hff hff hff haa haa haa haa hbb haa h01
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        print "Update CGMS Data "
+                        VBI_WriteData HDVBI1 17 hff h11 h87 h00 h00 h00 h00 hff hff hff haa haa haa h23 haa haa h01
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        M_CGMS_CLOSE
+
+
+                        print "**********************************"
+                        print "*   FULL-CGMS 480P TYPE B MODE   *"
+                        print "**********************************"
+                        M_CGMS_INIT "480P" "YUV"
+                        VBI_init "VBI" VIEWPORT "GDP1"
+                        HDVBI1=VBI_Open "VBI" CGMSFULL M480P_B
+                        VBI_Enable HDVBI1
+                        vmix_sback HDLVMIX1 , 0 250 150
+                        vmix_connect HDLVMIX1 "GDP1" "GDP2"
+                        print "Update CGMS Data "
+                        VBI_WriteData HDVBI1 17 hff h00 h00 h00 h00 h00 h00 hff hff hff haa haa haa haa haa haa h01
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        print "Disable CGMS Data "
+                        VBI_Disable HDVBI1
+                        api_quest "Does Cgms disabled ?"
+                        M_CHECK_RETCODE 0
+                        print "Enable CGMS Data "
+                        VBI_Enable HDVBI1
+                        api_quest "Does Cgms  Enabled?"
+                        M_CHECK_RETCODE 0
+                        print "Update CGMS Data "
+                        VBI_WriteData HDVBI1 17 haa h00 hbb h00 hff hff hff hcc hcc hcc haa haa h00 h00 haa haa h01
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        print "Update CGMS Data "
+                        VBI_WriteData HDVBI1 17 h0f h00 hbb h00 hff hff hff hcc hcc hff hff hff hff h00 haa haa h01
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        M_CGMS_CLOSE
+
+
+                        print "**********************************"
+                        print "*        FULL-CGMS 480P MODE     *"
+                        print "**********************************"
+                        M_CGMS_INIT "480P" "YUV"
+                        VBI_init "VBI" VIEWPORT "GDP1"
+                        HDVBI1=VBI_Open "VBI" CGMSFULL M480P
+                        VBI_Enable HDVBI1
+                        vmix_sback HDLVMIX1 , 0 250 150
+                        vmix_connect HDLVMIX1 "GDP1" "GDP2"
+                        print "Update CGMS Data "
+                        VBI_WriteData HDVBI1 3 h0a h4a ha1
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        print "Disable CGMS Data "
+                        VBI_Disable HDVBI1
+                        api_quest "Does Cgms disabled ?"
+                        M_CHECK_RETCODE 0
+                        print "Enable CGMS Data "
+                        VBI_Enable HDVBI1
+                        api_quest "Does Cgms  Enabled?"
+                        M_CHECK_RETCODE 0
+                        print "Update CGMS Data "
+                        VBI_WriteData HDVBI1 3 h0f h12 h01
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        print "Update CGMS Data "
+                        VBI_WriteData HDVBI1 3 h0f h75 h12
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        M_CGMS_CLOSE
+
+
+                        print "**********************************"
+                        print "*        FULL-CGMS 720P MODE     *"
+                        print "**********************************"
+                        M_CGMS_INIT "720P" "YUV"
+                        VBI_init "VBI" VIEWPORT "GDP1"
+                        HDVBI1=VBI_Open "VBI" CGMSFULL M720P ; M720P
+                        VBI_Enable HDVBI1
+                        vmix_sback HDLVMIX1 , 0 250 150
+                        vmix_connect HDLVMIX1 "GDP1" "GDP2"
+                        print "Update CGMS Data "
+                        VBI_WriteData HDVBI1 3 h0a h4a ha1
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        print "Disable CGMS Data "
+                        VBI_Disable HDVBI1
+                        api_quest "Does Cgms disabled ?"
+                        M_CHECK_RETCODE 0
+                        print "Enable CGMS Data "
+                        VBI_Enable HDVBI1
+                        api_quest "Does Cgms  Enabled?"
+                        M_CHECK_RETCODE 0
+                        print "Update CGMS Data "
+                        VBI_WriteData HDVBI1 3 h0f h12 h01
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        print "Update CGMS Data "
+                        VBI_WriteData HDVBI1 3 h0f h75 h12
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        M_CGMS_CLOSE
+
+                        print "**********************************"
+                        print "*        FULL-CGMS 1080I MODE    *"
+                        print "**********************************"
+
+                        M_CGMS_INIT "1080I" "YUV"
+                        VBI_init "VBI" VIEWPORT "GDP1"
+                        HDVBI1=VBI_Open "VBI" CGMSFULL M1080I
+                        VBI_Enable HDVBI1
+                        vmix_sback HDLVMIX1 , 0 250 150
+                        vmix_connect HDLVMIX1 "GDP1" "GDP2"
+                        print "Update CGMS-HD Data "
+                        VBI_WriteData HDVBI1 3 h06 hb4 h5f
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        print "Update CGMS-HD Data "
+                        VBI_WriteData HDVBI1 3 h08 h12 h31
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        print "Disable CGMS Data "
+                        VBI_Disable HDVBI1
+                        api_quest "Does Cgms disabled ?"
+                        M_CHECK_RETCODE 0
+                        print "Enable CGMS Data "
+                        VBI_Enable HDVBI1
+                        api_quest "Does Cgms  Enabled?"
+                        M_CHECK_RETCODE 0
+                        print "Update CGMS-HD Data "
+                        VBI_WriteData HDVBI1 3 h02 hb5 h12
+                        api_quest "Does Cgms working ?"
+                        M_CHECK_RETCODE 0
+                        M_CGMS_CLOSE
+
+
+end
+
+
+;;;;;;;;;;;;;;;;; AUTOMATIC TESTS ;;;;;;;;;;;;;;;;;;
+
+; M_CGMS_INIT
+define M_CGMS_INIT PARAMS VOUTMODE
+
+                if PARAMS=="1080I"
+                        if VOUTMODE=="RGB"
+                        print "**********************************"
+                        print "*            RGB MODE            *"
+                        print "**********************************"
+
+                                vout_init "HDANA" , "HD_RGB" , , , , 1
+                        END
+                        if VOUTMODE=="YUV"
+                        print "**********************************"
+                        print "*            YPbPr MODE          *"
+                        print "**********************************"
+
+                                vout_init "HDANA" , "HD_YUV" , , , , 1
+                        END
+
+                        T_HDLVOUTANA =vout_open "HDANA"
+                        vout_enable
+                        vtg_init
+                        HDLVTGMAIN=vtg_open
+                        vtg_set ,MODE_1080I60000_74250
+                        vtg_so HDLVTGMAIN 0 1
+                        if VOUTMODE=="YUV"
+                                            vout_setemb T_HDLVOUTANA "HD_YUV" 1 0 4
+                        end
+                        if VOUTMODE=="RGB"
+                                            vout_setemb T_HDLVOUTANA "HD_RGB" 1 0 4
+                        end
+                        vmix_init ,,,,,, "HDANA"
+                        HDLVMIX1 =vmix_open
+                        vmix_enable HDLVMIX1
+                        vmix_sscreen HDLVMIX1  ,,, 1920 1080 192 42
+                        layer_init "GDP1" GAMMA_GDPVBI G_GDP1_BA 1200 200
+                        layer_init "GDP2" GAMMA_GDP G_GDP2_BA 500 500
+                        HDLGDP2=layer_open "GDP2"
+                        HDLVPGDP2=layer_openvp HDLGDP2 5 STAPIGATDATA+"merou3.gam" 400 400 200 200
+                        layer_enable HDLVPGDP2
+                end
+                if PARAMS=="720P"
+
+                        source "../../../scripts/vmix1.mac"
+                        if VOUTMODE=="RGB"
+                        print "**********************************"
+                        print "*            RGB MODE            *"
+                        print "**********************************"
+
+                                vout_init "HDANA" , "HD_RGB" , , , , 1
+                        END
+                        if VOUTMODE=="YUV"
+                        print "**********************************"
+                        print "*            YPbPr MODE          *"
+                        print "**********************************"
+
+                                vout_init "HDANA" , "HD_YUV" , , , , 1
+                        END
+                                                T_HDLVOUTANA =vout_open "HDANA"
+                        vout_enable
+                        vtg_init
+                        HDLVTGMAIN=vtg_open
+                        vtg_set ,MODE_720P60000_74250
+                        vtg_so HDLVTGMAIN 0 1
+                        if VOUTMODE=="YUV"
+                                            vout_setemb T_HDLVOUTANA "HD_YUV" 1 0 4
+                        end
+                        if VOUTMODE=="RGB"
+                                            vout_setemb T_HDLVOUTANA "HD_RGB" 1 0 4
+                        end
+                        vmix_init ,,,,,, "HDANA"
+                        HDLVMIX1 =vmix_open
+                        vmix_enable HDLVMIX1
+                        vmix_sscreen HDLVMIX1 0 ,, 1280 720 228 26
+                        layer_init "GDP1" GAMMA_GDPVBI G_GDP1_BA  500 500 0
+                        layer_init "GDP2" GAMMA_GDP G_GDP2_BA 500 500 0
+                        HDLGDP2=layer_open "GDP2"
+                        HDLVPGDP2=layer_openvp HDLGDP2 5 STAPIGATDATA+"merou3.gam" 400 400 200 200
+                        layer_enable HDLVPGDP2
+
+                end
+                if PARAMS=="480P"
+
+                        vtg_init
+                        hdl_vtg1=vtg_open
+                        vtg_setmode hdl_vtg1 "MODE_480P60000_27027"
+                        vout_init "HDANA" VOUT_DEVICE_TYPE_7710 "HD_YUV" , , , , 1
+                        hndl_yuv=vout_open "HDANA"
+			vout_setparams hndl_yuv "HD_YUV"
+			vout_enable hndl_yuv
+			vtg_so hdl_vtg1 0 1
+			vout_setemb hndl_yuv "HD_YUV" 1 0 4
+                        vmix_init ,,,,,, "HDANA"
+                        HDLVMIX1 =vmix_open
+                        vmix_enable HDLVMIX1
+                        vmix_sscreen HDLVMIX1 0 ,, 720 480 123 43
+                        layer_init "GDP2" GAMMA_GDP G_GDP2_BA 720 480 0
+                        HDLGDP2=layer_open "GDP2"
+                        HDLVPGDP2=layer_openvp HDLGDP2 5 STAPIGATDATA+"merou3.gam" 0 0 720 480
+                        layer_enable HDLVPGDP2
+                        layer_init "GDP1" GAMMA_GDPVBI G_GDP1_BA 200 200 0
+
+
+                end
+
+
+end
+
+; M_CGMS_CLOSE
+define M_CGMS_CLOSE
+vbi_close
+vbi_term
+VMIX_Dconnect
+vmix_close
+vmix_term
+;layer_close HDLGDP1
+layer_term "GDP1" 1
+layer_close HDLGDP2
+layer_term "GDP2" 1
+vout_close
+vout_term "HDANA",1
+vtg_close
+vtg_term
+
+end
+
+
+
+
+
+
+
+
+
+
+

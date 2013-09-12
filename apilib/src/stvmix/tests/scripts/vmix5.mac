@@ -1,0 +1,781 @@
+;*****************************************************************************
+; File   :  VMIX5.MAC
+;           Multi-instance test for mixer
+;           See STVMIX component test specification document for use
+; Author :  BS - Reviewed november 2001
+;*****************************************************************************
+
+
+;*******************************************************************************
+;Name        : M_VMIX5_7015
+;Description : Multi-instance test for 7015 chip
+;*******************************************************************************
+define M_VMIX5_7015
+    api_report "M_VMIX5_7015 : Multi-instance test"
+
+    ; Private variables
+    HDLDIGVOUT=0
+    HDLANAVOUT=0
+    HDLVTG119=0
+    HDLVOUT119=0
+    HDLDENC119=0
+    HDLVOUTRGB119=0
+
+    ; Init DENC, VOUT, VTG1
+    M_COMMON_BEIO "ON"
+
+    ; Init HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "ON"
+
+    ; Start all layer
+    M_7015_LAYER "START" h1F
+
+    print ""
+    print "1) Test Mix1: Back/VID1/GFX1 on HD & Mix2: VID2/GFX2 on SD"
+    print
+
+    ; Init mixers
+    vmix_init ,, hA700 , 1 5 "HDANA"
+    vmix_init "VMIX2" , hA800 "VTG2" ,, VOUT_NAME
+    HDLVMIX1 = vmix_open
+    HDLVMIX2 = vmix_open "VMIX2"
+    vmix_enable HDLVMIX1
+    vmix_enable HDLVMIX2
+
+    ; Resize GFX2 to be displayed on mixer2
+    layer_sparams HDLGFX2 ,, 720 480
+
+    ; Set HD mode for VTG1, MIX1
+    M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+
+    ; Set NTSC mode for VTG2, MIX2 & internal DENC
+    M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+    ; Test VID1 & GFX1 on Mixer 1 on HD
+    vmix_connect HDLVMIX1 "LAYVID1" "GFX1"
+
+    ; Test VID2 & GFX2 on Mixer 2 on SD
+    vmix_connect HDLVMIX2 "LAYVID2" LAYER_NAME
+
+    ; WA Video 1 & 2
+    M_7015_LAYER "WA_SVPARAMS" h3
+
+    ; The video is not yet available for multi-display
+    ; Image is not fluid on both display at the same time
+    vmix_sback HDLVMIX1 , 0 150 0
+    print ""
+    print "Are green background, Video 1 and merou on HD Monitor ? "
+    print "And Video 2 & graphical susie on internal DENC output ?"
+    api_quest
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX1
+    vmix_dconnect HDLVMIX2
+
+    ; Term mixer
+    vmix_close HDLVMIX1
+    vmix_close HDLVMIX2
+    vmix_term
+    vmix_term "VMIX2"
+
+    print ""
+    print "2) Test Mix1: merou on SD & Mix2: GFX2 on STV0119"
+    print
+
+    ; Init mixers
+    vmix_init ,, hA700 , 1 5 VOUT_NAME
+    vmix_init "VMIX2" , hA800 "VTG2" ,, "HDDIG"
+    HDLVMIX1 = vmix_open
+    HDLVMIX2 = vmix_open "VMIX2"
+    vmix_enable HDLVMIX1
+    vmix_enable HDLVMIX2
+
+    ; Move GFX1 to be displayed on mixer1
+    layer_svppos HDLVPGFX1 10 10
+    layer_sparams HDLGFX1 ,, 720 480
+
+    ; Set mode for VTG1, MIX1
+    M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1
+
+    ; Set NTSC mode for VTG2, MIX2 & internal DENC
+    M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+    ; Disable VTG1 output to get synchro from VTG2 for STV0119
+    vtg_soptional HDLVTGMAIN "NO_OUTPUT_SIGNAL" TRUE
+
+    vmix_sback HDLVMIX1 , 0 0 150
+    vmix_connect HDLVMIX1 "GFX1"
+    vmix_connect HDLVMIX2 LAYER_NAME
+    print ""
+    print "Are merou & blue background on internal DENC output ?"
+    print "Are susie on STV0119 output ?"
+    api_quest
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX1
+    vmix_dconnect HDLVMIX2
+
+    ; Term mixers
+    vmix_close HDLVMIX1
+    vmix_close HDLVMIX2
+    vmix_term
+    vmix_term "VMIX2"
+
+    ; Stop all layer
+    M_7015_LAYER "STOP" h1F
+
+    M_7015_BEIO "OFF"
+
+    M_COMMON_BEIO "OFF"
+
+    api_report "M_VMIX5_7015" ERRORCOUNT
+end  ;M_VMIX5_7015
+
+
+;*******************************************************************************
+;Name        : M_VMIX5_7020
+;Description : Multi-instance test for 7020 /7710 chip
+;*******************************************************************************
+define M_VMIX5_7020
+    api_report "M_VMIX5_7020 or 7710 : Multi-instance test"
+
+    ; Private variables
+    HDLDIGVOUT=0
+    HDLANAVOUT=0
+    HDLVTG119=0
+    HDLVOUT119=0
+    HDLDENC119=0
+    HDLVOUTRGB119=0
+
+    ; Init DENC, VOUT, VTG1
+    M_COMMON_BEIO "ON"
+
+   if (API_CHIPID=="7710")
+                if (CHIP_CUT=="STI7710_CUT2x")
+                        vtg_init "VTG2" , h20103034
+                end
+                else
+                        vtg_init "VTG2" , h20103C34
+                end
+   end
+   else
+      if (API_CHIPID!="7100")&&(API_CHIPID!="7109")
+           vtg_init "VTG2" , h8000
+      end
+    end
+
+    HDLVTGAUX=vtg_open "VTG2"
+
+    ; Init HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "ON"
+    if (API_CHIPID=="7109")
+       VTG_EnableHVSync
+    end
+
+    ; Start layers GDP1, GDP2 on HD
+    ; Start VID1, VID2 on SD
+
+
+    if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+    M_GAMMA_LAYER "START" h7F 720 480
+    end
+    else
+    M_GAMMA_LAYER "START" hC
+    M_GAMMA_LAYER "START" h3 720 576
+    end
+    print ""
+    print "1) Test Mix1: Back/VID1/GDP1 on HD & Mix2: VID2/GDP2 on SD"
+    print
+
+    ; Init mixers
+     if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+        vmix_init ,,, , ,, "HDANA"
+        vmix_init "VMIX2" , hB920AD00 "VTG2" ,, VOUT_NAME
+    end
+    else
+    if (API_CHIPID=="7710")
+        vmix_init ,, h38215C00 , 1 5 "HDANA"
+        vmix_init "VMIX2" , h38215D00 "VTG2" ,, VOUT_NAME
+    end
+    else
+        vmix_init ,, hAC00 , 1 5 "HDANA"
+        vmix_init "VMIX2" , hAD00 "VTG2" ,, VOUT_NAME
+    end
+    end
+    HDLVMIX1 = vmix_open
+    HDLVMIX2 = vmix_open "VMIX2"
+    vmix_enable HDLVMIX1
+    vmix_enable HDLVMIX2
+
+    ; Resize GDP2 to be displayed on mixer2
+    layer_sparams HDLGDP2 ,, 720 480
+
+    ; Set NTSC mode for VTG2, MIX2 & internal DENC
+    M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+    ; Set HD mode for VTG1, MIX1
+    M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+
+
+    ; Test VID1 & GDP1 on Mixer 1 on HD
+   if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+    vmix_connect HDLVMIX1 "LAYVID1"
+   end
+   else
+     vmix_connect HDLVMIX1  "LAYVID1" "GDP1"
+   end
+
+    ; Test VID2 & GDP2 on Mixer 2 on SD
+
+if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+
+    vmix_connect HDLVMIX2 "LAYVID2" "GDP3"
+end
+else
+   vmix_connect HDLVMIX2  "LAYVID2" "GDP2"
+end
+
+
+    ; WA Video 1 & 2
+   if (API_CHIPID!="7100")&&(API_CHIPID!="7109")
+    M_GAMMA_LAYER "WA_SVPARAMS" h3 720 576
+   end
+    vmix_sback HDLVMIX1 , 0 150 0
+
+    print ""
+    print "Are green background, Video 1  on HD Monitor ? "
+
+    print "And Video 2 & graphical susie on internal DENC output ?"
+    api_quest
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX1
+    vmix_dconnect HDLVMIX2
+
+    ; Term mixer
+    vmix_close HDLVMIX1
+    vmix_close HDLVMIX2
+    vmix_term
+    vmix_term "VMIX2"
+
+    if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")  ;must be updated for 7710
+        print ""
+        print "2) Test Mix1: merou on SD & Mix2: GDP2 on STV0119"
+        print
+
+        ; Init mixers
+        vmix_init ,, hAC00 , 1 5 VOUT_NAME
+        vmix_init "VMIX2" , hAD00 "VTG2" ,, "HDDIG"
+        HDLVMIX1 = vmix_open
+        HDLVMIX2 = vmix_open "VMIX2"
+        vmix_enable HDLVMIX1
+        vmix_enable HDLVMIX2
+
+        ; Move GDP1 to be displayed on mixer1
+        layer_svppos HDLVPGDP1 10 10
+        layer_sparams HDLGDP1 ,, 720 480
+
+        ; Set mode for VTG1, MIX1
+        M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1
+
+        ; Set NTSC mode for VTG2, MIX2 & internal DENC
+        M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+        ; Disable VTG1 output to get synchro from VTG2 for STV0119
+        VTG_SOptional HDLVTGMAIN "NO_OUTPUT_SIGNAL" TRUE
+
+        vmix_sback HDLVMIX1 , 0 0 150
+        vmix_connect HDLVMIX1 "GDP1"
+        vmix_connect HDLVMIX2 "GDP2"
+        print ""
+        print "Are merou & blue background on internal DENC output ?"
+        print "Are susie on STV0119 output ?"
+        api_quest
+        ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+        vmix_dconnect HDLVMIX1
+        vmix_dconnect HDLVMIX2
+
+        ; Term mixers
+        vmix_close HDLVMIX1
+        vmix_close HDLVMIX2
+        vmix_term
+        vmix_term "VMIX2"
+    end
+    ; Stop layers GDP1, GDP2, VID1, VID2
+    M_GAMMA_LAYER "STOP" h7F
+    M_7015_BEIO "OFF"
+
+    M_COMMON_BEIO "OFF"
+
+    api_report "M_VMIX5_7020 or 7710" ERRORCOUNT
+end  ;M_VMIX5_7020
+
+;*******************************************************************************
+;Name        : M_VMIX5_7200
+;Description : Multi-instance test for 7200 chip
+;*******************************************************************************
+define M_VMIX5_7200
+    api_report "M_VMIX5_7200 : Multi-instance test"
+
+    ; Private variables
+    HDLDIGVOUT=0
+    HDLANAVOUT=0
+    HDLVTG119=0
+    HDLVOUT119=0
+    HDLDENC119=0
+    HDLVOUTRGB119=0
+
+    ; Init DENC, VOUT, VTG1
+    ;M_COMMON_BEIO "ON"
+
+    ;HD BEIO inits
+    ;vtg
+    vtg_init
+    HDLVTGMAIN = vtg_open
+    vtg_setmode HDLVTGMAIN "MODE_1080I60000_74250"
+
+    ;vout
+    vout_init "HDANA" , "HD_RGB"
+    HDLANAVOUT = vout_open "HDANA"
+    vout_enable
+
+    ;SD BEIO inits
+
+    M_COMMON_BEIO "ON_AUX"
+
+    denc_init "DENC2" ,,, hFD10F000
+    HDLDENC2=denc_open "DENC2"
+    denc_setmode HDLDENC2 "PAL"
+
+    vtg_init "VTG3" , hFD10F200
+    HDLVTGSEC=vtg_open "VTG3"
+    vtg_setmode HDLVTGSEC "MODE_576I50000_13500"
+
+    vout_init "VOUT2" , ,  "DENC2" , , ,
+    HDLVOUT2=vout_open  "VOUT2"
+    vout_enable HDLVOUT2
+
+    if (API_CHIPID=="7109")
+       VTG_EnableHVSync
+    end
+
+    ; Start layers GDP1, GDP2 on HD
+    ; Start VID1, VID2 on SD
+
+    M_GAMMA_LAYER "START" h317 720 480
+
+    print ""
+    print "1) Test Mix1: Back/VID1/GDP1 on HD, Mix2: VID2/GDP2 on SD & Mix3: VID3/GDP5 on SD"
+    print
+
+    ; Init mixers
+        vmix_init ,,, , ,, "HDANA"
+        vmix_init "VMIX2" , G_MIX2_BA "VTG2" ,, VOUT_NAME
+        vmix_init "VMIX3" , G_MIX3_BA "VTG3" ,, "VOUT2"
+
+    HDLVMIX1 = vmix_open
+    HDLVMIX2 = vmix_open "VMIX2"
+    HDLVMIX3 = vmix_open "VMIX3"
+
+    vmix_enable HDLVMIX1
+    vmix_enable HDLVMIX2
+    vmix_enable HDLVMIX3
+
+    ; Set NTSC mode for VTG2, MIX2 & internal DENC
+    M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+    ; Set HD mode for VTG1, MIX1
+    ;M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+
+
+    ; Test VID1 & GDP1 on Mixer 1 on HD
+   vmix_connect HDLVMIX1  "LAYVID1" "GDP1"
+
+    ; Test VID2 & GDP3 on Mixer 2 on SD
+    vmix_connect HDLVMIX2 "LAYVID2" "GDP3"
+
+    ; Test VID3 & GDP5 on Mixer3 on SD
+    vmix_connect HDLVMIX3 "LAYVID3" "GDP5"
+
+    vmix_sback HDLVMIX1 , 0 150 0
+
+    print ""
+    print "Are green background, Video 1 & merou  on HD Monitor ? "
+
+    print "And Video 2 & graphical susie on  DENC0 output ?"
+
+    print "And Video 3 & graphical crow on  DENC1 output ?"
+
+    api_quest
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX1
+    vmix_dconnect HDLVMIX2
+    vmix_dconnect HDLVMIX3
+
+    ; Term mixer
+    vmix_close HDLVMIX1
+    vmix_close HDLVMIX2
+    vmix_close HDLVMIX3
+    vmix_term
+    vmix_term "VMIX2"
+    vmix_term "VMIX3"
+
+      ; Stop layers GDP1, GDP3, GDP5, VID1, VID2, VID3
+    M_GAMMA_LAYER "STOP" h317
+
+   M_COMMON_BEIO "OFF_AUX"
+   vout_close HDLVOUT2
+   vout_term "VOUT2"
+
+   ; VTG Term
+   vtg_close HDLVTGSEC
+   vtg_term "VTG3"
+
+   ; DENC Term
+   denc_close HDLDENC2
+   denc_term "DENC2" 1
+
+   vout_close HDLANAVOUT
+   vout_term  "HDANA"
+
+   ; VTG Term
+   vtg_close HDLVTGMAIN
+   vtg_term
+
+
+
+    api_report "M_VMIX5_7200" ERRORCOUNT
+end  ;M_VMIX5_7200
+
+
+
+
+;*******************************************************************************
+;Name        : M_VMIX5_5528
+;Description : Multi-instance test for 5528 chip
+;*******************************************************************************
+define M_VMIX5_5528
+    api_report "M_VMIX5_5528 : Multi-instance test"
+
+
+    ; Init DENC, VOUT, VTG
+    M_MB376_BEIO "ON" "BOTH"
+
+    ; Start GDP1, GDP2
+    M_GAMMA_LAYER "START" hC
+    ; WA Video 1 & 2
+    M_GAMMA_LAYER "WA_SVPARAMS" h3 720 480
+
+
+    print ""
+    print " Test Mix1: Back/GDP1/VID1  & Mix2: VID2/GDP2 "
+    print
+
+    ; Init mixer1
+    vmix_init "VMIX1" , G_MIX1_BA VTG_NAME ,,  "MAIN_VOUT"
+    HDLVMIX1 = vmix_open "VMIX1"
+    vmix_enable HDLVMIX1
+
+    ; Set PAL mode for MIX1 & internal denc
+    M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1 MAIN_DENC_HDL AUX_VOUT_HDL
+
+
+    ; Init mixer2
+    vmix_init "VMIX2" , G_MIX2_BA  VTG_NAME ,, "AUX_VOUT"
+    HDLVMIX2 = vmix_open "VMIX2"
+    vmix_enable HDLVMIX2
+
+    ; Set NTSC mode for MIX2 & external DENC
+    HDLVTGAUX= HDLVTGMAIN
+    M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 AUX_DENC_HDL AUX_VOUT_HDL "4629"
+
+    vmix_sback HDLVMIX1 , 0 150 0
+    print ""
+
+    ; test GDP2 on mixer1 and GDP1 on mixer2
+    vmix_connect HDLVMIX1 "GDP2"
+    vmix_connect HDLVMIX2 "LAYVID1"
+    api_quest "Is Merou on mixer1 and Video1 on mixer2 ? "
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX1
+    vmix_dconnect HDLVMIX2
+
+    ; Test VID1 & GDP1 on Mixer 1
+    vmix_connect HDLVMIX1 "GDP1" "LAYVID1"
+    ; Test VID2 & GDP2 on Mixer 2
+    vmix_connect HDLVMIX2  "GDP2" "LAYVID2"
+    vmix_sback HDLVMIX2 , 250 250 0
+
+    print "Are green background, Video 1 and merou on mixer1  "
+    api_quest " & yellow backgraownd, Video 2 & merou on mixer2 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX1
+    vmix_dconnect HDLVMIX2
+
+    ; Term mixer
+    vmix_close HDLVMIX1
+    vmix_close HDLVMIX2
+    vmix_term "VMIX1"
+    vmix_term "VMIX2"
+
+    ; Stop layers GDP1, GDP2, VID1, VID2
+    M_GAMMA_LAYER "STOP" hF
+
+    M_MB376_BEIO "OFF" "BOTH"
+
+    api_report "M_VMIX5_5528 : Muti instance test " ERRORCOUNT
+end  ;M_VMIX5_5528
+
+
+;*******************************************************************************
+;Name        : M_VMIX5_5100
+;Description : Multi-instance test for 5100/5105/5301/5188 chip
+;*******************************************************************************
+define M_VMIX5_5100
+    api_report "M_VMIX5_5100: Multi-instance test for 5100/5105 chips"
+    api_checkerr
+
+    ; Private variables
+    HDLVOUTRGB =0
+
+    ; Init DENC, VTG & VOUT
+    M_COMMON_BEIO "ON"
+
+
+
+    ; Init VOUT in RGB
+    M_VOUTDENC_RGB "ON"
+
+
+    ; Init all possible layer
+    M_5100_LAYER "START" hf
+
+    ; Init mixer1
+    vmix_init "VMIX1" , G_MIX1_BA  VTG_NAME ,, VOUT_NAME
+
+
+    HDLVMIX1 = vmix_open "VMIX1"
+    vmix_sback HDLVMIX1 , 250 100 0   ;orange background
+    vmix_enable HDLVMIX1
+
+    ; Init mixer2
+    if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+      vmix_init "VMIX2" , G_MIX2_BA  VTG_NAME ,, "VOUTRGB"
+      HDLVMIX2=vmix_open "VMIX2"
+      vmix_sback HDLVMIX2 , 250 0 100   ;pink background
+      vmix_enable HDLVMIX2
+    end
+
+
+    layer_svpalpha HDLVPSTILL 75
+    vmix_connect HDLVMIX1  "STILL" "LVIDEO" "OSD"
+    api_quest "Are Still ,Video & OSD on screen with orange background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+      vmix_connect HDLVMIX2  "LVIDEO2"
+      api_quest "Is Video on screen with pink background ?"
+      ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    end
+
+    layer_svpalpha HDLVPSTILL 128
+    vmix_sback HDLVMIX1 , 0 0 0   ;black background
+    if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+      vmix_sback HDLVMIX2 , 0 0 0   ;black background
+      vmix_dconnect HDLVMIX2
+    end
+    vmix_dconnect HDLVMIX1
+
+    ; Term all possible layer
+    M_5100_LAYER "STOP" hF
+
+    ; Term mixer
+    vmix_disable HDLVMIX1
+    vmix_close HDLVMIX1
+    vmix_term "VMIX1"
+    if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+      vmix_disable HDLVMIX2
+      vmix_close HDLVMIX2
+      vmix_term "VMIX2"
+    end
+    ; Term VOUT in RGB
+    M_VOUTDENC_RGB "OFF"
+
+    ; Term DENC, VTG & VOUT
+    M_COMMON_BEIO "OFF"
+
+    api_report "M_VMIX5_5100" ERRORCOUNT
+end  ;M_VMIX5_5100
+
+
+;*******************************************************************************
+;Name        : M_VMIX5_5525
+;Description : Multi-instance test for 5100/5105/5301/5188/5107/5162 chip
+;*******************************************************************************
+define M_VMIX5_5525
+    api_report "M_VMIX5_5100: Multi-instance test for 5100/5105 chips"
+    api_checkerr
+
+
+        poke h1980002C hc00000
+        poke h19a00000 h38
+        poke h19a00018 h80
+        poke h19a0017c h00
+        poke h19b00000 h38
+        poke h19b00018 h80
+        poke h19b0017c h00
+
+
+denc_init
+denc_open
+denc_setmode
+vtg_init
+vtg_open
+vtg_setmode
+vout_init "VOUT"
+HDLVOUT =  vout_open "VOUT"
+vout_enable HDLVOUT
+
+
+denc_init "DENC2" ,,, h19B00000
+HDLDENC=denc_open "DENC2"
+denc_setmode HDLDENC "PAL"
+
+ vtg_init "VTG2" , h19B00400
+ hdl_vtg2=vtg_open "VTG2"
+ vtg_setmode hdl_vtg2 "MODE_576I50000_13500"
+
+ vout_init "VOUT2" VOUT_DEVICE_TYPE_5525 "CVBS"  "DENC2" h19B00700 , 8
+ hndl_yuv2=vout_open "VOUT2"
+ vout_setparams hndl_yuv2 "CVBS"
+ vout_enable hndl_yuv2
+
+
+
+    ; Init all possible layer
+    M_5100_LAYER "START" hf
+
+    ; Init mixer1
+    vmix_init "VMIX1" , G_MIX1_BA  VTG_NAME ,, VOUT_NAME
+
+
+    HDLVMIX1 = vmix_open "VMIX1"
+    vmix_sback HDLVMIX1 , 250 100 0   ;orange background
+    vmix_enable HDLVMIX1
+
+    ; Init mixer2
+    if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+      vmix_init "VMIX2" , G_MIX2_BA  "VTG2" ,, "VOUT2"
+      HDLVMIX2=vmix_open "VMIX2"
+      vmix_sback HDLVMIX2 , 250 0 100   ;pink background
+      vmix_enable HDLVMIX2
+    end
+
+
+    layer_svpalpha HDLVPSTILL 75
+    vmix_connect HDLVMIX1  "STILL" "LVIDEO" "OSD"
+    api_quest "Are Still ,Video & OSD on screen with orange background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+      vmix_connect HDLVMIX2  "LVIDEO2"
+      api_quest "Is Video on screen with pink background ?"
+      ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    end
+
+    layer_svpalpha HDLVPSTILL 128
+    vmix_sback HDLVMIX1 , 0 0 0   ;black background
+    if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+      vmix_sback HDLVMIX2 , 0 0 0   ;black background
+      vmix_dconnect HDLVMIX2
+    end
+    vmix_dconnect HDLVMIX1
+
+    ; Term all possible layer
+    M_5100_LAYER "STOP" hF
+
+    ; Term mixer
+    vmix_disable HDLVMIX1
+    vmix_close HDLVMIX1
+    vmix_term "VMIX1"
+    if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+      vmix_disable HDLVMIX2
+      vmix_close HDLVMIX2
+      vmix_term "VMIX2"
+    end
+
+     ; Term VOUT in RGB
+        vout_close  hndl_yuv2
+        vout_term   "VOUT2"
+        vtg_close   hdl_vtg2
+        vtg_term    "VTG2"
+        denc_close  HDlDENC
+        denc_term   "DENC2"
+
+    ; Term DENC, VTG & VOUT
+    M_COMMON_BEIO "OFF"
+
+    api_report "M_VMIX5_5100" ERRORCOUNT
+end  ;M_VMIX5_5100
+
+
+
+
+;*******************************************************************************
+;Name        : M_VMIX5_MAIN
+;Description : Main function redirect to specific targetting sub macros
+;*******************************************************************************
+define M_VMIX5_MAIN
+    ERRORCOUNT=0
+    print ""
+    print "Starting M_VMIX5..."
+
+    RET=MC_CHECK_TYPE
+    if RET&5
+        print " not applicable on this platform"
+        TESTVMIX5=FALSE_
+    end
+    if RET&2
+        M_VMIX5_7015
+    end
+    if RET&8
+        if (API_CHIPID=="7200")
+                M_VMIX5_7200
+        end
+        else
+                M_VMIX5_7020
+        end
+    end
+    if RET&16
+        M_VMIX5_5528
+        ;TESTVMIX5=FALSE_
+    end
+    if RET&32
+       if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+                if (API_CHIPID=="5525")
+                M_VMIX5_5525
+                end
+                else
+                M_VMIX5_5100
+                end
+      end
+      else
+        print "5105/5188/5107/5162 chip has only one GDMA : no mixer2 defined"
+      end
+    end
+
+    MC_CHECK_ERROR
+    ERR_VMIX5=GLOBERR
+end ;M_VMIX5_MAIN
+
+
+
+
+
+
+
+

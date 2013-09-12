@@ -1,0 +1,1345 @@
+;*****************************************************************************
+; File   :  VMIX1.MAC
+;           Connect various layers on MIXER1
+;           See STVMIX component test specification document for use
+; Author :  AC - Reviewed December 2003
+;*****************************************************************************
+
+;****************
+; COMMON MACROS *
+;****************
+
+define M_VMIX1_TEST_BACKGROUND
+    wait 2000
+    for I 0 250 30
+        vmix_sback ,, 0 0 I
+        T_BACK=vmix_gback
+        M_CHECK_BACK T_BACK 1 0 0 I
+        wait 20
+    end
+    for I 0 250 30
+        vmix_sback ,, 0 I 0
+        T_BACK=vmix_gback
+        M_CHECK_BACK T_BACK 1 0 I 0
+        wait 20
+    end
+    for I 0 250 30
+        vmix_sback ,, I 0 0
+        T_BACK=vmix_gback
+        M_CHECK_BACK T_BACK 1 I 0 0
+        wait 20
+    end
+    api_quest "Is background ok ?"
+    ERRORCOUNT = ERRORCOUNT+ERRORCODE
+    vmix_sback , 0 127 127 127
+    T_BACK=vmix_gback
+    M_CHECK_BACK T_BACK 0 127 127 127
+    api_quest "Is background off ?"
+    ERRORCOUNT = ERRORCOUNT+ERRORCODE
+end
+
+;*******************************************************************************
+;Name        : M_VMIX1_55XX
+;Description : Connecting on 55XX, various layers
+;*******************************************************************************
+define M_VMIX1_55XX
+    api_report "M_VMIX1_55XX: Various LAYERSs on MIXER"
+    api_checkerr
+
+    ; Init DENC, VTG & VOUT
+    M_COMMON_BEIO "ON"
+
+    ; Init all possible layers
+    M_55XX_LAYER "START" hF
+
+    ; Init mixer
+    vmix_init
+    HDLVMIX1 = vmix_open
+    vmix_enable
+
+    vmix_connect , "LVIDEO"
+
+    M_COMMON_SETMODE "PAL"
+
+    if API_CHIPID!="5508"
+        if API_CHIPID!="5518"
+            vmix_connect , "STILL"
+            api_quest "Is still on screen?"
+            ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+            ; set red background
+            vmix_sback ,, 250 0 0
+
+            ; Change STILL alpha value
+            layer_svpalpha HDLVPSTILL 75
+
+            api_quest "Still, red background ?"
+            ERRORCOUNT=ERRORCOUNT+ERRORCODE
+        end
+    end
+
+   ; Background with max opacity (still behind background)
+   layer_svpalpha HDLVPSTILL 0
+
+   ; Change STILL alpha value
+   M_VMIX1_TEST_BACKGROUND
+
+;;    vmix_sback , , 0 250 0
+;;    api_quest "Video, .. background ?"
+    layer_svpalpha HDLVPSTILL 75
+    vmix_sback ,, 0 0 200
+
+    vmix_connect , "LVIDEO"
+
+    api_quest "Is Video on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect , "OSD"
+
+    api_quest "Is Osd on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect , "CURSOR"
+
+    api_quest "Is cursor on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    M_55XX_LAYER "CONNECT_ALL"
+
+    if API_CHIPID=="5508"
+        api_quest "Do you see Video behind Osd behind Cursor ?"
+        ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    end
+    elif API_CHIPID=="5518"
+        api_quest "Do you see Video behind Osd behind Cursor ?"
+        ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    end
+    else ; case 5510 5512 5514 5516
+        print "Do you see Still behind Video behind Osd behind Cursor with background ?"
+        print "Note : Blue background should only be displayed behind Still"
+        api_quest
+        ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+        vmix_connect , "STILL" "LVIDEO" "CURSOR" "OSD"
+        api_quest "Do you see Still behind Video behind Cursor behind Osd with background ?"
+        ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    end
+
+    ; Term mixer
+    vmix_disable
+    vmix_dconnect
+    vmix_close
+    vmix_term
+
+    ; Term all possible layer
+    M_55XX_LAYER "STOP" hF
+
+    ; Term DENC, VTG & VOUT
+    M_COMMON_BEIO "OFF"
+
+    api_report "M_VMIX1_55XX" ERRORCOUNT
+end  ;M_VMIX1_55XX
+
+
+;*******************************************************************************
+;Name        : M_VMIX1_5100
+;Description : Connecting on 5100/5105/5301/5188/5107/5162, various layers
+;*******************************************************************************
+define M_VMIX1_5100
+    api_report "M_VMIX1_5100: Various LAYERSs on MIXER"
+    api_checkerr
+
+    ; Init DENC, VTG & VOUT
+    M_COMMON_BEIO "ON"
+
+    ; Init all possible layer
+    M_5100_LAYER "START" 7
+
+    ; Init mixer
+    vmix_init
+    HDLVMIX1 = vmix_open
+    vmix_enable
+    ; code related to the chroma luma delay WA
+    if (API_CHIPID=="5100")
+        STRMODE=vtg_getmode HDLVTGMAIN
+        Mode=api_evalstr STRMODE 1
+        VMIX_CLDelayWA HDLVMIX1 Mode  ; if WA_CLDELAY_USED is not defined this function do nothing
+    end
+
+    vmix_connect , "LVIDEO"
+
+    vmix_connect , "STILL"
+    api_quest "Is still on screen?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; set red background
+    vmix_sback ,, 250 0 0
+
+    ; Change STILL alpha value
+    layer_svpalpha HDLVPSTILL 75
+
+    api_quest "Still, red background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Background with max opacity (still behind background)
+    layer_svpalpha HDLVPSTILL 0
+
+    ; Change STILL alpha value
+    M_VMIX1_TEST_BACKGROUND
+
+    layer_svpalpha HDLVPSTILL 75
+    vmix_sback ,, 0 0 200
+
+    vmix_connect , "LVIDEO"
+
+    api_quest "Is Video on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect , "OSD"
+
+    api_quest "Is Osd on screen ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    M_5100_LAYER "CONNECT_ALL"
+    api_quest "Do you see Still behind Video behind Osd with background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; set Black background
+    vmix_sback ,, 0 0 0
+
+    vmix_dconnect
+
+    ;  Term all possible layer
+    M_5100_LAYER "STOP" 7
+
+    ; Term mixer
+    vmix_disable
+    vmix_close
+    vmix_term
+
+    ;  Term DENC, VTG & VOUT
+    M_COMMON_BEIO "OFF"
+
+    api_report "M_VMIX1_5100" ERRORCOUNT
+end  ;M_VMIX1_5100
+
+
+define M_VOUT_HDANA P_ACTION P_HDL
+    RET=0
+    if P_ACTION=="ON"
+        ; VOUT Analog HD Configuration
+        vout_init "HDANA" , "HD_YUV"
+        RET=vout_open "HDANA"
+        vout_enable
+    end
+    if P_ACTION=="OFF"
+        vout_close P_HDL
+        vout_term "HDANA"
+    end
+end RET
+
+
+
+;*******************************************************************************
+;Name        : M_VMIX1_7015
+;Description : Connecting on 7015, various layers
+;*******************************************************************************
+define M_VMIX1_7015 DEVICE_TYPE BASE_ADDRESS
+    api_report "M_VMIX1_7015: Various LAYERSs on MIXER1"
+
+    ; Init output
+    T_HDLVOUTANA = M_VOUT_HDANA "ON"
+
+    ; Start main VTG
+    vtg_init
+    HDLVTGMAIN=vtg_open
+
+    ; Init mixer
+    vmix_init , 1 hA700 , 1 5 "HDANA"
+    HDLVMIX1=vmix_open
+    vmix_enable HDLVMIX1
+
+    M_COMMON_SETMODE "MODE_1080I60000_74250"
+
+    print "Wait monitor to wakeup..."
+    wait 5000
+
+    print ""
+    print "1) Test background"
+    print ""
+    M_VMIX1_TEST_BACKGROUND
+
+    print ""
+    print "2) Test layer individually with background"
+    print ""
+
+    ; Start all 7015 layer
+    M_7015_LAYER "START" h1F
+
+    vmix_connect HDLVMIX1 LAYER_NAME
+    vmix_gback HDLVMIX1
+    vmix_sback HDLVMIX1 0
+    vmix_sback HDLVMIX1 , 250 0 0
+    api_quest "Graphic 2 on HD, red background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 0 250 0
+    vmix_connect HDLVMIX1 "LAYVID1"
+
+    ; WA video1
+    M_7015_LAYER "WA_SVPARAMS" h1
+
+    api_quest "video1 on HD, green background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 0 0 250
+    vmix_connect HDLVMIX1 "LAYVID2"
+
+    ; WA video2
+    M_7015_LAYER "WA_SVPARAMS" h2
+
+    api_quest "video2 on HD, blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 0 250 250
+    vmix_connect HDLVMIX1 "GFX1"
+    api_quest "Graphic 1 on HD, blue light background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 250 0 250
+
+    vmix_connect HDLVMIX1 "CURS"
+    api_quest "cursor on HD, violet background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 63 127 190
+    vmix_connect HDLVMIX1 LAYER_NAME "GFX1"
+    api_quest "Graphic 2 & Graphic 1 on HD, blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "3) Test layer permutation between video1, video2 & gfx1"
+    print ""
+    print "Video1 is the biggest susie & Video2 the smallest one."
+    print "The asked order are from the farthest to the closest"
+    print ""
+    vmix_connect HDLVMIX1 "LAYVID1" "LAYVID2" "GFX1"
+    api_quest "Is order video1 behind video2 behind gfx1 ?"
+
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 "LAYVID1" "GFX1" "LAYVID2"
+    api_quest "Is order video1 behind gfx1 behind video2 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 "GFX1" "LAYVID1" "LAYVID2"
+    api_quest "Is order gfx1 behind video1 behind video2 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 "GFX1" "LAYVID2" "LAYVID1"
+    api_quest "Is order gfx1 behind video2 behind video1 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 "LAYVID2" "GFX1" "LAYVID1"
+    api_quest "Is order video2 behind gfx1 behind video1 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 "LAYVID2" "LAYVID1" "GFX1"
+    api_quest "Is order video2 behind video1 behind gfx1 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 250 250 0
+    vmix_connect HDLVMIX1 LAYER_NAME "LAYVID2" "LAYVID1" "GFX1"
+
+    api_quest "Do you see background behind GFX2, video2, video1 & GFX1 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX1
+
+    ; Stop all 7015 layer
+    M_7015_LAYER "STOP" h1F
+
+    ; Term mixer
+    vmix_close HDLVMIX1
+    vmix_term
+
+    ; Term main vtg
+    vtg_close HDLVTGMAIN
+    vtg_term
+
+    ; Term output
+    M_VOUT_HDANA "OFF" T_HDLVOUTANA
+
+    api_report "M_VMIX1_7015" ERRORCOUNT
+end  ;M_VMIX1_7015
+
+; Routine to check background
+define M_CHECK_BACK P_STR P_ENABLE P_RED P_GREEN P_BLUE
+    T_ENABLE=api_evalstr P_STR 1
+    T_RED=api_evalstr P_STR 2
+    T_GREEN=api_evalstr P_STR 3
+    T_BLUE=api_evalstr P_STR 4
+    if T_ENABLE!=P_ENABLE
+        ERRORCOUNT = ERRORCOUNT+1
+        print "Enable background test failed !!"
+        print "Expect " P_ENABLE " and got " T_ENABLE
+    end
+    if T_RED!=P_RED
+        ERRORCOUNT = ERRORCOUNT+1
+        print "Red color background test failed !!"
+        print "Expect " P_RED " and got " T_RED
+    end
+    if T_GREEN!=P_GREEN
+        ERRORCOUNT = ERRORCOUNT+1
+        print "Green color background test failed !!"
+        print "Expect " P_GREEN " and got " T_GREEN
+    end
+    if T_BLUE!=P_BLUE
+        ERRORCOUNT = ERRORCOUNT+1
+        print "Blue color background test failed !!"
+        print "Expect " P_BLUE " and read " T_BLUE
+    end
+end
+
+;*******************************************************************************
+;Name        : M_VMIX1_GX1
+;Description : Connecting on GX1, various layers
+;*******************************************************************************
+define M_VMIX1_GX1
+    api_report "M_VMIX1_GX1: Various LAYERSs on MIXER"
+
+    LAYVPHDL = 0
+    T_GDP1HDL = 0
+    T_GDP1VPHDL = 0
+    T_GDP2HDL = 0
+    T_GDP2VPHDL = 0
+    T_GDP3HDL = 0
+    T_GDP3VPHDL = 0
+    T_GDP4HDL = 0
+    T_GDP4VPHDL = 0
+    T_CURHDL = 0
+    T_CURVPHDL = 0
+
+    M_COMMON_BEIO "ON"
+    T_GDP1HDL = M_GX1_GDP_ON "GDP1" h100 2 20 20
+    T_GDP1VPHDL = LAYVPHDL
+    T_GDP2HDL = M_GX1_GDP_ON "GDP2" h200 5 250 20
+    T_GDP2VPHDL = LAYVPHDL
+    T_GDP3HDL = M_GX1_GDP_ON "GDP3" h300 2 30 180
+    T_GDP3VPHDL = LAYVPHDL
+    T_GDP4HDL = M_GX1_GDP_ON "GDP4" h400 3 250 200
+    T_GDP4VPHDL = LAYVPHDL
+    T_CURHDL = M_GX1_CUR_ON "CUR" 280 340
+    T_CURVPHDL = LAYVPHDL
+
+    vmix_init
+    HDLVMIX1=vmix_open
+    vmix_sscre ,,,, 480
+
+    M_COMMON_SETMODE "PAL"
+    vmix_enable
+
+    print ""
+    print "1) Each GDP planes & cursor are going to be displayed during 2 second"
+    print ""
+    wait 2000
+    print "GDP1 = Merou en X=20 Y=20"
+    vmix_con , "GDP1"
+    wait 2000
+    print "GDP2 = Crow en X=250 Y=20"
+    vmix_con , "GDP2"
+    wait 2000
+    print "GDP3 = Merou en X=30 Y=180"
+    vmix_con , "GDP3"
+    wait 2000
+    print "GDP4 = Susie en X=250 Y=200"
+    vmix_con , "GDP4"
+    wait 2000
+    print "Cursor = face en X=280 Y=340"
+    vmix_con , "CUR"
+    wait 2000
+    vmix_dcon
+    print ""
+    api_quest "Did GDP 1,2,3,4 & cursor displayed correctly ?"
+    ERRORCOUNT = ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "2) All GDP planes & cursor are going to be displayed together"
+    print ""
+
+    vmix_con , "GDP1" "GDP2" "GDP3" "GDP4" "CUR"
+
+    print ""
+    api_quest "Do you see GDP 1,2,3,4 & cursor correctly ?"
+    ERRORCOUNT = ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "3) Display cursor & GDP with background"
+    print ""
+
+    vmix_connect HDLVMIX1 "GDP1"
+    vmix_gback HDLVMIX1
+    vmix_sback HDLVMIX1 0
+    vmix_sback HDLVMIX1 , 250 0 0
+    api_quest "Do you see merou & red background ?"
+    ERRORCOUNT = ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 0 250 0
+    vmix_connect HDLVMIX1 "GDP2"
+    api_quest "Do you see the crow & green background ?"
+    ERRORCOUNT = ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 0 0 250
+    vmix_connect HDLVMIX1 "CUR"
+    api_quest "Do tou see cursor & blue background ?"
+    ERRORCOUNT = ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 0 250 250
+    vmix_dconnect HDLVMIX1
+    api_quest "Do tou see blue light background only ?"
+    ERRORCOUNT = ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "4) All GDP planes are going to display by two during 2 seconds"
+    print ""
+
+    vmix_con , "GDP1" "GDP2"
+    wait 2000
+    vmix_con , "GDP1" "GDP3"
+    wait 2000
+    vmix_con , "GDP1" "GDP4"
+    wait 2000
+    vmix_con , "GDP2" "GDP3"
+    wait 2000
+    vmix_con , "GDP2" "GDP4"
+    wait 2000
+    vmix_con , "GDP3" "GDP4"
+    wait 2000
+    vmix_dcon
+    print ""
+    api_quest "Did you see GDP 1,2,3,4 displayed by two ?"
+    ERRORCOUNT = ERRORCOUNT+ERRORCODE
+
+    print ""
+    print "5) Background color test"
+    print ""
+    M_VMIX1_TEST_BACKGROUND
+
+    print ""
+    print "6) Background color test with connected layers"
+    print ""
+    vmix_con , "GDP3" "GDP4"
+    M_VMIX1_TEST_BACKGROUND
+
+    vmix_close
+    vmix_term
+
+    M_GX1_CUR_OFF T_CURHDL T_CURVPHDL
+    M_GX1_GDP_OFF "GDP1" T_GDP1HDL T_GDP1VPHDL
+    M_GX1_GDP_OFF "GDP2" T_GDP2HDL T_GDP2VPHDL
+    M_GX1_GDP_OFF "GDP3" T_GDP3HDL T_GDP3VPHDL
+    M_GX1_GDP_OFF "GDP4" T_GDP4HDL T_GDP4VPHDL
+
+    M_COMMON_BEIO "OFF"
+end
+
+;*******************************************************************************
+;Name        : M_VMIX1_7020
+;Description : Connecting on 7020  , various layers
+;*******************************************************************************
+define M_VMIX1_7020
+    api_report "M_VMIX1_7020  : Various LAYERSs on MIXER1"
+
+    ; Init output
+    T_HDLVOUTANA = M_VOUT_HDANA "ON"
+
+    ; Start main VTG
+    vtg_init
+    HDLVTGMAIN=vtg_open
+
+    vmix_init ,,,,,, "HDANA"
+
+    HDLVMIX1=vmix_open
+    vmix_enable HDLVMIX1
+
+    M_COMMON_SETMODE "MODE_1080I60000_74250"
+    print "Wait monitor to wakeup..."
+    wait 5000
+
+    print ""
+    print "1) Test background"
+    print ""
+    M_VMIX1_TEST_BACKGROUND
+
+    print ""
+    print "2) Test layer individually with background"
+    print ""
+
+    ; Start all layer
+    M_GAMMA_LAYER "START" h7F
+
+    vmix_connect HDLVMIX1 "GDP2"
+    vmix_gback HDLVMIX1
+    vmix_sback HDLVMIX1 0
+    vmix_sback HDLVMIX1 , 250 0 0
+
+    api_quest "Graphic 2 on HD, red background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 0 250 0
+    vmix_connect HDLVMIX1 "LAYVID1"
+
+    ; WA video1
+    M_GAMMA_LAYER "WA_SVPARAMS" h1
+
+    api_quest "video1 on HD, green background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 0 0 250
+    vmix_connect HDLVMIX1 "LAYVID2"
+
+    ; WA video2
+    M_GAMMA_LAYER "WA_SVPARAMS" h2
+
+    api_quest "video2 on HD, blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 0 250 250
+    vmix_connect HDLVMIX1 "GDP1"
+    api_quest "Graphic 1 on HD, blue light background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 250 0 250
+
+    vmix_connect HDLVMIX1 "CURS"
+    api_quest "Is cursor on HD with violet background ?"
+
+    vmix_sback HDLVMIX1 , 63 127 190
+    vmix_connect HDLVMIX1 "GDP1" "GDP2"
+    api_quest "Graphic 2 & Graphic 1 on HD, blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    LAYGDP=""
+    LAYGDP="GDP1"
+    print ""
+    print "3) Test layer permutation between video1, video2 & GDP"
+    print ""
+    print "Video1 is the biggest susie & Video2 the smallest one."
+    print "The asked order are from the farthest to the closest"
+    print ""
+    vmix_connect HDLVMIX1 "LAYVID1" "LAYVID2" LAYGDP
+    api_quest "Is order video1 behind video2 behind merou ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX1 "LAYVID1" LAYGDP "LAYVID2"
+    api_quest "Is order video1 behind merou behind video2 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 LAYGDP "LAYVID1" "LAYVID2"
+    api_quest "Is order merou behind video1 behind video2 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 LAYGDP "LAYVID2" "LAYVID1"
+    api_quest "Is order merou behind video2 behind video1 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 "LAYVID2" LAYGDP "LAYVID1"
+    api_quest "Is order video2 behind merou behind video1 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 "LAYVID2" "LAYVID1" LAYGDP
+    api_quest "Is order video2 behind video1 behind merou ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 250 250 0
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX1 "GDP3" "LAYVID2" "LAYVID1" "GDP1" "GDP2" "CURS"
+    api_quest "Do you see background behind GDP3, video2, video1, GDP1, GDP2 & cursor ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX1 "ALPHA" "GDP3" "LAYVID2" "LAYVID1" "GDP1" "GDP2" "CURS"
+    layer_attvp HDLVPALPHA HDLGDP1
+
+    api_quest "Do you see same as previous with alpha component on ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX1
+
+    ; Stop all layer
+    M_GAMMA_LAYER "STOP" h7F
+
+    ; Term mixer
+    vmix_close HDLVMIX1
+    vmix_term
+
+    ; Term main vtg
+    vtg_close HDLVTGMAIN
+    vtg_term
+
+    ; Term output
+    M_VOUT_HDANA "OFF" T_HDLVOUTANA
+
+    api_report "M_VMIX1_7020 " ERRORCOUNT
+end  ;M_VMIX1_7020
+
+;*******************************************************************************
+;Name        : M_VMIX1_7710
+;Description : Connecting on 7710 , various layers
+;*******************************************************************************
+define M_VMIX1_7710
+    api_report "7710 or 7100 or 7109 or 7200: Various LAYERSs on MIXER1"
+if (API_CHIPID!="7200")
+     MIX1_SD=1
+     MIX1_HD=0
+end
+else
+    MIX1_HD=1
+    MIX1_SD=0
+end
+
+if (API_CHIPID!="7200")
+
+for I 1 2
+    if (MIX1_HD==1)
+       api_report "TEST HD"
+    end
+    if (MIX1_SD==1)
+       api_report "TEST SD"
+    end
+
+
+    if (MIX1_SD==1)
+    M_COMMON_BEIO "ON"
+    vmix_init ,,,,,, VOUT_NAME
+    HDLVMIX1=vmix_open
+    ; Set HD mode for VTG1, mixer1
+    M_COMMON_SETMODE "PAL" HDLVTGMAIN HDLVMIX1
+    end
+
+
+
+    if (MIX1_HD==1)
+
+    if (API_CHIPID=="7109")
+       VTG_EnableHVSync
+    end
+
+    ; VTG Inits
+    vtg_init
+    HDLVTGMAIN = vtg_open
+    ; Init output
+    T_HDLVOUTANA = M_VOUT_HDANA "ON"
+
+    vmix_init ,,,,,, "HDANA"
+     HDLVMIX1=vmix_open
+    ; Set HD mode for VTG1, mixer1
+    M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+    if (API_CHIPID=="7109")
+        vout_setemb T_HDLVOUTANA "HD_YUV" 1 0 4
+        vtg_so HDLVTGMAIN 0 1
+    end
+    end
+
+    vmix_enable HDLVMIX1
+
+
+    print "Wait monitor to wakeup..."
+    ;;wait 5000
+
+    print ""
+    print "1) Test background"
+    print ""
+    M_VMIX1_TEST_BACKGROUND
+
+    print ""
+    print "2) Test layer individually with background"
+    print ""
+
+    ; Start all layer
+
+
+    M_GAMMA_LAYER "START" h7f 720 480
+
+
+    ; WA video1
+
+;;M_GAMMA_LAYER "WA_SVPARAMS" h1
+
+if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+
+
+    vmix_connect HDLVMIX1 "LAYVID2"
+
+    api_quest "Video 2  blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+end
+
+    vmix_sback HDLVMIX1 , 0 250 0
+    vmix_connect HDLVMIX1 "LAYVID1"
+
+    api_quest "video1 , green background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 0 250 250
+
+    vmix_connect HDLVMIX1 "GDP1"
+    api_quest "Graphic 1 , blue light background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 250 0 250
+
+    vmix_connect HDLVMIX1 "CURS"
+    api_quest "Is cursor  with violet background ?"
+
+    vmix_connect HDLVMIX1 "GDP2"
+    api_quest "Graphic 2 , violet background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+
+
+    vmix_connect HDLVMIX1 "GDP3"
+    api_quest "Graphic 3 , violet background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+end
+
+    vmix_sback HDLVMIX1 , 63 127 190
+
+if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+
+
+    vmix_connect HDLVMIX1 "GDP1" "GDP3"
+    api_quest "Graphic 3 & Graphic 1 , blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+end
+
+    vmix_connect HDLVMIX1 "GDP1" "GDP2"
+    api_quest "Graphic 2 & Graphic 1 , blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+
+
+    vmix_connect HDLVMIX1 "GDP2" "GDP3"
+    api_quest "Graphic 2 & Graphic 3 , blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+    vmix_connect HDLVMIX1 "GDP2" "GDP3" "GDP1"
+    api_quest "Graphic 2 , Graphic 1  & Graphic 3 , blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+
+
+    vmix_connect HDLVMIX1 "GDP2" "GDP3" "GDP1"  "LAYVID2"
+    api_quest "Graphic 2 , Graphic 1  & Graphic 3 and Video 2 blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+    vmix_connect HDLVMIX1  "LAYVID2"  "GDP2" "GDP3" "GDP1" "LAYVID1"
+    api_quest "Graphic 2 , Graphic 1  & Graphic 3 Video 2 and Video 1 blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+end
+
+    vmix_connect HDLVMIX1 "GDP2" "GDP1"  "LAYVID1"
+    api_quest "Graphic 2 , Graphic 1   and Video 1 blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+
+
+    LAYGDP=""
+    LAYGDP="GDP1"
+    print ""
+    print "3) Test layer permutation between video1, GDP2 & GDP1"
+    print ""
+    print "Video1 is the biggest susie & Video2 the smallest one."
+    print "The asked order are from the farthest to the closest"
+    print ""
+
+    vmix_connect HDLVMIX1 "LAYVID1" LAYGDP "GDP2"
+    api_quest "Is order video1 behind merou behind graph2?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 LAYGDP "LAYVID1" "GDP2"
+    api_quest "Is order merou behind video1 behind graph2?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 LAYGDP "GDP2" "LAYVID1"
+    api_quest "Is order merou behind graph2 behind video1 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 "GDP2" LAYGDP "LAYVID1"
+    api_quest "Is order graph2 behind merou behind video1 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 "GDP2" "LAYVID1" LAYGDP
+    api_quest "Is order graph2 behind video1 behind merou ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 250 250 0
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX1 "LAYVID1" "GDP1" "GDP2" "CURS"
+    api_quest "Do you see background behind video1, GDP1, GDP2 & cursor ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    layer_svpiorect HDLVPALPHA , , , , 50 20 , ,
+    vmix_connect HDLVMIX1 "ALPHA" "LAYVID1" "GDP1" "GDP2" "CURS"
+    layer_attvp HDLVPALPHA HDLGDP1
+
+    api_quest "Do you see same as previous with alpha component on ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX1
+
+    ; Stop all layer
+    M_GAMMA_LAYER "STOP" h7F
+
+    ; Term mixer
+    vmix_close HDLVMIX1
+    vmix_term
+
+    ; Term main vtg
+    vtg_close HDLVTGMAIN
+    vtg_term
+    ;if (MIX1_HD==1)
+    ;; Term output
+    ;M_VOUT_HDANA "OFF" T_HDLVOUTANA
+    ;end
+    if (MIX1_SD==1)
+    M_COMMON_BEIO "OFF"
+    end
+    if (MIX1_SD==1)
+        MIX1_SD=2
+        MIX1_HD=1
+    end
+end
+end
+else ; CHIP_ID==7200 cut 1 do not support SD
+    if (MIX1_HD==1)
+       api_report "TEST HD"
+    end
+    if (MIX1_HD==1)
+        ; VTG Inits
+        vtg_init
+        HDLVTGMAIN = vtg_open
+        if  (API_CHIPID=="7200")
+        vtg_setmode HDLVTGMAIN "MODE_1080I60000_74250"
+        end
+        ; Init output
+        T_HDLVOUTANA = M_VOUT_HDANA "ON"
+        vmix_init ,,,,,, "HDANA"
+        HDLVMIX1=vmix_open
+        ; Set HD mode for VTG1, mixer1
+        if (API_CHIPID!="7200")
+                M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+        end
+   end
+    vmix_enable HDLVMIX1
+
+
+    print "Wait monitor to wakeup..."
+    ;;wait 5000
+
+    print ""
+    print "1) Test background"
+    print ""
+    M_VMIX1_TEST_BACKGROUND
+
+    print ""
+    print "2) Test layer individually with background"
+    print ""
+
+    ; Start all layer
+
+    M_GAMMA_LAYER "START" h3f 720 480
+
+
+    ; WA video1
+
+    vmix_connect HDLVMIX1 "LAYVID2"
+
+    api_quest "Video 2  blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 0 250 0
+    vmix_connect HDLVMIX1 "LAYVID1"
+
+    api_quest "video1 , green background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 0 250 250
+
+    vmix_connect HDLVMIX1 "GDP1"
+    api_quest "Graphic 1 , blue light background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 250 0 250
+
+    vmix_connect HDLVMIX1 "CURS"
+    api_quest "Is cursor  with violet background ?"
+
+    vmix_connect HDLVMIX1 "GDP2"
+    api_quest "Graphic 2 , violet background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX1 "GDP3"
+    api_quest "Graphic 3 , blue light background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+    vmix_sback HDLVMIX1 , 63 127 190
+
+    vmix_connect HDLVMIX1 "GDP1" "GDP3"
+    api_quest "Graphic 3 & Graphic 1 , blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX1 "GDP1" "GDP2"
+    api_quest "Graphic 2 & Graphic 1 , blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+    vmix_connect HDLVMIX1 "GDP2" "GDP3"
+    api_quest "Graphic 2 & Graphic 3 , blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+    vmix_connect HDLVMIX1 "GDP2" "GDP3" "GDP1"
+    api_quest "Graphic 2 , Graphic 1  & Graphic 3 , blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+
+
+    vmix_connect HDLVMIX1 "GDP2" "GDP3" "GDP1"  "LAYVID2"
+    api_quest "Graphic 2 , Graphic 1  & Graphic 3 and Video 2 blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+    vmix_connect HDLVMIX1  "LAYVID2"  "GDP2" "GDP3" "GDP1" "LAYVID1"
+    api_quest "Graphic 2 , Graphic 1  & Graphic 3 Video 2 and Video 1 blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+    vmix_connect HDLVMIX1 "GDP2" "GDP1"  "LAYVID1"
+    api_quest "Graphic 2 , Graphic 1   and Video 1 blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+    LAYGDP=""
+    LAYGDP="GDP1"
+    print ""
+    print "3) Test layer permutation between video1, GDP2 & GDP1"
+    print ""
+    ;print "Video1 is the biggest susie & Video2 the smallest one."
+    ;print "The asked order are from the farthest to the closest"
+    print ""
+
+    vmix_connect HDLVMIX1 "LAYVID1" LAYGDP "GDP2"
+    api_quest "Is order video1 behind merou behind graph2?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 LAYGDP "LAYVID1" "GDP2"
+    api_quest "Is order merou behind video1 behind graph2?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 LAYGDP "GDP2" "LAYVID1"
+    api_quest "Is order merou behind graph2 behind video1 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 "GDP2" LAYGDP "LAYVID1"
+    api_quest "Is order graph2 behind merou behind video1 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 "GDP2" "LAYVID1" LAYGDP
+    api_quest "Is order graph2 behind video1 behind merou ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 250 250 0
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX1 "LAYVID1" "GDP1" "GDP2" "CURS"
+    api_quest "Do you see background behind video1, GDP1, GDP2 & cursor ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    if (API_CHIPID!="7200")
+    layer_svpiorect HDLVPALPHA , , , , 50 20 , ,
+    vmix_connect HDLVMIX1 "ALPHA" "LAYVID1" "GDP1" "GDP2" "CURS"
+    layer_attvp HDLVPALPHA HDLGDP1
+
+    api_quest "Do you see same as previous with alpha component on ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    end
+    vmix_dconnect HDLVMIX1
+
+    ; Stop all layer
+    M_GAMMA_LAYER "STOP" h3f
+
+    ; Term mixer
+    vmix_close HDLVMIX1
+    vmix_term
+
+    ; Term vout
+    M_VOUT_HDANA "OFF" T_HDLVOUTANA
+
+    ; Term main vtg
+    vtg_close HDLVTGMAIN
+    vtg_term
+
+end
+
+ api_report "M_VMIX1" ERRORCOUNT
+
+end  ;M_VMIX1_7710
+
+
+;*******************************************************************************
+;Name        : M_VMIX1_5528
+;Description : Connecting on 5528, various layers
+;*******************************************************************************
+define M_VMIX1_5528
+    api_report "M_VMIX1_5528: Various LAYERSs on MIXER1"
+
+    M_MB376_BEIO "ON" "MAIN"
+
+    ;init mixer 1
+    vmix_init , , , , , , VOUT_NAME
+    HDLVMIX1= vmix_open
+    vmix_enable HDLVMIX1
+
+    M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1 HDLDENC
+
+    ; Start all layer
+    M_GAMMA_LAYER "START" hFC
+
+    print ""
+    print "1) Test background"
+    print ""
+    M_VMIX1_TEST_BACKGROUND
+
+    print ""
+    print "2) Test layer individually with background"
+    print ""
+    ; test graphic layers
+    vmix_sback HDLVMIX1 , 250 0 0
+    vmix_connect HDLVMIX1 "GDP1"
+    api_quest " Is graphical merou (GDP1) on screen  ? "
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_gback HDLVMIX1
+    vmix_sback HDLVMIX1 , 250 250 0
+    vmix_connect HDLVMIX1 "GDP2"
+    api_quest " Is graphical merou (GDP2)on screen with yellow backgrownd"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 "GDP3"
+    api_quest " Is graphical susie (GDP3) on screen with yellow backgrownd"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_sback HDLVMIX1 , 250 250 0
+    vmix_connect HDLVMIX1 "GDP4"
+    api_quest " Is GAMMA_GDP GDP4 on screen ? "
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; load and connect new layer GDP4 on GAMMA_GDP
+    layer_disable HDLVPGDP4
+    layer_closevp HDLVPGDP4
+    vmix_dconnect HDLVMIX1
+    layer_close HDLGDP4
+    layer_term "GDP4" 1
+    vmix_sback HDLVMIX1 0
+    layer_init "GDP4" GAMMA_FILTER G_GDP4_BA  720 480
+    HDLGDP4=layer_open "GDP4"
+
+    vmix_connect HDLVMIX1 "GDP1" "GDP4"
+    api_quest " Is GDP1 on screen ? "
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; test attachement of GDP1 to GDP4 on flicker processor
+    lay_ena_flt HDLVPGDP1  HDLGDP4
+    api_quest "Is flicker processor enabled ? "
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    lay_dis_flt HDLVPGDP1  HDLGDP4
+    api_quest "Is flicker processor disabled ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    layer_disable HDLVPGDP4
+    layer_closevp HDLVPGDP4
+    vmix_dconnect HDLVMIX1
+    layer_close HDLGDP4
+    layer_term "GDP4" 1
+    vmix_sback HDLVMIX1 0
+    layer_init "GDP4" GAMMA_GDP G_GDP4_BA 720 480
+    HDLGDP4=layer_open "GDP4"
+    HDLVPGDP4=layer_openvp HDLGDP4 5 STAPIGATDATA+"corbeau.gam" 0 0 ;720 480
+    layer_enable HDLVPGDP4
+
+    ; test cursor
+    print ""
+    vmix_sback HDLVMIX1 , 250 0 250
+    vmix_connect HDLVMIX1 "CURS"
+    api_quest "Is cursor out with violet background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+    vmix_sback HDLVMIX1 0
+    vmix_sback HDLVMIX1 , 250 0 0
+
+
+    ; WA video1 & video2
+    M_GAMMA_LAYER "WA_SVPARAMS" h3
+
+    ; test video1 & video2
+    print ""
+    vmix_sback HDLVMIX1 , 0 250 0
+    vmix_connect HDLVMIX1 "LAYVID1"
+    api_quest "video1 out, green background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_sback HDLVMIX1 , 0 0 250
+    vmix_connect HDLVMIX1 "LAYVID2"
+    api_quest "video2 out, blue background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    print ""
+    ;Test alpha plan
+    vmix_sback HDLVMIX1 , 0 250 250
+    vmix_connect HDLVMIX1 "GDP1" "GDP2" "LAYVID2" "LAYVID1" "GDP4" "ALPHA" "CURS"
+    api_quest "Are all graphic and video layers connected with light blue background ? "
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    layer_attvp HDLVPALPHA HDLGDP4
+    api_quest "Are  the same layers connected with component ALPHA on corbeau (GDP4)"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+    LAYGDP=""
+    LAYGDP="GDP2"
+    print ""
+    print " 3) Test layer permutation between video1, video2 & GDP"
+    print ""
+    print "Video1 is the biggest susie & Video2 the smallest one."
+    print "The asked order are from the farthest to the closest"
+    print ""
+    vmix_connect HDLVMIX1 "LAYVID1" "LAYVID2" LAYGDP
+    api_quest "Is order video1 behind video2 behind merou ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX1 "LAYVID1" LAYGDP "LAYVID2"
+    api_quest "Is order video1 behind merou behind video2 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 LAYGDP "LAYVID1" "LAYVID2"
+    api_quest "Is order merou behind video1 behind video2 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 LAYGDP "LAYVID2" "LAYVID1"
+    api_quest "Is order merou behind video2 behind video1 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 "LAYVID2" LAYGDP "LAYVID1"
+    api_quest "Is order video2 behind merou behind video1 ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_connect HDLVMIX1 "LAYVID2" "LAYVID1" LAYGDP
+    api_quest "Is order video2 behind video1 behind merou ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_sback HDLVMIX1 , 250 250 0
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX1
+    ; Stop all layer
+    M_GAMMA_LAYER "STOP" hFF
+    ; Term mixer
+    vmix_close HDLVMIX1
+    vmix_term
+    ; Term vout , vtg , denc
+    M_MB376_BEIO "OFF" "MAIN"
+
+    api_report "M_VMIX1_5528" ERRORCOUNT
+
+end  ;M_VMIX1_5528
+
+;*******************************************************************************
+;Name        : M_VMIX1_7100_HD
+;Description : Test Video plan with MIX1 and HD output
+;*******************************************************************************
+define M_VMIX1_7100_HD
+    api_report "M_VMIX1_7100 Test Video HD LAYER with  MIXER1"
+           ; Init output
+    T_HDLVOUTANA = M_VOUT_HDANA "ON"
+
+    ; Start main VTG
+    vtg_init
+    HDLVTGMAIN=vtg_open
+
+    vmix_init ,,,,,, "HDANA"
+
+    HDLVMIX1=vmix_open
+    vmix_enable HDLVMIX1
+
+    M_COMMON_SETMODE "MODE_1080I60000_74250"
+    print "Wait monitor to wakeup..."
+    ;;wait 5000
+
+    print ""
+    print "1) Test background"
+    print ""
+    M_VMIX1_TEST_BACKGROUND
+
+    print ""
+    print "2) Test layer individually with background"
+    print ""
+
+    ; Start all layer
+    M_GAMMA_LAYER "START" h1
+
+
+    ; WA video1
+    ;;M_GAMMA_LAYER "WA_SVPARAMS" h1
+
+    vmix_sback HDLVMIX1 , 0 250 0
+    vmix_connect HDLVMIX1 "LAYVID1"
+
+    api_quest "video1 on HD, green background ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+   vmix_dconnect HDLVMIX1
+
+    ; Stop all layer
+    M_GAMMA_LAYER "STOP" h1
+
+    ; Term mixer
+    vmix_close HDLVMIX1
+    vmix_term
+
+    ; Term main vtg
+    vtg_close HDLVTGMAIN
+    vtg_term
+
+    ; Term output
+    M_VOUT_HDANA "OFF" T_HDLVOUTANA
+
+   api_report "M_VMIX1_7100_HD " ERRORCOUNT
+
+end
+
+;*******************************************************************************
+;Name        : M_VMIX1_MAIN
+;Description : Main function redirect to specific targetting sub macros
+;*******************************************************************************
+define M_VMIX1_MAIN
+    ERRORCOUNT = 0
+    print ""
+    print "Starting M_VMIX1..."
+    RET=MC_CHECK_TYPE
+    if RET&1
+        M_VMIX1_55XX
+    end
+    if RET&2
+        M_VMIX1_7015
+    end
+    if RET&4
+        M_VMIX1_GX1
+    end
+    if RET&8
+        if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+             M_VMIX1_7710
+        end
+        else
+             M_VMIX1_7020
+        end
+    end
+    if RET&16
+        M_VMIX1_5528
+    end
+    if RET&32  ; 5100/5105/5301/5188/5107/5162
+        M_VMIX1_5100
+    end
+
+    MC_CHECK_ERROR
+    ERR_VMIX1=GLOBERR
+end ; M_VMIX1_MAIN
+
+

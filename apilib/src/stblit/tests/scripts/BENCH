@@ -1,0 +1,41 @@
+;*************************************************************
+;  Testtool Macros for testing STBlit Driver
+
+; Perform some benchmark runs of the current driver
+;*************************************************************
+
+define test depth
+    print "."
+    print "***********************************"
+    print "Benchmark " depth
+    print 
+    print "*********************************** "
+
+    surf_create "dst" depth 1000 1000 "Black"
+    surf_create "src" depth 1000 1000 "Checker"
+
+    blt_setcontext 1 1 0 0 0 0 3 4294967295 0 0 0 0 0 0 0 1 0 0 1000 1000 0
+    surf_benchmark handle "dst" "src"
+
+    surf_delete "dst"
+    surf_delete "src"
+
+end
+
+
+api_error 0
+
+blt_init "blitter1" 1 1000 1 1 1000
+handle=blt_open "blitter1"
+
+test "CLUT8"
+test "RGB565"
+test "S_YCBCR888_422"
+test "ARGB8888"
+
+blt_close handle
+blt_term "blitter1"
+
+api_checkerr 0
+
+del test

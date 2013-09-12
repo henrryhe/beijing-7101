@@ -1,0 +1,73 @@
+\#!/bin/sh
+
+# Launch script for 7200
+
+
+# Network setting 
+JEI_IP=<TBD>       # <TBD> must be Address of the JEI, HTI or MicroConnect
+TARGETIP=<TBD>     # <TBD> must be IP address to be given to the target
+SERVERIP=<TBD>     # <TBD> must be HOST NFS server IP
+GWIP=<TBD>         # <TBD> must be IP address of your network gateway
+NETMASK=<TBD>      # <TBD> must be Local network subnet mask
+NAME=Neo           # Initial hostname for the target
+AUTOCONF=off       # Try to determine addresses automatically?
+
+#JEI_IP=10.129.101.182   # Bernard
+
+#TARGETIP=10.129.101.117   # Reserved bernard PC network
+#TARGETIP=10.129.101.116  # Reserved Laurent PC network
+
+#SERVERIP=10.129.100.247  # HOST NFS server IP - Laurent
+#SERVERIP=10.129.101.134  # HOST NFS server IP - Jerome
+#SERVERIP=10.129.100.44   # HOST NFS server IP - Laurent - gnx2367
+#SERVERIP=164.130.63.122  # HOST NFS server IP - Tunis
+
+#GWIP=10.129.100.254       # IP address of your UNIX network gateway
+
+
+# Option pour ST40load
+#        console=ttySC0 \
+
+# Root of target's file system
+SERVERDIR=$MY_TARGET
+#SERVERDIR=/work1/linux_targets/target_bernard
+#SERVERDIR=/work1/linux_targets/target_faziol
+#SERVERDIR=/work1/linux_targets/target_fx
+
+# Kernel image
+KERNEL=$KDIR/vmlinux
+
+
+# Command
+#GDB_CMD=mb519bypass
+GDB_CMD=mymb519bypass
+
+
+#       smc91111eth=mac0:00:80:e1:12:02:00 \
+#       nwhwconf=device:eth0,hwaddr:00:80:e1:12:02:00 \
+#       kgdb=ttyAS1,19200,halt
+#       kgdbasc=0,115200 \
+
+# 48 Mb + 1000 Pages for bigphysarea is the original working configuration
+
+#/opt/STM/STLinux-2.3ear/devkit/sh4/bin/st40load_gdb -t $JEI_IP -b $KERNEL -c $GDB_CMD -- console=ttyAS0,115200 nwhwconf=device:eth0,hwaddr:00:80:E1:12:20:0A root=/dev/nfs ide0=noprobe nfsroot=$SERVERIP:$SERVERDIR,nfsvers=2,rsize=4096,wsize=8192,tcp ip=$TARGETIP::$GWIP:$NETMASK:$NAME::$AUTOCONF mem=48m coprocessor_mem=2m@0x04000000,2m@0x04300000 bigphysarea=1000
+
+echo "********************************************************"
+echo "********************************************************"
+echo "                 KERNEL LOADING....                     "
+echo "********************************************************"
+echo "********************************************************"
+
+/opt/STM/STLinux-2.3ear/devkit/sh4/bin/st40load_gdb \
+        -t $JEI_IP \
+        -b $KERNEL \
+        -c $GDB_CMD \
+        -- \
+        console=ttyAS0,115200 \
+        nwhwconf=device:eth0,hwaddr:00:80:E1:12:20:4F \
+        root=/dev/nfs \
+        ide0=noprobe \
+        nfsroot=$SERVERIP:$SERVERDIR,nfsvers=2,rsize=4096,wsize=8192,tcp \
+        ip=$TARGETIP::$GWIP:$NETMASK:$NAME::$AUTOCONF \
+        mem=32m \
+        bigphysarea=1512

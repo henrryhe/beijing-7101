@@ -1,0 +1,433 @@
+; ****************************************************************************
+; File         : DNCOPTION.MAC
+; Tests        : DENC option modes on an analog TV
+; Author       : BS - June 2001
+; ****************************************************************************
+
+; Test to check DENC option modes on an analog TV
+define M_OPTION_TESTS
+    ERRORTOT=0
+    api_report "OPTION_TESTS"
+    CAPADENC=denc_capa DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+    CAPASQUARE=api_evalstr CAPADENC 2
+    CAPA_NON_INTERLACED=api_evalstr CAPADENC 3
+    CAPASIXTY=api_evalstr CAPADENC 4
+    CAPACHROMMIN=api_evalstr CAPADENC 6
+    CAPACHROMMAX=api_evalstr CAPADENC 7
+    CAPACHROMSTEP=api_evalstr CAPADENC 8
+    CAPAYCBCR444=api_evalstr CAPADENC 9
+    CAPA_BLACK_LEVEL_PEDESTAL_AUX=api_evalstr CAPADENC 10
+    CAPA_CHROMA_DELAY_AUX=api_evalstr CAPADENC 11
+    CAPA_LUMA_TRAP_FILTER_AUX=api_evalstr CAPADENC 12
+
+    if VTGPROG==0
+        ; VTG cannot be reprogrammed
+        CAPASQUARE=0
+        CAPASIXTY=0
+    end
+    if CAPASQUARE != 0
+        M_OPTION_SQUARE
+        ERRORTOT=ERRORTOT+ERRORCOUNT
+    end
+    if CAPASIXTY != 0
+        M_OPTION_SIXTY_HERTZ
+        ERRORTOT=ERRORTOT+ERRORCOUNT
+    end
+    M_OPTION_LEVEL_PEDESTAL
+    ERRORTOT=ERRORTOT+ERRORCOUNT
+    M_OPTION_CHROMA_DELAY
+    ERRORTOT=ERRORTOT+ERRORCOUNT
+    M_OPTION_TRAP_FILTER
+    ERRORTOT=ERRORTOT+ERRORCOUNT
+    M_OPTION_NON_INTERLACED
+    ERRORTOT=ERRORTOT+ERRORCOUNT
+    if CAPAYCBCR444==0
+        M_OPTION_YCBCR444_INPUT
+        ERRORTOT=ERRORTOT+ERRORCOUNT
+    end
+    api_report "OPTION_TESTS" ERRORTOT
+end
+
+; Test black level pedestal
+define M_OPTION_LEVEL_PEDESTAL
+    ERRORCOUNT=0
+    api_report "OPTION_LEVEL_PEDESTAL_TEST"
+    LOOP=1
+    if AUXDENC==1
+        LOOP=2
+    end
+    for I 1 LOOP 1
+        OPTION="LEVEL_PEDESTAL"
+        if I==2
+            OPTION="LEVEL_PEDESTAL_AUX"
+        end
+        PREVOPTION=denc_goption , OPTION
+        M_CHECK_RETCODE ERR_NO_ERROR
+        PREVVAL=api_evalstr PREVOPTION
+        denc_soption , OPTION 1
+        M_CHECK_RETCODE ERR_NO_ERROR
+        NEWOPTION=denc_goption , OPTION
+        M_CHECK_RETCODE ERR_NO_ERROR
+        if NEWOPTION!="1"
+           M_CHECK_RETCODE 1
+        end
+        denc_soption , OPTION 0
+        M_CHECK_RETCODE ERR_NO_ERROR
+        NEWOPTION=denc_goption , OPTION
+        M_CHECK_RETCODE ERR_NO_ERROR
+        if NEWOPTION!="0"
+           M_CHECK_RETCODE 1
+        end
+        denc_soption , OPTION PREVVAL
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    api_report "OPTION_LEVEL_PEDESTAL" ERRORCOUNT
+end
+
+; Test Chroma delay
+define M_OPTION_CHROMA_DELAY
+    ERRORCOUNT=0
+    api_report "OPTION_CHROMA_DELAY_TEST"
+    LOOP=1
+    if AUXDENC==1
+        LOOP=2
+    end
+    for I 1 LOOP 1
+        OPTION="CHROMA_DELAY"
+        if I==2
+            OPTION="CHROMA_DELAY_AUX"
+        end
+        PREVOPTION=denc_goption , OPTION
+        M_CHECK_RETCODE ERR_NO_ERROR
+        PREVVAL=api_evalstr PREVOPTION
+        for i CAPACHROMMIN CAPACHROMMAX CAPACHROMSTEP
+           denc_soption , OPTION i
+           M_CHECK_RETCODE ERR_NO_ERROR
+           NEWOPTION=denc_goption , OPTION
+           NEWVALUE=api_evalstr NEWOPTION
+           M_CHECK_RETCODE ERR_NO_ERROR
+           if NEWVALUE!=i
+                 M_CHECK_RETCODE 1
+           end
+        end
+        denc_soption , OPTION PREVVAL
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    api_report "OPTION_CHROMA_DELAY" ERRORCOUNT
+end
+
+; Test trap filter
+define M_OPTION_TRAP_FILTER
+    ERRORCOUNT=0
+    api_report "OPTION_TRAP_FILTER_TEST"
+    denc_set
+    M_CHECK_RETCODE ERR_NO_ERROR
+    LOOP=1
+    if AUXDENC==1
+        LOOP=2
+    end
+    for I 1 LOOP 1
+        OPTION="TRAP_FILTER"
+        if I==2
+            OPTION="TRAP_FILTER_AUX"
+        end
+        PREVOPTION=denc_goption , OPTION
+        M_CHECK_RETCODE ERR_NO_ERROR
+        denc_soption , OPTION 1
+        M_CHECK_RETCODE ERR_NO_ERROR
+        PREVVAL=api_evalstr PREVOPTION
+        NEWOPTION=denc_goption , OPTION
+        M_CHECK_RETCODE ERR_NO_ERROR
+        if NEWOPTION!="1"
+           M_CHECK_RETCODE 1
+        end
+        denc_soption , OPTION 0
+        M_CHECK_RETCODE ERR_NO_ERROR
+        NEWOPTION=denc_goption , OPTION
+        M_CHECK_RETCODE ERR_NO_ERROR
+        if NEWOPTION!="0"
+           M_CHECK_RETCODE 1
+        end
+        denc_soption , OPTION PREVVAL
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    api_report "OPTION_TRAP_FILTER" ERRORCOUNT
+end
+
+; Test to check DENC 60Hz mode on an analog TV if vtg permit it
+define M_OPTION_SIXTY_HERTZ
+    api_report "OPTION_SIXTY_HERTZ_TESTS"
+    ERRORCOUNT=0
+    i=0
+    j=1
+    if (API_CHIPID=="7200")
+        vtgsim_set HDLMAINDENC VTGSIM_TYPE 2 "MODE_480I60000_13514"
+    end
+    else
+        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_480I60000_13514"
+    end
+    if ERRORCODE==ERR_NO_ERROR
+        while j!=512
+            if CAPASIXTY&j
+                denc_setmode HDLDENC i 0 1 1
+                M_CHECK_RETCODE ERR_NO_ERROR
+                CONFIG=denc_getmode
+                M_CHECK_RETCODE ERR_NO_ERROR
+                OPTIONCONFIG= denc_goption , "RATE_60HZ"
+                M_CHECK_RETCODE ERR_NO_ERROR
+                MODE=api_evalstr CONFIG 1
+                SIXTYOPTION=api_evalstr OPTIONCONFIG
+                if MODE!=i
+                    M_CHECK_RETCODE 1
+                end
+                SQUARE=api_evalstr CONFIG 2
+                if SQUARE!=0
+                    M_CHECK_RETCODE 1
+                end
+                SIXTYCONF=api_evalstr CONFIG 4
+                if SIXTYCONF!=1
+                    M_CHECK_RETCODE 1
+                end
+                if SIXTYOPTION!=1
+                    M_CHECK_RETCODE 1
+                end
+                api_quest "Is the image correct in color ? [y/n]"
+                M_CHECK_RETCODE 0
+            end
+        j=j*2
+        i=i+1
+        end
+    end
+    api_report "OPTION_SIXTY_HERTZ" ERRORCOUNT
+end
+
+; Test non interlaced
+define M_OPTION_NON_INTERLACED
+    ERRORCOUNT=0
+    api_report "OPTION_NON_INTERLACED_TEST"
+    i=0
+    j=1
+    while j!=512
+        if CAPA_NON_INTERLACED&j
+            if i<4
+                ; Mode NTSC
+                if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 2 "MODE_480I59940_13500"
+                end
+                else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_480I59940_13500"
+                end
+            end
+            else
+                if i==5
+                    ; Mode PALM -> VTG in NTSC
+                    if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 2 "MODE_480I59940_13500"
+                    end
+                    else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_480I59940_13500"
+                    end
+                end
+                else
+                    ; Mode PAL
+                    if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 2 "MODE_576I50000_13500"
+                    end
+                    else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_576I50000_13500"
+                    end
+                end
+            end
+            denc_setmode , i
+            denc_soption , "NON_INTERLACED" 1
+            M_CHECK_RETCODE ERR_NO_ERROR
+            STRINGHARDVAL=denc_read , 2
+            HARDVAL=api_evalstr STRINGHARDVAL
+            if HARDVAL&h80
+                 M_CHECK_RETCODE 1
+            end
+            NEWOPTION=denc_goption , "NON_INTERLACED"
+            M_CHECK_RETCODE ERR_NO_ERROR
+            if NEWOPTION!="1"
+                M_CHECK_RETCODE 1
+            end
+            denc_soption , "NON_INTERLACED" 0
+            M_CHECK_RETCODE ERR_NO_ERROR
+            STRINGHARDVAL=denc_read , 2
+            HARDVAL=api_evalstr STRINGHARDVAL
+            if HARDVAL&h80
+                 ; Correct denc value
+            end
+            else
+                 M_CHECK_RETCODE 1
+            end
+            NEWOPTION=denc_goption , "NON_INTERLACED"
+            M_CHECK_RETCODE ERR_NO_ERROR
+            if NEWOPTION!="0"
+                M_CHECK_RETCODE 1
+            end
+        end
+        j=j*2
+        i=i+1
+    end
+    api_report "OPTION_NON_INTERLACED" ERRORCOUNT
+end
+
+
+; Test to check DENC square mode on an analog TV
+define M_OPTION_SQUARE
+    api_report "OPTION_SQUARE_TESTS"
+    ERRORCOUNT=0
+    i=0
+    j=1
+    while j!=512
+        if CAPASQUARE&j
+            if i<4
+                   ; Mode NTSC SQUARE
+                   if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 2 "MODE_480I59940_12273"
+                   end
+                   else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_480I59940_12273"
+                   end
+                   denc_setmode HDLDENC i 1
+            end
+            else
+                if i==5
+                    ; Mode PALM -> VTG in NTSC square
+                    if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 2 "MODE_480I59940_12273"
+                    end
+                    else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_480I59940_12273"
+                    end
+                    denc_setmode HDLDENC i 1
+                end
+                else
+                    ; Mode PAL or SECAM SQUARE
+                    if (API_CHIPID=="7200")
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 2 "MODE_576I50000_14750"
+                    end
+                    else
+                        vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_576I50000_14750"
+                    end
+                    if (SET_EXTERNAL==1)
+                        denc_setmode HDLDENC i 1 , 1
+                    end
+                    else
+                        denc_setmode HDLDENC i 1
+                    end
+                end
+            end
+            M_CHECK_RETCODE ERR_NO_ERROR
+            denc_soption , "SQUARE_PIXEL" 1
+            M_CHECK_RETCODE ERR_NO_ERROR
+            CONFIG=denc_getmode
+            M_CHECK_RETCODE ERR_NO_ERROR
+            OPTIONCONFIG= denc_goption , "SQUARE_PIXEL"
+            M_CHECK_RETCODE ERR_NO_ERROR
+            MODE=api_evalstr CONFIG 1
+            if MODE!=i
+                M_CHECK_RETCODE 1
+            end
+            SQUARECONF=api_evalstr CONFIG 2
+            SQUAREOPTION=api_evalstr OPTIONCONFIG
+            ; Feature not available for SECAM
+            if j<256
+                if SQUARECONF!=1
+                    M_CHECK_RETCODE 1
+                end
+            end
+	    if SQUAREOPTION!=1
+                M_CHECK_RETCODE 1
+            end
+            if i<5
+                api_quest "Is the image correct in color ? [y/n]"
+                M_CHECK_RETCODE 0
+
+            end
+            else
+                if i>7
+                    api_quest "Is the image correct in color ? [y/n]"
+                    M_CHECK_RETCODE 0
+
+                end
+                else
+                    api_quest "Is the image correct in black & white ? [y/n]"
+                    M_CHECK_RETCODE 0
+
+                end
+            end
+        end
+        j=j*2
+        i=i+1
+    end
+    api_report "OPTION_SQUARE" ERRORCOUNT
+end
+
+; Test YCBCR444 input
+define M_OPTION_YCBCR444_INPUT
+    ERRORCOUNT=0
+    api_report "OPTION_YCBCR444_INPUT_TEST"
+    if ((API_CHIPID=="7020")||(API_CHIPID=="5528")||(API_CHIPID=="GX1")||(API_CHIPID=="5100")||(API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="5301")||(API_CHIPID=="7109")||(API_CHIPID=="5525")||(API_CHIPID=="7200"))
+       denc_soption , "YCBCR444_INPUT" 0
+       M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+       denc_soption , "YCBCR444_INPUT" 1
+       M_CHECK_RETCODE ERR_NO_ERROR
+       denc_goption , "YCBCR444_INPUT"
+       M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    elif (API_CHIPID=="5105")||(API_CHIPID=="5188")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+       denc_soption , "YCBCR444_INPUT" 0
+       M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+       denc_soption , "YCBCR444_INPUT" 1
+       M_CHECK_RETCODE ERR_NO_ERROR
+       denc_goption , "YCBCR444_INPUT"
+       M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    elif (API_CHIPID=="7015")
+       denc_soption , "YCBCR444_INPUT" 1
+       M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+       denc_soption , "YCBCR444_INPUT" 0
+       M_CHECK_RETCODE ERR_NO_ERROR
+       denc_goption , "YCBCR444_INPUT"
+       M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    else
+        ;omega1
+        denc_setmode
+        M_CHECK_RETCODE ERR_NO_ERROR
+        PREVOPTION=denc_goption , "YCBCR444_INPUT"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        PREVVAL=api_evalstr PREVOPTION
+        denc_soption , "YCBCR444_INPUT" 1
+        M_CHECK_RETCODE ERR_NO_ERROR
+        ; direct poke for 55XX
+        HARDVALUE=bpeek h90
+        bpoke h90 0
+        api_quest "Is the OSD present on RGB ouput and not present on CVBS ouput ?"
+        M_CHECK_RETCODE 0
+
+        NEWOPTION=denc_goption , "YCBCR444_INPUT"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        if NEWOPTION!="1"
+            M_CHECK_RETCODE 1
+        end
+        denc_soption , "YCBCR444_INPUT" 0
+        M_CHECK_RETCODE ERR_NO_ERROR
+        NEWOPTION=denc_goption , "YCBCR444_INPUT"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        if NEWOPTION!="0"
+            M_CHECK_RETCODE 1
+        end
+        api_quest "Is the OSD not present on CVBS & RGB ouput ?"
+        M_CHECK_RETCODE 0
+
+        bpoke h90 HARDVALUE
+        denc_soption , "YCBCR444_INPUT" PREVVAL
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    api_report "OPTION_YCBCR444_INPUT" ERRORCOUNT
+end
+

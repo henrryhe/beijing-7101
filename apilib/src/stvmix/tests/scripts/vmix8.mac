@@ -1,0 +1,629 @@
+;*****************************************************************************
+; File   :  VMIX8.MAC
+;           Connect various vout on MIXER1 with tridac configuration
+;           See STVMIX component test specification document for use
+; Author :  Adel Chaouch - December 2003
+;*****************************************************************************
+
+; This macro need to have HDLVOUTYC declared
+define M_VOUTDENC_YCOUT P_MODE DAC
+    if P_MODE=="ON"
+        ; Init VOUT YC
+        if DAC&24
+        api_report "TEST OUTPUT YC WITH DAC4,5 ON MIXER1"
+        end
+        else
+        api_report "TEST OUTPUT YC WITH DAC1,2 ON MIXER1"
+        end
+        vout_init "VOUTYC" , "YC" , , , DAC 0
+        HDLVOUTYC=vout_open "VOUTYC"
+        vout_setparams HDLVOUTYC
+        vout_enable HDLVOUTYC
+    end
+    else
+        ; Term VOUT YC
+        vout_disable HDLVOUTYC
+        vout_close HDLVOUTYC
+        vout_term "VOUTYC"
+    end
+end
+
+; This macro need to have HDLVOUTYUV declared
+define M_VOUTDENC_YUVOUT P_MODE DAC
+    if P_MODE=="ON"
+        ; Init VOUT YUV
+	if DAC&7
+        api_report "TEST OUTPUT YUV WITH DAC1,2,3 ON MIXER1"
+        end
+        else
+        api_report "TEST OUTPUT YUV WITH DAC4,5,6 ON MIXER1"
+        end
+        vout_init "VOUTYUV" , "YUV" , , , DAC 0
+        HDLVOUTYUV=vout_open "VOUTYUV"
+        vout_setparams HDLVOUTYUV
+        vout_enable HDLVOUTYUV
+    end
+    else
+        ; Term VOUT YUV
+        vout_disable HDLVOUTYUV
+        vout_close HDLVOUTYUV
+        vout_term "VOUTYUV"
+    end
+end
+
+; This macro need to have HDLVOUTRGB declared
+define M_VOUTDENC_RGBOUT P_MODE DAC
+    if P_MODE=="ON"
+        ; Init VOUT RGB
+        if DAC&7
+        api_report "TEST OUTPUT RGB WITH DAC1,2,3 ON MIXER1"
+        vout_init "VOUTRGB" , "RGB" , , , DAC 0
+        end
+        else
+        api_report "TEST OUTPUT RGB WITH DAC4,5,6 ON MIXER1"
+        vout_init "VOUTRGB" , "RGB" , , , DAC 0
+        end
+        HDLVOUTRGB=vout_open "VOUTRGB"
+        vout_setparams HDLVOUTRGB
+        vout_enable HDLVOUTRGB
+    end
+    else
+        ; Term VOUT RGB
+        vout_disable HDLVOUTRGB
+        vout_close HDLVOUTRGB
+        vout_term "VOUTRGB"
+    end
+end
+
+; This macro need to have HDLVOUTCVBS declared
+define M_VOUTDENC_CVBSOUT P_MODE DAC
+    if P_MODE=="ON"
+        ; Init VOUT CVBS
+        if DAC&16
+          api_report "TEST OUTPUT CVBS WITH DAC5 ON MIXER1"
+        end
+        if DAC&8
+          api_report "TEST OUTPUT CVBS WITH DAC3 ON MIXER1"
+        end
+        if DAC&1
+          api_report "TEST OUTPUT CVBS WITH DAC1 ON MIXER1"
+        end
+        if DAC&32
+          api_report "TEST OUTPUT CVBS WITH DAC6 ON MIXER1"
+        end
+        vout_init "VOUTCVBS" , "CVBS" , , , DAC 0
+        HDLVOUTCVBS=vout_open "VOUTCVBS"
+        vout_setparams HDLVOUTCVBS
+        vout_enable HDLVOUTCVBS
+    end
+    else
+        ; Term VOUT CVBS
+        vout_disable HDLVOUTCVBS
+        vout_close HDLVOUTCVBS
+        vout_term "VOUTCVBS"
+    end
+end
+
+
+;*******************************************************************************
+;Name        : M_VMIX8_5528
+;Description : Connecting on 5528 output on mixer1
+;*******************************************************************************
+define M_VMIX8_5528 T_LAYERNAME VOUT_TYPE I PAR
+    api_report "M_VMIX8_5528: Various VOUTs on MIXER1"
+    ; Private variables
+    HDLVOUTRGB =0
+    HDLVOUTYUV =0
+    HDLVOUTCVBS =0
+    HDLVOUTYC =0
+
+    ;Init vout
+    if VOUT_TYPE=="CVBS"
+         if PAR&2
+         ;DAC=16
+         M_VOUTDENC_CVBSOUT "ON" 16
+         end
+         if PAR&4
+         ;DAC=4
+         M_VOUTDENC_CVBSOUT "ON" 4
+         end
+         if PAR&8
+         ;DAC=1
+         M_VOUTDENC_CVBSOUT "ON" 1
+         end
+         vmix_init , , , , , , VOUT_NAME
+    end
+    if VOUT_TYPE=="RGB"
+         if PAR&1
+         ;DAC=7
+         M_VOUTDENC_RGBOUT "ON" 7
+         end
+         else
+         ;DAC=56
+         M_VOUTDENC_RGBOUT "ON" 56
+         end
+         vmix_init , , , , , , VOUT_NAME "VOUTRGB"
+
+    end
+    if VOUT_TYPE=="YUV"
+         if PAR&1
+         M_VOUTDENC_YUVOUT "ON" 7
+         vmix_init , , , , , , VOUT_NAME "VOUTYUV"
+         end
+   end
+    if VOUT_TYPE=="YC"
+         if PAR&1
+         M_VOUTDENC_YCOUT "ON" 24
+         end
+         else
+         M_VOUTDENC_YCOUT "ON" 3
+         end
+         vmix_init , , , , , , VOUT_NAME "VOUTYC"
+    end
+   ; Init Mixer1
+   ; vmix_init
+    HDLVMIX1 = vmix_open
+    vmix_enable HDLVMIX1
+
+    ; Set NTSC mode for VTG1, MIX1 & internal DENC
+    M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1 HDLDENC
+
+    vmix_sback HDLVMIX1 , 128+I 200-I 200
+    vmix_connect , "GDP1"
+    api_quest "Is merou on output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX1 "ALPHA" "GDP2" "CURS"
+    layer_attvp HDLVPALPHA HDLGDP2
+    api_quest "Are graphical merou, cursor and alpha component on output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX1 "LAYVID1" "GDP3"
+    api_quest "Are video1 & susie on output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Term Mixer1
+    vmix_dconnect HDLVMIX1
+    vmix_close HDLVMIX1
+    vmix_term
+    if VOUT_TYPE=="RGB"
+         M_VOUTDENC_RGBOUT "OFF"
+    end
+    if VOUT_TYPE=="YUV"
+         M_VOUTDENC_YUVOUT "OFF"
+    end
+    if VOUT_TYPE=="YC"
+         M_VOUTDENC_YCOUT "OFF"
+    end
+
+    api_report "M_VMIX8_5528" ERRORCOUNT
+end  ;M_VMIX8_5528
+
+
+;*******************************************************************************
+;Name        : M_VMIX8_5100
+;Description : Connecting on 5100;5301 output on mixer1
+;*******************************************************************************
+define M_VMIX8_5100 VOUT_TYPE I PAR
+    api_report "M_VMIX8_5100: Various VOUTs on MIXER1"
+    ; Private variables
+    HDLVOUTRGB =0
+    HDLVOUTYUV =0
+    HDLVOUTCVBS =0
+    HDLVOUTYC =0
+
+    ;Init vout
+    if VOUT_TYPE=="CVBS"
+         if PAR&2
+         ;DAC=16
+         M_VOUTDENC_CVBSOUT "ON" 16
+         end
+         if PAR&4
+         ;DAC=4
+         M_VOUTDENC_CVBSOUT "ON" 4
+         end
+         if PAR&8
+         ;DAC=1
+         M_VOUTDENC_CVBSOUT "ON" 1
+         end
+         vmix_init , , , , , , VOUT_NAME
+    end
+    if VOUT_TYPE=="RGB"
+         if PAR&1
+         ;DAC=7
+         M_VOUTDENC_RGBOUT "ON" 7
+         end
+         else
+         ;DAC=56
+         M_VOUTDENC_RGBOUT "ON" 56
+         end
+         vmix_init , , , , , , VOUT_NAME "VOUTRGB"
+
+    end
+    if VOUT_TYPE=="YUV"
+         M_VOUTDENC_YUVOUT "ON" 7
+         vmix_init , , , , , , VOUT_NAME "VOUTYUV"
+    end
+    if VOUT_TYPE=="YC"
+         if PAR&1
+         M_VOUTDENC_YCOUT "ON" 3
+         end
+         else
+         M_VOUTDENC_YCOUT "ON" 24
+         end
+         vmix_init , , , , , , VOUT_NAME "VOUTYC"
+    end
+
+    HDLVMIX1 = vmix_open
+    vmix_enable HDLVMIX1
+
+    vmix_sback HDLVMIX1 , 128+I 200-I 200
+    vmix_connect , "OSD"
+    api_quest "Is OSD on output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX1 "STILL" "LVIDEO" "OSD"
+    api_quest "Are video and osd component on output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Term Mixer1
+    vmix_dconnect HDLVMIX1
+    vmix_disable HDLVMIX1
+    vmix_close HDLVMIX1
+    vmix_term
+
+    if VOUT_TYPE=="RGB"
+         M_VOUTDENC_RGBOUT "OFF"
+    end
+    if VOUT_TYPE=="YUV"
+         M_VOUTDENC_YUVOUT "OFF"
+    end
+    if VOUT_TYPE=="YC"
+         M_VOUTDENC_YCOUT "OFF"
+    end
+
+    api_report "M_VMIX8_5100" ERRORCOUNT
+end  ;M_VMIX8_5100
+;*******************************************************************************
+;Name        : M_VMIX8_7100
+;Description : Connecting on 7100 output on mixer1
+;*******************************************************************************
+define M_VMIX8_7100 VOUT_TYPE I PAR
+    api_report "M_VMIX8_7100: Various VOUTs on MIXER1"
+    ; Private variables
+    HDLVOUTRGB =0
+    HDLVOUTYUV =0
+    HDLVOUTCVBS =0
+    HDLVOUTYC =0
+
+    ;Init vout
+    if VOUT_TYPE=="CVBS"
+         if PAR&32
+         ;DAC=32
+         M_VOUTDENC_CVBSOUT "ON" 32
+         end
+         if PAR&4
+         ;DAC=4
+         M_VOUTDENC_CVBSOUT "ON" 4
+         end
+         vmix_init , , , , , , VOUT_NAME
+    end
+    if VOUT_TYPE=="RGB"
+         if PAR&7
+         ;DAC=7
+         M_VOUTDENC_RGBOUT "ON" 7
+         end
+         if PAR&56
+         ;DAC=56
+         M_VOUTDENC_RGBOUT "ON" 56
+         end
+         vmix_init , , , , , , VOUT_NAME "VOUTRGB"
+
+    end
+    if VOUT_TYPE=="YUV"
+         M_VOUTDENC_YUVOUT "ON" 7
+         vmix_init , , , , , , VOUT_NAME "VOUTYUV"
+    end
+    if VOUT_TYPE=="YC"
+         if PAR&1
+         M_VOUTDENC_YCOUT "ON" 3
+         end
+         vmix_init , , , , , , VOUT_NAME "VOUTYC"
+    end
+
+
+
+    HDLVMIX1 = vmix_open
+    vmix_enable HDLVMIX1
+
+    vmix_sback HDLVMIX1 , 128+I 200-I 200
+    vmix_connect HDLVMIX1 "LAYVID1"
+
+
+    api_quest "Is Video 1 on SD ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Term Mixer1
+    vmix_dconnect HDLVMIX1
+    vmix_disable HDLVMIX1
+    vmix_close HDLVMIX1
+    vmix_term
+
+    if VOUT_TYPE=="RGB"
+         M_VOUTDENC_RGBOUT "OFF"
+    end
+    if VOUT_TYPE=="YUV"
+         M_VOUTDENC_YUVOUT "OFF"
+    end
+    if VOUT_TYPE=="YC"
+         M_VOUTDENC_YCOUT "OFF"
+    end
+
+    api_report "M_VMIX8_7100" ERRORCOUNT
+end  ;M_VMIX8_7100
+
+
+;*******************************************************************************
+;Name        : M_VMIX8_5105
+;Description : Connecting on 5105/5188/5107/5162 output on mixer1
+;*******************************************************************************
+define M_VMIX8_5105 VOUT_TYPE I PAR
+    api_report "M_VMIX8_5105/5188/5107/5162: Various VOUTs on MIXER1"
+    ; Private variables
+    HDLVOUTRGB =0
+    HDLVOUTYUV =0
+    HDLVOUTCVBS =0
+    HDLVOUTYC =0
+
+    ;Init vout
+    if VOUT_TYPE=="CVBS"
+         if PAR&2
+           ;DAC=1
+           M_VOUTDENC_CVBSOUT "ON" 1
+         end
+         if PAR&4
+           ;DAC=4
+           M_VOUTDENC_CVBSOUT "ON" 4
+         end
+         if PAR&8
+         ;DAC=32
+         M_VOUTDENC_CVBSOUT "ON" 32
+         end
+         vmix_init , , , , , , VOUT_NAME
+    end
+    if VOUT_TYPE=="RGB"
+         if PAR&1
+         ;DAC=7
+         M_VOUTDENC_RGBOUT "ON" 7
+         end
+         vmix_init , , , , , , VOUT_NAME "VOUTRGB"
+
+    end
+    if VOUT_TYPE=="YUV"
+         M_VOUTDENC_YUVOUT "ON" 7
+         vmix_init , , , , , , VOUT_NAME "VOUTYUV"
+    end
+    if VOUT_TYPE=="YC"
+         if PAR&1
+           M_VOUTDENC_YCOUT "ON" 3
+         end
+         vmix_init , , , , , , VOUT_NAME "VOUTYC"
+    end
+
+    HDLVMIX1 = vmix_open
+    vmix_enable HDLVMIX1
+
+    vmix_sback HDLVMIX1 , 128+I 200-I 200
+    vmix_connect , "OSD"
+    api_quest "Is OSD on output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX1 "STILL" "LVIDEO" "OSD"
+    api_quest "Are video and osd component on output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Term Mixer1
+    vmix_dconnect HDLVMIX1
+    vmix_disable HDLVMIX1
+    vmix_close HDLVMIX1
+    vmix_term
+
+    if VOUT_TYPE=="RGB"
+         M_VOUTDENC_RGBOUT "OFF"
+    end
+    if VOUT_TYPE=="YUV"
+         M_VOUTDENC_YUVOUT "OFF"
+    end
+    if VOUT_TYPE=="YC"
+         M_VOUTDENC_YCOUT "OFF"
+    end
+
+    api_report "M_VMIX8_5105/5188/5107/5162" ERRORCOUNT
+end  ;M_VMIX8_5105
+
+
+;*******************************************************************************
+;Name        : M_VMIX8_MAIN
+;Description : Main function redirect to specific targetting sub macros
+;*******************************************************************************
+define M_VMIX8_MAIN
+    ERRORCOUNT = 0
+    print ""
+    print "Starting M_VMIX8..."
+
+    RET=MC_CHECK_TYPE
+    if RET&16 ; 5528
+        M_GAMMA_LAYER "START" h7C 720 480
+        M_GAMMA_LAYER "WA_SVPARAMS" h1 720 480
+        M_MB376_BEIO "ON" "MAIN"
+
+        print ""
+        api_report "Output CVBS on mixer1"
+        print ""
+        M_VMIX8_5528  "GDP1" "CVBS" 50 1
+
+        api_report "Output RGB on mixer1"
+        M_VMIX8_5528  "GDP1" "RGB" 0 1
+        print ""
+
+        api_report "Output YUV on mixer1"
+        print ""
+        M_VMIX8_5528  "GDP1" "YUV" 100 1
+
+       ; print ""
+        api_report "Output YC on mixer1"
+        print ""
+        M_VMIX8_5528  "GDP1" "YC" 128 2
+
+        api_report "Output YC on mixer1"
+        print ""
+        M_VMIX8_5528  "GDP1" "YC" 128 1
+        print ""
+
+        M_GAMMA_LAYER "STOP" h7D
+        M_MB376_BEIO "OFF" "MAIN"
+
+    end
+    if RET&32 ; 5100/5105/5301/5188/5107/5162
+        ; Init DENC, VTG & VOUT
+    	M_COMMON_BEIO "ON"
+
+    	; Init Video, OSD & Still
+        M_5100_LAYER "START" 7
+
+        print ""
+        api_report "Output CVBS on mixer1"
+        print ""
+        if ((API_CHIPID=="5100")||(API_CHIPID=="5301")||(API_CHIPID=="5525"))
+          M_VMIX8_5100 "CVBS" 50 1
+        end
+        if (API_CHIPID=="5105")||(API_CHIPID=="5188")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+          M_VMIX8_5105 "CVBS" 50 2
+        end
+
+        api_report "Output RGB on mixer1"
+        if ((API_CHIPID=="5100")||(API_CHIPID=="5301")||(API_CHIPID=="5525"))
+          M_VMIX8_5100 "RGB" 50 2
+        end
+        if (API_CHIPID=="5105")||(API_CHIPID=="5188")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+          M_VMIX8_5105 "RGB" 50 1
+        end
+        print ""
+
+        api_report "Output YUV on mixer1"
+        print ""
+       if ((API_CHIPID=="5100")||(API_CHIPID=="5301")||(API_CHIPID=="5525"))
+          M_VMIX8_5100  "YUV" 50 1
+        end
+        if (API_CHIPID=="5105")||(API_CHIPID=="5188")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+          M_VMIX8_5105  "YUV" 50 1
+        end
+
+       ; print ""
+        api_report "Output YC on mixer1"
+        print ""
+        if ((API_CHIPID=="5100")||(API_CHIPID=="5301")||(API_CHIPID=="5525"))
+          M_VMIX8_5100 "YC" 50 1
+        end
+        if (API_CHIPID=="5105")||(API_CHIPID=="5188")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+          M_VMIX8_5105 "YC" 50 1
+        end
+
+        M_5100_LAYER "STOP" 7
+        M_COMMON_BEIO "OFF"
+
+    end
+
+     if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+        ; Init DENC, VTG & VOUT
+    	M_COMMON_BEIO "ON"
+
+
+        ; Start on 7100 layer Vid1 in NTSC mode
+         M_GAMMA_LAYER "START" h1 720 480
+
+
+
+        print ""
+        api_report "Output CVBS on mixer1"
+        print ""
+
+          M_VMIX8_7100 "CVBS" 50 4
+          M_VMIX8_7100 "CVBS" 50 32
+
+        api_report "Output RGB on mixer1"
+
+          M_VMIX8_7100 "RGB" 50 7
+          M_VMIX8_7100 "RGB" 50 56
+        print ""
+
+        api_report "Output YUV on mixer1"
+          M_VMIX8_7100  "YUV" 50 7
+
+       ; print ""
+        api_report "Output YC on mixer1"
+        print ""
+
+        M_VMIX8_7100 "YC" 50 3
+
+        M_GAMMA_LAYER "STOP" h1
+
+        M_COMMON_BEIO "OFF"
+     end
+
+    MC_CHECK_ERROR  ERRORCOUNT
+
+    ERR_VMIX8=GLOBERR
+end ;M_VMIX8_MAIN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,47 @@
+; ****************************************************************************
+; File         : VTGSLHD.MAC
+; Tests        : VTG timing modes in slave mode on HD TV
+; Requirements : video on screen
+; Author       : HSM - BS - January 2001
+; ****************************************************************************
+
+; Test to check VTG slave mode features on HD TV.
+define M_SLHD_TESTS
+    api_report "SLAVE_HD_TESTS"
+    ERRORCOUNT=0
+
+    vtg_init "VTG1"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    HDLVTG1=vtg_open "VTG1"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I60000_74250"
+
+    vtg_init "VTG2" , h8000
+    M_CHECK_RETCODE ERR_NO_ERROR
+    HDLVTG2=vtg_open "VTG2"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_setmode HDLVTG2
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    vtg_ssmparams HDLVTG2 VTG_TYPE 0 1 1 480 1440 1 1 0
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_setmode HDLVTG2 "MODE_SLAVE"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest "Is output ok in NTSC mode ?"
+    M_CHECK_RETCODE 0
+
+    print ""
+    print "*** In mode PAL ***"
+    denc_setmode HDLDENC "PAL"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_720P60000_74250"
+    vtg_ssmparams HDLVTG2 VTG_TYPE 0 1 1 480 1440 1 1 0
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_setmode HDLVTG2 "MODE_SLAVE"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest "Is output ok in PAL mode ?"
+    M_CHECK_RETCODE 0
+
+    api_report "SLAVE_HD_TESTS" ERRORCOUNT
+ end
+

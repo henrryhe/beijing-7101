@@ -1,0 +1,181 @@
+; ****************************************************************************
+; File         : VTGSLSD.MAC
+; Tests        : VTG timing modes in slave mode on SD TV
+; Requirements : video on screen
+; Author       : HSM - BS - January 2001
+; ****************************************************************************
+
+
+define M_SM_H_AND_V
+       api_report "M_SM_H_AND_V"
+       ERRORCOUNT=0
+       print ""
+       print " Test on NTSC and PAL mode with VTG2 on slave mode : H_AND_V ?"
+       print ""
+       denc_setmode HDLDENC "NTSCM"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_init "VTG1" , , , , 1
+       M_CHECK_RETCODE ERR_NO_ERROR
+       HDLVTG1=vtg_open "VTG1"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_setmode HDLVTG1 "NTSC"
+      if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+        layer_enable HDLVPVID1
+        layer_svpparams HDLVPVID1 ,, 720 576 720/3 200 360*3 288*3 1 720 576 BUFF_ADD
+      end
+       M_CHECK_RETCODE ERR_NO_ERROR
+       if (API_CHIPID=="7015")||(API_CHIPID=="7020")
+          vtg_init "VTG2" , h8000
+       end
+       elif (API_CHIPID=="7710")
+             if (CHIP_CUT=="STI7710_CUT2x")
+                vtg_init "VTG2" , h20103034
+             end
+             else
+                vtg_init "VTG2" , h20103C34
+             end
+       end
+       elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+          vtg_init "VTG2" , hB9005034
+       end
+       M_CHECK_RETCODE ERR_NO_ERROR
+       HDLVTG2=vtg_open "VTG2"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_setmode HDLVTG2 "NTSC"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       print ""
+       print "SLAVE_MODE is H_AND_V"
+       print ""
+       vtg_ssmparams HDLVTG2 VTG_TYPE 0 1 1 200 600 1 1 0
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_setmode HDLVTG2 "MODE_SLAVE"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_event "VTG2" 1 59940
+       M_CHECK_RETCODE ERR_NO_ERROR
+       api_quest "Is output ok in NTSC mode ?"
+       M_CHECK_RETCODE 0
+       print ""
+       print "*** In mode PAL ***"
+       print ""
+       denc_setmode HDLDENC "PAL"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_setmode HDLVTG1 "PAL"
+      if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+        layer_enable HDLVPVID1
+        layer_svpparams HDLVPVID1 ,, 720 576 720/3 200 360*3 288*3 1 720 576 BUFF_ADD
+      end
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_setmode HDLVTG2 "PAL"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       print ""
+       print "SLAVE_MODE is H_AND_V"
+       print ""
+       vtg_ssmparams HDLVTG2 VTG_TYPE 0 1 1 200 600 1 1 0
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_setmode HDLVTG2 "MODE_SLAVE"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_event "VTG2" 1 50000
+       M_CHECK_RETCODE ERR_NO_ERROR
+       api_quest "Is output ok in PAL mode ?"
+       M_CHECK_RETCODE 0
+
+       vtg_close HDLVTG2
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_term  "VTG2"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_close HDLVTG1
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_term  "VTG1"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       api_report "M_SM_H_AND_V" ERRORCOUNT
+end
+
+define M_SM_V_ONLY
+       api_report "M_SM_V_ONLY"
+       ERRORCOUNT=0
+       print ""
+       print " Test on NTSC and PAL mode with VTG2 on slave mode : V_ONLY ?"
+       print ""
+       denc_setmode HDLDENC "NTSCM"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_init "VTG1" , , , , 1
+       M_CHECK_RETCODE ERR_NO_ERROR
+       HDLVTG1=vtg_open "VTG1"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_setmode HDLVTG1 "NTSC"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       if (API_CHIPID=="7015")||(API_CHIPID=="7020")
+          vtg_init "VTG2" , h8000
+       end
+       elif (API_CHIPID=="7710")
+             if (CHIP_CUT=="STI7710_CUT2x")
+                vtg_init "VTG2" , h20103034
+             end
+             else
+                vtg_init "VTG2" , h20103C34
+             end
+       end
+       elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+          vtg_init "VTG2" , hB9005034
+       end
+       M_CHECK_RETCODE ERR_NO_ERROR
+       HDLVTG2=vtg_open "VTG2"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_setmode HDLVTG2 "NTSC"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       print ""
+       print "SLAVE_MODE is V_ONLY"
+       print ""
+       vtg_ssmparams HDLVTG2 VTG_TYPE 1 1 1 200 600 1 1 0
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_setmode HDLVTG2 "MODE_SLAVE"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_event "VTG2" 1 59940
+       M_CHECK_RETCODE ERR_NO_ERROR
+       api_quest "Is output ok in NTSC mode ?"
+       M_CHECK_RETCODE 0
+       print ""
+       print "*** In mode PAL ***"
+       print ""
+       denc_setmode HDLDENC "PAL"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_setmode HDLVTG1 "PAL"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_setmode HDLVTG2 "PAL"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       print ""
+       print "SLAVE_MODE is V_ONLY"
+       print ""
+       vtg_ssmparams HDLVTG2 VTG_TYPE 1 1 1 200 600 1 1 0
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_setmode HDLVTG2 "MODE_SLAVE"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_event "VTG2" 1 50000
+       M_CHECK_RETCODE ERR_NO_ERROR
+       api_quest "Is output ok in PAL mode ?"
+       M_CHECK_RETCODE 0
+       vtg_close HDLVTG2
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_term  "VTG2"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_close HDLVTG1
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_term  "VTG1"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       api_report "M_SM_V_ONLY" ERRORCOUNT
+end
+
+; Test to check VTG slave mode features on SD TV.
+
+define M_71_SLAVE_SD
+    ;api_report "M_71_SLAVE_SD"
+    ;ERRORCOUNT=0
+    M_SM_H_AND_V
+    M_SM_V_ONLY
+    ;api_report "M_71_SLAVE_SD" ERRORCOUNT
+end
+
+
+
+
+

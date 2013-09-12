@@ -1,0 +1,20 @@
+// Please note -- this is a representative set of error suppression
+//                options.  Please adjust to suit your own policies
+//                See  manual (chapter LIVING WITH LINT)
+//                for further details.
+
+-w2
+
+// Suppress the following warnings
+-e537             // Repeated include
+-e506             // Constant value boolean
+-e539             // positive indentation
+-e525             // negative indentation
+-e526             // symbols not defined in this file (see GNBvd24526)
+
++rw(__optasm)     // Support the ASM commands
++rw(__asm)        // ditto
++rw(__inline)     // support __inline reserved word
+
+// -strong(AJXB, BOOL)   // We should have this strong type, but cannot now
+

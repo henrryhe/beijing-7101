@@ -1,0 +1,1134 @@
+/*****************************************************************************
+File Name   : stfdma.h
+
+Description : API Interfaces for the STFDMA driver.
+
+History     :
+
+
+Copyright (C) 2003 STMicroelectronics
+
+Reference   :
+*****************************************************************************/
+
+/* Define to prevent recursive inclusion */
+#ifndef __STFDMA_H
+#define __STFDMA_H
+
+/* Includes --------------------------------------------------------------- */
+
+#include "stddefs.h"         /* Standard definitions */
+#include "stos.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Exported Constants ----------------------------------------------------- */
+
+/* Driver constants, required by the driver model */
+#define STFDMA_DRIVER_ID           323   /* 0x143 */
+#define STFDMA_DRIVER_BASE         (STFDMA_DRIVER_ID << 16)
+
+/* Error constants returned by */
+enum
+{
+    STFDMA_ERROR_NOT_INITIALIZED = STFDMA_DRIVER_BASE,
+    STFDMA_ERROR_DEVICE_NOT_SUPPORTED,
+    STFDMA_ERROR_NO_CALLBACK_TASK,
+    STFDMA_ERROR_BLOCKING_TIMEOUT,
+    STFDMA_ERROR_CHANNEL_BUSY,
+    STFDMA_ERROR_NO_FREE_CHANNELS,
+    STFDMA_ERROR_ALL_CHANNELS_LOCKED,
+    STFDMA_ERROR_CHANNEL_NOT_LOCKED,
+    STFDMA_ERROR_UNKNOWN_CHANNEL_ID,
+    STFDMA_ERROR_UNKNOWN_DEVICE_NUMBER,
+    STFDMA_ERROR_UNKNOWN_REGION_NUMBER,
+    STFDMA_ERROR_UNKNOWN_ADR_PARAMETER,
+    STFDMA_ERROR_UNKNOWN_REQUEST_SIGNAL,
+    STFDMA_ERROR_INVALID_TRANSFER_ID,
+    STFDMA_ERROR_TRANSFER_ABORTED,
+    STFDMA_ERROR_TRANSFER_IN_PROGRESS,
+    STFDMA_ERROR_INVALID_BUFFER,
+    STFDMA_ERROR_INVALID_CHANNEL,
+    STFDMA_ERROR_INVALID_CONTEXT_ID,
+    STFDMA_ERROR_INVALID_SC_RANGE,
+    STFDMA_ERROR_NO_FREE_CONTEXTS,
+    STFDMA_ERROR_TRANSFER_FAILED,
+    STFDMA_ERROR_REQUEST_SIGNAL_BUSY
+};
+
+
+/* 1D and 2D step control for use with STFDMA_Control_t */
+enum
+{
+    STFDMA_DIRECTION_STATIC =  1,
+    STFDMA_DIRECTION_INCREMENTING
+};
+
+#define STFDMA_EXTENDED_NODE   0X1F
+
+
+enum
+{
+    STFDMA_EXT_NODE_PES   = 0,
+    STFDMA_EXT_NODE_SPDIF,
+    STFDMA_EXT_NODE_FEI
+};
+
+
+enum
+{
+    STFDMA_SC_ENTRY   = 0,
+    STFDMA_PTS_ENTRY
+};
+
+
+/* Channel select constants for use with STFDMA_StartTransfer() */
+#define STFDMA_USE_ANY_CHANNEL   0xff           /* Use any channel available */
+
+
+/* Exported Macros -------------------------------------------------------- */
+
+/* Exported Variables ----------------------------------------------------- */
+
+/* Exported Types --------------------------------------------------------- */
+
+/*  DMA Req line constants for use with STFDMA_PacedControl_t */
+typedef enum STFDMA_RequestSignal_e
+{
+
+    STFDMA_REQUEST_SIGNAL_NONE = 0,
+
+#if defined(ST_5517)
+
+/*=========================== 5517 =========================================*/
+
+    STFDMA_REQUEST_SIGNAL_PCMO_HI,
+    STFDMA_REQUEST_SIGNAL_PCMI_HI,
+    STFDMA_REQUEST_SIGNAL_SWTS,
+    STFDMA_REQUEST_SIGNAL_DREQ0_HI,  /* Port2 Bit 5 hi priority */
+    STFDMA_REQUEST_SIGNAL_DREQ1_HI,  /* Port2 Bit 6 hi prority */
+    STFDMA_REQUEST_SIGNAL_UART0_RX,
+    STFDMA_REQUEST_SIGNAL_UART1_RX,
+    STFDMA_REQUEST_SIGNAL_UART2_RX,
+    STFDMA_REQUEST_SIGNAL_UART3_RX,
+    STFDMA_REQUEST_SIGNAL_UART4_RX,
+    STFDMA_REQUEST_SIGNAL_UART0_TX,
+    STFDMA_REQUEST_SIGNAL_UART1_TX,
+    STFDMA_REQUEST_SIGNAL_UART2_TX,
+    STFDMA_REQUEST_SIGNAL_UART3_TX,
+    STFDMA_REQUEST_SIGNAL_UART4_TX,
+    STFDMA_REQUEST_SIGNAL_SSC0_RX,
+    STFDMA_REQUEST_SIGNAL_SSC1_RX,
+    STFDMA_REQUEST_SIGNAL_SSC0_TX,
+    STFDMA_REQUEST_SIGNAL_SSC1_TX,
+    STFDMA_REQUEST_SIGNAL_CD_VIDEO,
+    STFDMA_REQUEST_SIGNAL_CD_AUDIO,
+    STFDMA_REQUEST_SIGNAL_CD_SP,
+    STFDMA_REQUEST_SIGNAL_CD_EXT0,
+    STFDMA_REQUEST_SIGNAL_CD_EXT1,
+    STFDMA_REQUEST_SIGNAL_DREQ0_LO,  /* Port2 Bit 5 lo priority */
+    STFDMA_REQUEST_SIGNAL_DREQ1_LO,  /* Port2 Bit 6 lo prority */
+    STFDMA_REQUEST_SIGNAL_PTIA = 27,
+    STFDMA_REQUEST_SIGNAL_PCMO_LO,
+    STFDMA_REQUEST_SIGNAL_PCMI_LO,
+    STFDMA_REQUEST_SIGNAL_UNUSED_1,
+    STFDMA_REQUEST_SIGNAL_COUNTER_LO
+
+#elif defined (ST_5100) || defined (ST_5101) || defined (ST_5301)
+
+/*=========================== 5100, 5301 ===================================*/
+
+    STFDMA_REQUEST_SIGNAL_CD_EXT0,
+    STFDMA_REQUEST_SIGNAL_CD_EXT1,
+
+    STFDMA_REQUEST_SIGNAL_UART0_RX,
+    STFDMA_REQUEST_SIGNAL_UART1_RX,
+    STFDMA_REQUEST_SIGNAL_UART2_RX,
+    STFDMA_REQUEST_SIGNAL_UART3_RX,
+    STFDMA_REQUEST_SIGNAL_UART0_TX,
+    STFDMA_REQUEST_SIGNAL_UART1_TX,
+    STFDMA_REQUEST_SIGNAL_UART2_TX,
+    STFDMA_REQUEST_SIGNAL_UART3_TX,
+
+    STFDMA_REQUEST_SIGNAL_SSC0_RX,
+    STFDMA_REQUEST_SIGNAL_SSC1_RX,
+    STFDMA_REQUEST_SIGNAL_SSC2_RX,
+    STFDMA_REQUEST_SIGNAL_SSC0_TX,
+    STFDMA_REQUEST_SIGNAL_SSC1_TX,
+    STFDMA_REQUEST_SIGNAL_SSC2_TX,
+
+    STFDMA_REQUEST_SIGNAL_DISEQC0_FULL,
+    STFDMA_REQUEST_SIGNAL_DISEQC0_EMPTY,
+
+    STFDMA_REQUEST_SIGNAL_VTG_0,
+    STFDMA_REQUEST_SIGNAL_VTG_1,
+    STFDMA_REQUEST_SIGNAL_ILC_0,
+    STFDMA_REQUEST_SIGNAL_ILC_1,
+
+    STFDMA_REQUEST_SIGNAL_SWTS = 28,
+    STFDMA_REQUEST_SIGNAL_CD_AUDIO,
+    STFDMA_REQUEST_SIGNAL_SPDIF_AUDIO
+
+#elif defined (ST_5105) || defined (ST_5107)
+
+/*=========================== 5105 =========================================*/
+
+    STFDMA_REQUEST_SIGNAL_CD_EXT0,
+
+    STFDMA_REQUEST_SIGNAL_CD_AUDIO = 3,
+    STFDMA_REQUEST_SIGNAL_AUDIO_DECODER,
+    STFDMA_REQUEST_SIGNAL_PCM0,
+    STFDMA_REQUEST_SIGNAL_SPDIF_AUDIO,
+
+    STFDMA_REQUEST_SIGNAL_UART0_RX,
+    STFDMA_REQUEST_SIGNAL_UART1_RX,
+    STFDMA_REQUEST_SIGNAL_UART0_TX,
+    STFDMA_REQUEST_SIGNAL_UART1_TX,
+
+    STFDMA_REQUEST_SIGNAL_SSC0_RX,
+    STFDMA_REQUEST_SIGNAL_SSC1_RX,
+    STFDMA_REQUEST_SIGNAL_SSC0_TX,
+    STFDMA_REQUEST_SIGNAL_SSC1_TX,
+
+    STFDMA_REQUEST_SIGNAL_IRB_RX,
+    STFDMA_REQUEST_SIGNAL_IRB_TX,
+
+    STFDMA_REQUEST_SIGNAL_VTG_0,
+    STFDMA_REQUEST_SIGNAL_ILC_0,
+    STFDMA_REQUEST_SIGNAL_ILC_1
+
+#elif defined (ST_5188)
+
+/*=========================== 5188 =========================================*/
+
+    STFDMA_REQUEST_SIGNAL_CD_EXT0,
+
+    STFDMA_REQUEST_SIGNAL_CD_AUDIO = 3,
+    STFDMA_REQUEST_SIGNAL_AUDIO_DECODER,
+    STFDMA_REQUEST_SIGNAL_PCM0,
+    STFDMA_REQUEST_SIGNAL_SPDIF_AUDIO,
+
+    STFDMA_REQUEST_SIGNAL_UART0_RX,
+    STFDMA_REQUEST_SIGNAL_AUDIO_PCMOUT,
+    STFDMA_REQUEST_SIGNAL_UART0_TX,
+    STFDMA_REQUEST_SIGNAL_AUDIO_CDIN,
+
+    STFDMA_REQUEST_SIGNAL_SSC0_RX,
+    STFDMA_REQUEST_SIGNAL_SSC1_RX,
+    STFDMA_REQUEST_SIGNAL_SSC0_TX,
+    STFDMA_REQUEST_SIGNAL_SSC1_TX,
+
+    STFDMA_REQUEST_SIGNAL_IRB_RX,
+    STFDMA_REQUEST_SIGNAL_IRB_TX,
+
+    STFDMA_REQUEST_SIGNAL_VTG_0,
+    STFDMA_REQUEST_SIGNAL_ILC_0,
+    STFDMA_REQUEST_SIGNAL_ILC_1,
+
+    STFDMA_REQUEST_SIGNAL_FEI_DREQ,
+    STFDMA_REQUEST_SIGNAL_FEI_DREQSTART,
+    STFDMA_REQUEST_SIGNAL_FEI_PCM,
+    STFDMA_REQUEST_SIGNAL_FEI_TVO,
+    STFDMA_REQUEST_SIGNAL_FEI_DATA
+
+#elif defined (ST_5162)
+
+/*=========================== 5162 =========================================*/
+
+    STFDMA_REQUEST_SIGNAL_DREQ0_HI,  
+    STFDMA_REQUEST_SIGNAL_DREQ1_HI,  
+    
+    STFDMA_REQUEST_SIGNAL_UART2_RX,		/*3*/
+    STFDMA_REQUEST_SIGNAL_UART3_RX,
+    STFDMA_REQUEST_SIGNAL_UART2_TX,
+    STFDMA_REQUEST_SIGNAL_UART3_TX,
+    STFDMA_REQUEST_SIGNAL_UNUSED_1,  	/*7*/  
+    
+    STFDMA_REQUEST_SIGNAL_UART0_RX,		/*8*/
+    STFDMA_REQUEST_SIGNAL_UART1_RX,
+    STFDMA_REQUEST_SIGNAL_UART0_TX,
+    STFDMA_REQUEST_SIGNAL_UART1_TX,		/*11*/
+    
+    STFDMA_REQUEST_SIGNAL_SSC0_RX,		/*12*/
+    STFDMA_REQUEST_SIGNAL_SSC1_RX,
+    STFDMA_REQUEST_SIGNAL_SSC0_TX,
+    STFDMA_REQUEST_SIGNAL_SSC1_TX,   /*15*/  
+    
+    STFDMA_REQUEST_SIGNAL_IRB_RX,		/*16*/
+    STFDMA_REQUEST_SIGNAL_IRB_TX,
+    
+    STFDMA_REQUEST_SIGNAL_VTG_0,			/*18*/
+    STFDMA_REQUEST_SIGNAL_ILC_0,
+    STFDMA_REQUEST_SIGNAL_ILC_1,
+    STFDMA_REQUEST_SIGNAL_NAND_DATA,
+    STFDMA_REQUEST_SIGNAL_NAND_CMD,		    
+	STFDMA_REQUEST_SIGNAL_SWTS,				/*23*/	
+	
+	STFDMA_REQUEST_SIGNAL_CD_AUDIO,		/*24*/
+    STFDMA_REQUEST_SIGNAL_AUDIO_DECODER,
+    STFDMA_REQUEST_SIGNAL_PCM0,
+	STFDMA_REQUEST_SIGNAL_SPDIF_AUDIO,
+	STFDMA_REQUEST_SIGNAL_SWTS1,					/*28*/
+	STFDMA_REQUEST_SIGNAL_PCM1,
+	STFDMA_REQUEST_SIGNAL_CD_AUDIO1,
+	STFDMA_REQUEST_SIGNAL_COUNTER_L1		/*31*/
+		
+    
+#elif defined (ST_5525)
+
+/*=========================== 5525 =========================================*/
+
+    STFDMA_REQUEST_SIGNAL_PCMP_0 = 1,
+
+    STFDMA_REQUEST_SIGNAL_SWTS,
+    STFDMA_REQUEST_SIGNAL_SWTS1,
+    STFDMA_REQUEST_SIGNAL_SWTS2,
+    STFDMA_REQUEST_SIGNAL_SWTS3,
+
+    STFDMA_REQUEST_SIGNAL_PCMP_1,
+    STFDMA_REQUEST_SIGNAL_PCMP_2,
+    STFDMA_REQUEST_SIGNAL_PCMP_3,
+
+    STFDMA_REQUEST_SIGNAL_ANALOGIO_PCM_P,
+
+    STFDMA_REQUEST_SIGNAL_PCMR_0,
+    STFDMA_REQUEST_SIGNAL_PCMR_1,
+
+    STFDMA_REQUEST_SIGNAL_ANALOGIO_PCM_R,
+
+    STFDMA_REQUEST_SIGNAL_DISEQTX_EMPTY,
+    STFDMA_REQUEST_SIGNAL_DISEQRX_FULL,
+
+    STFDMA_REQUEST_SIGNAL_SSC3_TX,
+    STFDMA_REQUEST_SIGNAL_SSC2_TX,
+    STFDMA_REQUEST_SIGNAL_SSC1_TX,
+    STFDMA_REQUEST_SIGNAL_SSC0_TX,
+
+    STFDMA_REQUEST_SIGNAL_SSC3_RX,
+    STFDMA_REQUEST_SIGNAL_SSC2_RX,
+    STFDMA_REQUEST_SIGNAL_SSC1_RX,
+    STFDMA_REQUEST_SIGNAL_SSC0_RX,
+
+    STFDMA_REQUEST_SIGNAL_UART3_TX,
+    STFDMA_REQUEST_SIGNAL_UART2_TX,
+    STFDMA_REQUEST_SIGNAL_UART1_TX,
+    STFDMA_REQUEST_SIGNAL_UART0_TX,
+
+    STFDMA_REQUEST_SIGNAL_UART2_RX,
+    STFDMA_REQUEST_SIGNAL_UART1_RX,
+    STFDMA_REQUEST_SIGNAL_UART0_RX,
+
+    STFDMA_REQUEST_SIGNAL_SPDIF_AUDIO
+
+#elif defined (ST_7710)
+
+/*=========================== 7710 =========================================*/
+
+    STFDMA_REQUEST_SIGNAL_IRB_RX = 8,
+
+    STFDMA_REQUEST_SIGNAL_UART0_RX_FULL,
+    STFDMA_REQUEST_SIGNAL_UART1_RX_FULL,
+    STFDMA_REQUEST_SIGNAL_UART2_RX_FULL,
+    STFDMA_REQUEST_SIGNAL_UART3_RX_FULL,
+
+    STFDMA_REQUEST_SIGNAL_UART0_TX_EMPTY,
+    STFDMA_REQUEST_SIGNAL_UART1_TX_EMPTY,
+    STFDMA_REQUEST_SIGNAL_UART2_TX_EMPTY,
+    STFDMA_REQUEST_SIGNAL_UART3_TX_EMPTY,
+
+    STFDMA_REQUEST_SIGNAL_SSC0_TX,
+    STFDMA_REQUEST_SIGNAL_SSC1_TX,
+    STFDMA_REQUEST_SIGNAL_SSC2_TX,
+    STFDMA_REQUEST_SIGNAL_SSC3_TX,
+
+    STFDMA_REQUEST_SIGNAL_SSC0_RX,
+    STFDMA_REQUEST_SIGNAL_SSC1_RX,
+    STFDMA_REQUEST_SIGNAL_SSC2_RX,
+    STFDMA_REQUEST_SIGNAL_SSC3_RX,
+
+    STFDMA_REQUEST_SIGNAL_CD_AUDIO,
+    STFDMA_REQUEST_SIGNAL_SWTS,
+
+    STFDMA_REQUEST_SIGNAL_CD_EXT0,
+    STFDMA_REQUEST_SIGNAL_CD_EXT1
+
+#elif defined (ST_7100)
+
+/*=========================== 7100 =========================================*/
+
+    STFDMA_REQUEST_SIGNAL_CD_VIDEO = 3,
+
+    STFDMA_REQUEST_SIGNAL_DISEQC0_EMPTY,
+    STFDMA_REQUEST_SIGNAL_DISEQC0_FULL,
+
+    STFDMA_REQUEST_SIGNAL_SH4_SCIF_RX,
+    STFDMA_REQUEST_SIGNAL_SH4_SCIF_TX,
+
+    STFDMA_REQUEST_SIGNAL_SSC0_RX,
+    STFDMA_REQUEST_SIGNAL_SSC1_RX,
+    STFDMA_REQUEST_SIGNAL_SSC2_RX,
+    STFDMA_REQUEST_SIGNAL_SSC0_TX,
+    STFDMA_REQUEST_SIGNAL_SSC1_TX,
+    STFDMA_REQUEST_SIGNAL_SSC2_TX,
+
+    STFDMA_REQUEST_SIGNAL_UART0_RX,
+    STFDMA_REQUEST_SIGNAL_UART1_RX,
+    STFDMA_REQUEST_SIGNAL_UART2_RX,
+    STFDMA_REQUEST_SIGNAL_UART3_RX,
+    STFDMA_REQUEST_SIGNAL_UART0_TX,
+    STFDMA_REQUEST_SIGNAL_UART1_TX,
+    STFDMA_REQUEST_SIGNAL_UART2_TX,
+    STFDMA_REQUEST_SIGNAL_UART3_TX,
+
+    STFDMA_REQUEST_SIGNAL_CD_EXT0,
+    STFDMA_REQUEST_SIGNAL_CD_EXT1,
+
+    STFDMA_REQUEST_SIGNAL_CPxM_DECRYPTED_DATA,
+    STFDMA_REQUEST_SIGNAL_CPxM_ENCRYPTED_DATA,
+
+    STFDMA_REQUEST_SIGNAL_PCM0,
+    STFDMA_REQUEST_SIGNAL_PCM1,
+    STFDMA_REQUEST_SIGNAL_PCMREADER,
+    STFDMA_REQUEST_SIGNAL_SPDIF_AUDIO,
+
+    STFDMA_REQUEST_SIGNAL_SWTS
+
+#elif defined (ST_7109)
+
+/*=========================== 7109 =========================================*/
+
+    STFDMA_REQUEST_SIGNAL_CD_VIDEO = 1,
+
+    STFDMA_REQUEST_SIGNAL_DISEQC0_EMPTY,
+    STFDMA_REQUEST_SIGNAL_DISEQC0_FULL,
+
+    STFDMA_REQUEST_SIGNAL_SH4_SCIF_RX,
+    STFDMA_REQUEST_SIGNAL_SH4_SCIF_TX,
+
+    STFDMA_REQUEST_SIGNAL_SSC0_RX,
+    STFDMA_REQUEST_SIGNAL_SSC1_RX,
+    STFDMA_REQUEST_SIGNAL_SSC2_RX,
+    STFDMA_REQUEST_SIGNAL_SSC0_TX,
+    STFDMA_REQUEST_SIGNAL_SSC1_TX,
+    STFDMA_REQUEST_SIGNAL_SSC2_TX,
+
+    STFDMA_REQUEST_SIGNAL_UART0_RX,
+    STFDMA_REQUEST_SIGNAL_UART1_RX,
+    STFDMA_REQUEST_SIGNAL_UART2_RX,
+    STFDMA_REQUEST_SIGNAL_UART3_RX,
+    STFDMA_REQUEST_SIGNAL_UART0_TX,
+    STFDMA_REQUEST_SIGNAL_UART1_TX,
+    STFDMA_REQUEST_SIGNAL_UART2_TX,
+    STFDMA_REQUEST_SIGNAL_UART3_TX,
+
+    STFDMA_REQUEST_SIGNAL_CD_EXT0,
+    STFDMA_REQUEST_SIGNAL_CD_EXT1,
+
+    STFDMA_REQUEST_SIGNAL_CPxM_DECRYPTED_DATA,
+    STFDMA_REQUEST_SIGNAL_CPxM_ENCRYPTED_DATA,
+
+    STFDMA_REQUEST_SIGNAL_PCM0,
+    STFDMA_REQUEST_SIGNAL_PCM1,
+    STFDMA_REQUEST_SIGNAL_PCMREADER,
+    STFDMA_REQUEST_SIGNAL_SPDIF_AUDIO,
+
+    STFDMA_REQUEST_SIGNAL_SWTS0,
+    STFDMA_REQUEST_SIGNAL_SWTS1,
+    STFDMA_REQUEST_SIGNAL_SWTS2
+
+#elif defined (ST_7200)
+
+/*=========================== 7200 =========================================*/
+
+    /* FDMA #0 */
+    STFDMA_REQUEST_SIGNAL_SCIF_RX = 12,
+    STFDMA_REQUEST_SIGNAL_SCIF_TX,
+
+    STFDMA_REQUEST_SIGNAL_SSC0_RX,
+    STFDMA_REQUEST_SIGNAL_SSC0_TX,
+
+    STFDMA_REQUEST_SIGNAL_CD_EXT1,
+
+    STFDMA_REQUEST_SIGNAL_AUDIO_SRC_INPUT,
+    STFDMA_REQUEST_SIGNAL_AUDIO_SRC_OUTPUT,
+
+    STFDMA_REQUEST_SIGNAL_CPXM_DECRYPTED_INPUT,
+    STFDMA_REQUEST_SIGNAL_CPXM_DECRYPTED_OUTPUT,
+    STFDMA_REQUEST_SIGNAL_CPXM_ENCRYPTED_INPUT,
+    STFDMA_REQUEST_SIGNAL_CPXM_ENCRYPTED_OUTPUT,
+
+    STFDMA_REQUEST_SIGNAL_PCM0,
+    STFDMA_REQUEST_SIGNAL_PCM1,
+    STFDMA_REQUEST_SIGNAL_PCM2,
+    STFDMA_REQUEST_SIGNAL_PCM3,
+
+    STFDMA_REQUEST_SIGNAL_PCMREADER,
+
+    STFDMA_REQUEST_SIGNAL_SPDIF_AUDIO,
+
+    STFDMA_REQUEST_SIGNAL_HDMI_PCM_PLYR,
+    STFDMA_REQUEST_SIGNAL_HDMI_SPDIF_PLYR,
+
+    /* FDMA #1 */
+
+    STFDMA_REQUEST_SIGNAL_SSC1_RX = 1,
+    STFDMA_REQUEST_SIGNAL_SSC2_RX,
+    STFDMA_REQUEST_SIGNAL_SSC3_RX,
+    STFDMA_REQUEST_SIGNAL_SSC4_RX,
+
+    STFDMA_REQUEST_SIGNAL_SSC1_TX,
+    STFDMA_REQUEST_SIGNAL_SSC2_TX,
+    STFDMA_REQUEST_SIGNAL_SSC3_TX,
+    STFDMA_REQUEST_SIGNAL_SSC4_TX,
+
+    STFDMA_REQUEST_SIGNAL_UART0_RX,
+    STFDMA_REQUEST_SIGNAL_UART1_RX,
+    STFDMA_REQUEST_SIGNAL_UART2_RX,
+    STFDMA_REQUEST_SIGNAL_UART3_RX,
+
+    STFDMA_REQUEST_SIGNAL_UART0_TX,
+    STFDMA_REQUEST_SIGNAL_UART1_TX,
+    STFDMA_REQUEST_SIGNAL_UART2_TX,
+    STFDMA_REQUEST_SIGNAL_UART3_TX,
+
+    STFDMA_REQUEST_SIGNAL_CD_EXT0,
+
+    STFDMA_REQUEST_SIGNAL_UHF2_RXBUF_EMPTY,
+    STFDMA_REQUEST_SIGNAL_UHF2_RXBUF_FULL,
+
+    STFDMA_REQUEST_SIGNAL_MODEM_PCM_PLYR,
+    STFDMA_REQUEST_SIGNAL_MODEM_PCM_READER,
+
+    STFDMA_REQUEST_SIGNAL_DISEQC0_EMPTY,
+    STFDMA_REQUEST_SIGNAL_DISEQC0_FULL,
+    STFDMA_REQUEST_SIGNAL_DISEQC1_EMPTY,
+    STFDMA_REQUEST_SIGNAL_DISEQC1_FULL,
+
+    STFDMA_REQUEST_SIGNAL_HDMI_AVI_BUFF_EMPTY,
+
+    STFDMA_REQUEST_SIGNAL_NAND_DATA,
+    STFDMA_REQUEST_SIGNAL_NAND_CMD,
+
+    STFDMA_REQUEST_SIGNAL_TTXT,
+    STFDMA_REQUEST_SIGNAL_TTXT_SDTVOUT,
+
+#else
+
+/*=========================== UNKNOWN ======================================*/
+
+    #error This hardware does not have a request line configuration
+
+#endif
+} STFDMA_RequestSignal_t;
+
+
+/* Supported FDMA interface device types for STFDMA_Init()  */
+typedef enum STFDMA_Device_e
+{
+    STFDMA_DEVICE_FDMA_1,
+    STFDMA_DEVICE_FDMA_2
+} STFDMA_Device_t;
+
+/* Multiinstance */
+typedef enum STFDMA_Block_e
+{
+    STFDMA_1,
+    STFDMA_2,
+    STFDMA_MAX
+}STFDMA_Block_t;
+
+/* The avaiable Channel Pools  */
+typedef enum STFDMA_Pool_e
+{
+    STFDMA_DEFAULT_POOL,
+    STFDMA_PES_POOL,
+    STFDMA_SPDIF_POOL,
+    STFDMA_HIGH_BANDWIDTH_POOL
+#if defined (ST_5188)
+    ,
+    STFDMA_FEI_POOL
+#endif
+} STFDMA_Pool_t;
+
+
+/* Event constants for use with CallbackReason() */
+typedef enum STFDMA_Event_e
+{
+    STFDMA_NOTIFY_NODE_COMPLETE_DMA_CONTINUING,
+    STFDMA_NOTIFY_NODE_COMPLETE_DMA_PAUSED,
+    STFDMA_NOTIFY_TRANSFER_ABORTED,
+    STFDMA_NOTIFY_TRANSFER_COMPLETE
+} STFDMA_Event_t;
+
+
+/* Theses are the start code ranges that can be configured for start code */
+/* detection during PES processing */
+typedef enum STFDMA_SCRange_e
+{
+    STFDMA_DEVICE_PES_RANGE_0,
+    STFDMA_DEVICE_ES_RANGE_0,
+    STFDMA_DEVICE_ES_RANGE_1
+#if defined (ST_7100) || defined (ST_7109) || defined (ST_7200)
+    ,
+    STFDMA_DEVICE_MPEG_RANGE_0 = 1,
+    STFDMA_DEVICE_MPEG_RANGE_1 = 2,
+    STFDMA_DEVICE_H264_RANGE_0 = 3
+/* On the VSOC platform, the ST7100 has VC1 capability */
+#if defined (ST_7109) || defined (ST_7200) || ( defined (ST_7100) && defined (NATIVE_CORE) )
+    ,
+    STFDMA_DEVICE_VC1_RANGE_0 = 4
+#endif
+
+#endif
+} STFDMA_SCRange_t;
+
+typedef enum STFDMA_VideoCodec_e
+{
+    VIDEO_CODEC_MPEG,
+    VIDEO_CODEC_H264,
+    VIDEO_CODEC_VC1,
+    VIDEO_CODEC_MAX
+}STFDMA_VideoCodec_t;
+
+typedef enum STFDMA_AdditionalDataRegion_e
+{
+    PES_ADDITIONAL_DATA_REGION_0,
+    PES_ADDITIONAL_DATA_REGION_1,
+    PES_ADDITIONAL_DATA_REGION_2,
+    SPDIF_ADDITIONAL_DATA_REGION_3,
+#if defined (ST_7200)
+    PES_ADDITIONAL_DATA_REGION_4,
+    PES_ADDITIONAL_DATA_REGION_5,
+    PES_ADDITIONAL_DATA_REGION_6,
+#endif
+    ADDITIONAL_DATA_REGION_MAX
+} STFDMA_AdditionalDataRegion_t;
+
+typedef enum STFDMA_AdditionalDataRegionParameter_e
+{
+    /* For additional data region 0-2 */
+    PES_SC_WRITE = 0,
+    PES_SC_SIZE,
+    PES_ESBUF_TOP,
+    PES_ESBUF_READ,
+    PES_ESBUF_WRITE,
+    PES_ESBUF_BOT,
+    PES_PES_CTRL,
+    PES_SC1_CTRL,
+    PES_SC2_CTRL,
+    PES_SCD_STATE_WORD_0,
+    PES_SCD_STATE_WORD_1,
+    PES_SCD_STATE_WORD_2,
+    PES_SCD_STATE_WORD_3,
+    PES_SCD_STATE_WORD_4,
+    PES_SCD_STATE_WORD_5,
+    PES_SCD_STATE_WORD_6,
+    PES_LAST,
+
+    /* For additional data region 3 */
+    SPDIF_RESERVED_0 = 0,
+    SPDIF_RESERVED_1,
+    SPDIF_RESERVED_2,
+    SPDIF_RESERVED_3,
+    SPDIF_RESERVED_4,
+    SPDIF_RESERVED_5,
+    SPDIF_RESERVED_6,
+    SPDIF_RESERVED_7,
+    SPDIF_FRAME_COUNT,
+    SPDIF_FRAMES_TO_GO,
+    SPDIF_DATA_PRECISION_MASK,
+    SPDIF_RESERVED_11,
+    SPDIF_RESERVED_12,
+    SPDIF_RESERVED_13,
+    SPDIF_RESERVED_14,
+    SPDIF_RESERVED_15,
+    SPDIF_LAST
+} STFDMA_AdditionalDataRegionParameter_t;
+
+/* DMA channel identifier */
+typedef U32  STFDMA_ChannelId_t;
+
+/* DMA transfer identifier */
+typedef U32  STFDMA_TransferId_t;
+
+/* Identifies a specific FDMA Context */
+typedef U32  STFDMA_ContextId_t;
+
+
+/* Channel status bits for the SPDIF (PCM & Compressed mode) Audio processing */
+typedef struct STFDMA_SPDIFChannelStatus_s  /* S/PDIF not supported in 5188 */
+{
+    U32 Status_0;
+
+#if defined (ST_7100) || defined (ST_7109) || defined (ST_7200)
+    union
+    {
+        struct
+        {
+            U32 Status_1    :   9;
+            U32 UserStatus  :   1;
+            U32 Valid       :   1;
+            U32 Pad         :   21;
+        }PCMMode;
+
+        struct
+        {
+#endif
+
+            U32 Status_1    :   4;
+            U32 UserStatus  :   1;
+            U32 Valid       :   1;
+            U32 Pad         :   26;
+
+#if defined (ST_7100) || defined (ST_7109) || defined (ST_7200)
+        }CompressedMode;
+    }Status;
+#endif
+} STFDMA_SPDIFChannelStatus_t;
+
+
+/* FDMA device Init parameters for STFDMA_Init() */
+typedef struct STFDMA_InitParams_s
+{
+    STFDMA_Device_t         DeviceType;         /* FDMA device */
+    ST_Partition_t          *DriverPartition_p; /* Mem partion for driver use */
+    ST_Partition_t          *NCachePartition_p; /* Non-cached partition */
+    U32                     *BaseAddress_p;     /* Base address of FDMA block */
+    U32                     InterruptNumber;    /* FMDA block interrupt number */
+    U32                     InterruptLevel;     /* FDMA block interrupt level */
+    U32                     NumberCallbackTasks; /* Number of task to use for callback manager */
+    U32                     ClockTicksPerSecond; /* Number of clock ticks per second */
+    STFDMA_Block_t          FDMABlock;           /* FDMA Silicon used */
+} STFDMA_InitParams_t;
+
+
+/* Node control word describing a transfer for STFDMA_Node_t */
+typedef struct STFDMA_NodeControl_s
+{
+    U32 PaceSignal              :       5;      /* Pace signal id number */
+    U32 SourceDirection         :       2;      /* Source address direction control */
+    U32 DestinationDirection    :       2;      /* Destination address direction control */
+#if defined (ST_7109) || defined (ST_7200)
+    U32 Reserved                :       6;      /* Reerved. Should be set to 0 */
+    U32 Secure                  :       1;
+    U32 Reserved1               :       14;     /* Reerved. Should be set to 0 */
+#else
+    U32 Reserved                :       21;     /* Reerved. Should be set to 0 */
+#endif
+    U32 NodeCompletePause       :       1;      /* End of node pause control */
+    U32 NodeCompleteNotify      :       1;      /* End of node notification contro */
+} STFDMA_NodeControl_t;
+
+
+/* DMA node structure for application definition of transfers.
+ * Linked list transfer are a linked list of STFDMA_Node_t
+ */
+typedef struct STFDMA_Node_s
+{
+    struct STFDMA_Node_s        *Next_p;                /* Next node in list (NULL==end) */
+    STFDMA_NodeControl_t        NodeControl;                /* Node control bits */
+    U32                         NumberBytes;            /* Number of bytes in node */
+    void                        *SourceAddress_p;       /* Start of source data */
+    void                        *DestinationAddress_p;  /* Start of dest location */
+    U32                         Length;                 /* Line length */
+    S32                         SourceStride;           /* Stride between source lines */
+    S32                         DestinationStride;      /* Stride between dest lines  */
+} STFDMA_Node_t;
+
+
+/* Defines the extended node required for transfers including additional
+ * processing for SPDIF (PCM & Compressed mode) Audio
+ */
+typedef struct STFDMA_SPDIFNode_s   /* S/PDIF not supported in 5188 */
+{
+    struct STFDMA_SPDIFNode_s *Next_p;
+
+    U32     Extended            :   5;
+    U32     Type                :   3;
+    U32     DReq                :   5;
+
+#if defined (ST_5525)
+    U32     Pad                 :   2;
+    U32     Secure              :   1;
+    U32     Pad2                :   12;
+#elif defined (ST_7100)
+    U32     ModeData            :   1;
+    U32     Pad                 :  14;
+#elif defined (ST_7109) || defined (ST_7200)
+    U32     ModeData            :   1;
+    U32     Pad                 :   1;
+    U32     Secure              :   1;
+    U32     Pad2                :   12;
+#else
+    U32     Pad                 :   15;
+#endif
+
+    U32     BurstEnd            :   1;
+    U32     Valid               :   1;
+    U32     NodeCompletePause   :   1;
+    U32     NodeCompleteNotify  :   1;
+    U32     NumberBytes;
+
+    void   *SourceAddress_p;
+    void   *DestinationAddress_p;
+
+#if defined (ST_7100) || defined (ST_7109) || defined (ST_7200)
+    union
+    {
+        struct
+        {
+            U32     Reserved1;
+            U32     SStride;
+            U32     Reserved2;
+        }PCMMode;
+
+        struct
+        {
+#endif
+
+            U16     PreambleB;
+            U16     PreambleA;
+            U16     PreambleD;
+            U16     PreambleC;
+            U32     BurstPeriod;
+
+#if defined (ST_7100) || defined (ST_7109) || defined (ST_7200)
+        }CompressedMode;
+    }Data;
+#endif
+
+    STFDMA_SPDIFChannelStatus_t  Channel0;
+    STFDMA_SPDIFChannelStatus_t  Channel1;
+
+    U32     Pad1[4]; /* Pad to multiple of 32 bytes */
+} STFDMA_SPDIFNode_t;
+
+typedef struct STFDMA_FEINode_s
+{
+    struct  STFDMA_FEINode_s *Next_p;
+
+    U32     Extended            :   5;
+    U32     Type                :   3;
+    U32     DreqStart           :   5;
+    U32     DreqData            :   5;
+    U32     FirstNodeOfTransfer :   1;
+    U32     Pad1                :  11;
+    U32     NodeCompletePause   :   1;
+    U32     NodeCompleteNotify  :   1;
+
+    U32     NumberBytes;
+
+    void   *SourceAddress_p;
+    void   *DestinationAddress_p;
+    void   *TVOCounterAddress_p;
+
+    U32     Pad2[10];
+} STFDMA_FEINode_t;
+
+/* Defines the extended node required for transfers using additional Context information.
+ * This is currently only used for transfers requiring PES processing and ES start code detection.
+ */
+typedef struct STFDMA_ContextNode_s
+{
+    struct STFDMA_ContextNode_s     *Next_p;
+    U32     Extended            :   5;
+    U32     Type                :   3;
+    U32     Context             :   4;
+#if defined (ST_7109) || defined (ST_5525) || defined (ST_7200)
+    U32     Pad1                :   3;
+    U32     Secure              :   1;
+#else
+    U32     Pad1                :   4;
+#endif
+    U32     Tag                 :   8;
+    U32     Pad2                :   6;
+    U32     NodeCompletePause   :   1;
+    U32     NodeCompleteNotify  :   1;
+    U32     NumberBytes;
+    void   *SourceAddress_p;
+
+    U32     Pad3[4]; /* Pad to multiple of 32 bytes */
+
+} STFDMA_ContextNode_t;
+
+
+/* The generic node structure */
+typedef union STFDMA_GenericNode_s
+{
+    struct
+    {
+        union STFDMA_GenericNode_s     *Next_p;
+        U32     Extended        :   5;
+        U32     Type            :   3;
+        U32     Pad             :   24;
+        U32     NumberBytes;
+        void   *SourceAddress_p;
+    } Gen;
+
+    STFDMA_Node_t           Node;
+    STFDMA_ContextNode_t    ContextNode;
+    STFDMA_SPDIFNode_t      SPDIFNode;
+    STFDMA_FEINode_t        FEINode;
+} STFDMA_GenericNode_t;
+
+
+/* An entry in the start code list for PES processing */
+typedef union STFDMA_SCEntry_s
+{
+    /* Start code entry */
+    struct
+    {
+        U32     Type            : 2;  /* STFDMA_SC_ENTRY */
+        U32     Pad1            : 6;
+        U32     Tag             : 8;
+        U32     Pad2            : 16;
+        void   *Addr;
+#if defined (ST_7100) || defined (ST_7109) || defined (ST_7200)
+        union
+        {
+            struct
+            {
+                U8      SCValue;
+                U8      Reserved[3];
+            }MPEG2;
+
+            struct
+            {
+                U32     SCValue         : 8;
+                U32     SliceCount      : 16;  /* Undefined for mpeg */
+                U32     Reserved        : 8;
+            }H264;
+#if defined (ST_7109) || defined (ST_7200)
+            struct
+            {
+                U32     SCValue         : 8;
+                U32     SliceAddress    : 9;  /* Undefined for mpeg */
+                U32     Reserved        : 15;
+            }VC1;
+#endif
+        }ExtendedInfo;
+#else
+        U8      SCValue;
+        U8      Reserved[3];
+#endif
+
+    }
+    SC;
+
+    /* PTS entry */
+    struct
+    {
+        U32     Type    :   2;  /* STFDMA_PTS_ENTRY */
+        U32     Pad1    :   6;
+        U32     Tag     :   8;
+        U32     Pad2    :   16;
+        void   *Addr;
+        U32     PTS1;
+        U32     PTS0;
+    }
+    PTS;
+
+} STFDMA_SCEntry_t;
+
+
+/* Configurattion of the start code detection */
+typedef struct STFDMA_SCState_s
+{
+    U8      RangeStart;
+    U8      RangeEnd;
+    BOOL    RangeEnabled;
+    BOOL    PTSEnabled;
+    BOOL    OneShotEnabled;
+} STFDMA_SCState_t;
+
+
+/* Transfer status of current node for STFDMA_GetTransferStatus() */
+typedef struct STFDMA_TransferStatus_s
+{
+    BOOL            Paused;                 /* Transfer is paused */
+    U32             NodeAddress;            /* Address of current node */
+    U32             NodeBytesRemaining;     /* Number of bytes remaining in transfer */
+} STFDMA_TransferStatus_t;
+
+
+/* Callback function type for TransferParams_t  */
+typedef void  (*STFDMA_CallbackFunction_t) (U32         TransferId,           /* Transfer id */
+                                            U32         CallbackReason,       /* Reason for callback */
+                                            U32         *CurrentNode_p,       /* Node transfering */
+                                            U32         NodeBytesTransfered,  /* Number of bytes transfered */
+                                            BOOL Error,                       /* Interrupt missed */
+                                            void *ApplicationData_p,          /* Application data */
+                                            STOS_Clock_t  InterruptTime);        /* time_now from interrupt handler */
+
+#if defined (ST_OSLINUX) && defined (CONFIG_STM_DMA)
+typedef void  (*STFDMA_LinuxCallbackFunction_t) (void *ApplicationData_p );   /* Application data */
+#endif
+
+/* Parameters for STFDMA_StartGenericTransfer() */
+typedef struct STFDMA_TransferGenericParams_s
+{
+    STFDMA_ChannelId_t                  ChannelId;              /* Id of the channel to transfer on */
+    STFDMA_Pool_t                       Pool;                   /* The pool from which the channel is to be selected */
+    STFDMA_GenericNode_t               *NodeAddress_p;          /* Address of node details */
+    U32                                 BlockingTimeout;        /* Blocking timeout */
+    STFDMA_CallbackFunction_t           CallbackFunction;       /* Pointer to callback function */
+    void                               *ApplicationData_p;      /* Pointer application data for callback */
+    STFDMA_Block_t                      FDMABlock;              /* FDMA Silicon used */
+} STFDMA_TransferGenericParams_t;
+
+
+/* Parameters for STFDMA_StartTransfer() */
+typedef struct STFDMA_TransferParams_s
+{
+    STFDMA_ChannelId_t                  ChannelId;              /* Id of the channel to transfer on */
+    STFDMA_Node_t                      *NodeAddress_p;          /* Address of node details */
+    U32                                 BlockingTimeout;        /* Blocking timeout */
+    STFDMA_CallbackFunction_t           CallbackFunction;       /* Pointer to callback function */
+    void                               *ApplicationData_p;      /* Pointer application data for callback */
+    STFDMA_Block_t                      FDMABlock;              /* FDMA Silicon used */
+} STFDMA_TransferParams_t;
+
+
+/* Exported Functions ----------------------------------------------------- */
+
+ST_ErrorCode_t STFDMA_Init(const ST_DeviceName_t DeviceName,
+                           const STFDMA_InitParams_t *InitParams_p);
+
+
+ST_ErrorCode_t STFDMA_StartGenericTransfer(STFDMA_TransferGenericParams_t *TransferParams_p,
+                                           STFDMA_TransferId_t *TransferId_p);
+ST_ErrorCode_t STFDMA_StartTransfer   (STFDMA_TransferParams_t *TransferParams_p,
+                                       STFDMA_TransferId_t *TransferId_p);
+ST_ErrorCode_t STFDMA_ResumeTransfer(STFDMA_TransferId_t TransferId);
+ST_ErrorCode_t STFDMA_FlushTransfer (STFDMA_TransferId_t TransferId);
+ST_ErrorCode_t STFDMA_AbortTransfer(STFDMA_TransferId_t TransferId);
+
+
+ST_ErrorCode_t STFDMA_AllocateContext       (STFDMA_ContextId_t *ContextId);
+ST_ErrorCode_t STFDMA_DeallocateContext     (STFDMA_ContextId_t  ContextId);
+
+
+ST_ErrorCode_t STFDMA_ContextGetSCList      (STFDMA_ContextId_t   ContextId,
+                                             STFDMA_SCEntry_t   **SCList,
+                                             U32                 *Size,
+                                             BOOL                *Overflow);
+ST_ErrorCode_t STFDMA_ContextSetSCList      (STFDMA_ContextId_t   ContextId,
+                                             STFDMA_SCEntry_t    *SCList,
+                                             U32                  Size);
+
+
+ST_ErrorCode_t STFDMA_ContextGetSCState     (STFDMA_ContextId_t  ContextId,
+                                             STFDMA_SCState_t   *State,
+                                             STFDMA_SCRange_t    Range);
+ST_ErrorCode_t STFDMA_ContextSetSCState     (STFDMA_ContextId_t  ContextId,
+                                             STFDMA_SCState_t   *State,
+                                             STFDMA_SCRange_t    Range);
+
+
+ST_ErrorCode_t STFDMA_ContextSetESBuffer    (STFDMA_ContextId_t ContextId, void *Buffer, U32 Size);
+ST_ErrorCode_t STFDMA_ContextSetESReadPtr   (STFDMA_ContextId_t ContextId, void *Read);
+ST_ErrorCode_t STFDMA_ContextSetESWritePtr  (STFDMA_ContextId_t ContextId, void *Write);
+ST_ErrorCode_t STFDMA_ContextGetESReadPtr   (STFDMA_ContextId_t ContextId, void **Read);
+ST_ErrorCode_t STFDMA_ContextGetESWritePtr  (STFDMA_ContextId_t ContextId, void **Write, BOOL *Overflow);
+
+ST_ErrorCode_t STFDMA_GetTransferStatus(STFDMA_TransferId_t TransferId,
+                                        STFDMA_TransferStatus_t *TransferStatus_p);
+
+
+ST_ErrorCode_t STFDMA_LockChannelInPool(STFDMA_Pool_t       Pool, STFDMA_ChannelId_t *ChannelId, STFDMA_Block_t DeviceNo);
+ST_ErrorCode_t STFDMA_LockChannel      (STFDMA_ChannelId_t *ChannelId, STFDMA_Block_t DeviceNo);
+ST_ErrorCode_t STFDMA_UnlockChannel(STFDMA_ChannelId_t ChannelId, STFDMA_Block_t DeviceNo);
+
+ST_ErrorCode_t STFDMA_SetTransferCount(U32 RequestLineNo,  U32 TransferCount, STFDMA_Block_t DeviceNo);
+ST_ErrorCode_t STFDMA_SetAddDataRegionParameter(STFDMA_Block_t DeviceNo, STFDMA_AdditionalDataRegion_t RegionNo, STFDMA_AdditionalDataRegionParameter_t ADRParameter, U32 Value);
+
+#if defined (ST_OSLINUX) && defined (CONFIG_STM_DMA)
+ST_ErrorCode_t STFDMA_SetSTLinuxChannel(STFDMA_ChannelId_t ChannelId, STFDMA_Block_t DeviceNo);
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,11)
+ST_ErrorCode_t STFDMA_LockFdmaChannel(int *ChannelId, STFDMA_Block_t DeviceNo);
+#else
+ST_ErrorCode_t STFDMA_LockFdmaChannel(STFDMA_Block_t DeviceNo);
+#endif
+#endif
+
+ST_Revision_t STFDMA_GetRevision(void);
+
+
+ST_ErrorCode_t STFDMA_Term(const ST_DeviceName_t DeviceName,
+                           const BOOL ForceTerminate,
+                           STFDMA_Block_t DeviceNo);
+
+/* Non-blocking call with no callback */
+/* This is a stub function to allocate a unique value */
+void  STFDMA_NO_CALLBACK (U32  TransferId,           /* Transfer id */
+                          U32  CallbackReason,       /* Reason for callback */
+                          U32  *CurrentNode_p,       /* Node transfering */
+                          U32  NodeBytesTransfered,  /* Number of bytes transfered */
+                          BOOL Error,                /* Interrupt missed */
+                          void *ApplicationData_p,   /* Application data */
+                          STOS_Clock_t  InterruptTime); /* time_now from interrupt handler */
+
+
+#if defined (STFDMA_USE_VIRTUAL_CONTEXT)
+
+/* Identifies a specific Virtual FDMA Context */
+typedef U32  STFDMA_VirtualContextId_t;
+
+ST_ErrorCode_t STFDMA_AllocateVirtualContext       (STFDMA_VirtualContextId_t *VirtualContextId);
+
+ST_ErrorCode_t STFDMA_DeallocateVirtualContext     (STFDMA_VirtualContextId_t  VirtualContextId);
+
+ST_ErrorCode_t STFDMA_VirtualContextRestore (STFDMA_VirtualContextId_t  VirtualContextId,
+                                             STFDMA_ContextId_t         ContextId);
+
+ST_ErrorCode_t STFDMA_VirtualContextSave   (STFDMA_ContextId_t         ContextId,
+                                            STFDMA_VirtualContextId_t  VirtualContextId);
+
+ST_ErrorCode_t STFDMA_VirtualContextGetSCList(STFDMA_VirtualContextId_t   VirtualContextId,
+	                                           STFDMA_SCEntry_t          **SCList,
+	                                           U32                         *Size,
+	                                           BOOL                        *Overflow);
+
+ST_ErrorCode_t STFDMA_VirtualContextSetSCList(STFDMA_VirtualContextId_t  VirtualContextId,
+	                                           STFDMA_SCEntry_t          *SCList,
+	                                           U32                        Size);
+
+ST_ErrorCode_t STFDMA_VirtualContextGetSCState (STFDMA_VirtualContextId_t  VirtualContextId,
+	                                             STFDMA_SCState_t          *State,
+	                                             STFDMA_SCRange_t           Range);
+
+ST_ErrorCode_t STFDMA_VirtualContextSetSCState (STFDMA_VirtualContextId_t  VirtualContextId,
+	                                             STFDMA_SCState_t          *State,
+	                                             STFDMA_SCRange_t           Range);
+
+ST_ErrorCode_t STFDMA_VirtualContextSetESBuffer (STFDMA_VirtualContextId_t  VirtualContextId,
+                                                 void                      *Buffer,
+                                                 U32                        Size);
+
+ST_ErrorCode_t STFDMA_VirtualContextSetESReadPtr(STFDMA_VirtualContextId_t  VirtualContextId,
+                                                 void                      *Read);
+
+ST_ErrorCode_t STFDMA_VirtualContextSetESWritePtr (STFDMA_VirtualContextId_t  VirtualContextId,
+                                                   void                      *Write);
+
+ST_ErrorCode_t STFDMA_VirtualContextGetESReadPtr (STFDMA_VirtualContextId_t   VirtualContextId,
+                                                  void                      **Read);
+
+ST_ErrorCode_t STFDMA_VirtualContextGetESWritePtr (STFDMA_VirtualContextId_t  VirtualContextId,
+                                                   void **Write,
+                                                   BOOL  *Overflow);
+#endif /* STFDMA_VIRTUAL_CONTEXT */
+
+#ifdef __cplusplus
+}
+#endif
+
+#if defined (STFDMA_DEBUG_SUPPORT)
+void STFDMA_DisplayStatus (STFDMA_Block_t DeviceNo);
+#endif
+
+#endif /* __STFDMA_H */
+
+/* End of stfdma.h */

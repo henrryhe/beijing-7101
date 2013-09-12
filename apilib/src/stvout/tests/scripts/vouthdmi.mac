@@ -1,0 +1,999 @@
+; ****************************************************************************
+; File         : VOUTHDMI.MAC
+; Requirements :
+; Author       : Adel Chaouch - September 2004
+; ****************************************************************************
+; Test :
+; API BASIC TESTS (RGB888 for DVI outputs)
+; DVI/HDMI RETURNS TESTS
+; STATE MACHINE TESTS
+; EDID RETRIEVAL TESTS
+; SEND INFO FRAME TESTS
+
+define M_TEST7_OUTPUTS ALL_TEST
+loop=0
+HPD=1
+  hdmichoice=""
+  while loop==0
+    if ALL_TEST==1
+      hdmichoice="all"
+    end
+    else
+      print "-------------------------------------------------"
+      print "               DVI/HDMI TESTS                    "
+      print "-------------------------------------------------"
+      hdmichoice=""
+      print " 1  - API BASIC TESTS                            "
+      print " 2  - RETURNS TESTS                              "
+      print " 3  - STATE MACHINE TESTS                        "
+      print " 4  - EDID RETRIEVAL TESTS                       "
+      print " 5  - INFOFRAME TRANSMISSION TESTS               "
+      print " 6  - HDCP Revok & Enable                        "
+      print " 7  - HDCP Disable during Authentication         "
+      print " 8  - Send CEC Message                           "
+      print " all- All tests                                  "
+      print " 9  - To Exit                                    "
+      print " hit return to Quit this menu"
+      print " Enter your choice :"
+      hdmichoice=getstring
+    end
+    if hdmichoice==""
+        loop=1
+    end
+    if hdmichoice=="9"
+        loop=1
+    end
+    if hdmichoice=="1"
+       M_TEST_BASIC_HDMI
+    end
+    if hdmichoice=="2"
+       ; RETURNS TESTS
+       ;source "../../../scripts/rethdmi.mac"
+        source OSPATH+DRV_PATH_VOUT+"rethdmi.mac"
+       M_RET_HDMI_ALL ALL_TEST
+       M_LAYER_TERM
+       del M_RET_*
+    end
+    if hdmichoice=="3"
+       ; STATE MACHINE TESTS
+       M_TEST_STATE_MACHINE
+    end
+    if hdmichoice=="4"
+       ; EDID RETRIEVAL TESTS
+       M_TEST_EDID_RETRIEVAL
+    end
+    if hdmichoice=="5"
+       ; INFO FRAMES TRANSMISSION TESTS
+       M_TEST_INFOFRAME_TRANS
+    end
+    if hdmichoice=="6"
+       ; HDCP Key revocation Check then Enable Disable Screen
+       M_TEST_HDCP_Revok_Enable
+    end
+    if hdmichoice=="7"
+       ; HDCP default screen disable during authentication in progress
+       M_TEST_HDCP_Auth_Dis
+    end
+    if hdmichoice=="8"
+       ; Sending a CEC %essage for test
+       M_TEST_CEC_Send
+    end
+    if hdmichoice=="all"
+        ERR_T800=FALSE_
+        ERR_T801=FALSE_
+        ERR_T802=FALSE_
+        ERR_T803=FALSE_
+        ERR_T804=FALSE_
+        M_TEST_BASIC_HDMI
+        M_RET_HDMI_ALL ALL_TEST
+        M_TEST_STATE_MACHINE
+        M_TEST_EDID_RETRIEVAL
+        M_TEST_INFOFRAME_TRANS
+        M_TEST_HDCP_Revok_Enable
+        M_TEST_HDCP_Auth_Dis
+        M_TEST_CEC_Send
+        if ALL_TEST!=1
+           M_CHECK_TEST8_ERR ERR_T800 ERR_T801 ERR_T802 ERR_T803 ERR_T804
+        end
+        loop=1
+    end
+   end
+end
+
+
+define M_DISP_SET_MODE VTGNAME HDLVTG VTGPARAMS
+    vtg_setmode HDLVTG VTGPARAMS
+    M_CHECK_RETCODE ERR_NO_ERROR
+    STRMODE=vtg_getmode HDLVTG
+    M_CHECK_RETCODE ERR_NO_ERROR
+    T_FRAMERATE=api_evalstr STRMODE 2
+    T_SCANTYPE=api_evalstr STRMODE 3
+    if (API_CHIPID=="7710")
+        T_XStartHD=api_evalstr STRMODE 8
+        T_YStartHD=api_evalstr STRMODE 9
+        GammaDisplay T_SCANTYPE T_XStartHD T_YStartHD
+    end
+end
+
+define M_TEST_INTERFACE
+    print "Test on DVI or HDMI interface ? "
+    choiceinterface=""
+    ok=0
+    INTERFACE=0
+    while ok==0
+      print " 1 - DVI"
+      print " 2 - HDMI"
+      print " Enter your choice :"
+      choiceinterface=getstring
+      if choiceinterface=="1"
+        INTERFACE =0
+        ok=1
+      end
+      if choiceinterface=="2"
+        INTERFACE =1
+        ok=1
+      end
+    end
+end
+
+define M_TEST_ENCRYPTION
+    choice_enc=""
+    ok=0
+    ENCRYPTION=0
+    while ok==0
+      print " Enable Encryption ?"
+      print " 1 - YES"
+      print " 2 - NO"
+      print " Enter your choice :"
+      choice_enc=getstring
+      if choice_enc=="1"
+        ENCRYPTION =1
+        ok=1
+      end
+      if choice_enc=="2"
+        ENCRYPTION =0
+        ok=1
+      end
+    end
+end
+
+define M_TEST_HPD
+    choice_enc=""
+    ok=0
+    HPD=0
+    while ok==0
+      print " Is HPD Inverted ?"
+      print " 1 - YES"
+      print " 2 - NO"
+      print " Enter your choice :"
+      choice_enc=getstring
+      if choice_enc=="1"
+        HPD =1
+        ok=1
+      end
+      if choice_enc=="2"
+        HPD =0
+        ok=1
+      end
+    end
+end
+
+
+define M_TEST_BASIC_HDMI
+  api_checkerr
+  M_TEST_HDMI_RGB888 "1080I"
+  ;;api_checkerr
+  M_TEST_HDMI_RGB888 "720P"
+  ;api_checkerr
+  M_TEST_HDMI_RGB888 "480P"
+end
+
+define M_TEST_HDMI_RGB888 MODE
+  api_checkerr
+  hndl_dvi=0
+  if HDOUT==0
+    print " capabilities not available! "
+    TEST444_24=FALSE_
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    print " -----------------------------------------------"
+    print "               API BASIC TESTS                  "
+    print " test DVI/HDMI OUTPUT RGB888 24 bits Components "
+    print " -----------------------------------------------"
+    print " init/open/Get State/ Get Sink Infos/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+
+    ; MODE_720P60000_74250
+    if MODE=="720P"
+        if (API_CHIPID=="7200")
+          GammaDisplay 1 253 55 1280 720
+          vtg_init "VTG" , hFD10C300
+        end
+        else
+           if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+             vtg_init "VTG"
+           end
+           else
+             if (CHIP_CUT=="STI7710_CUT2x")
+               vtg_init "VTG" 5 h20103000
+             end
+             else
+               vtg_init "VTG" 5 h20103c00
+             end
+           end
+        end
+        hdl_vtg = vtg_open "VTG"
+        M_DISP_SET_MODE "VTG" hdl_vtg "MODE_720P60000_74250"
+        print "--- start -------------------------------------------------------"
+        print "            Capabilities expected :"
+        print "    Capability : SupportedOutputs :"
+        print "     Analog    : RGB YUV YC CVBS "
+        print "     Digital   : HDMI_RGB888 HDMI_YCbCr444 HDMI_YCbCr422 HD_RGB HD_YUV"
+        print "    Capability : Selected : DIGITAL_YCbCr444_24bitsComponents"
+        print " "
+        M_TEST_INTERFACE
+        ; Encryption Enable/Disable
+        M_TEST_ENCRYPTION
+        M_TEST_HPD
+
+        vout_init "VoutDvi" DEVICETYPE OUTPUTTYPE , , , , , , , , , , , ENCRYPTION HPD
+        hndl_dvi = vout_open "VoutDvi"
+        vout_start hndl_dvi
+
+        if ENCRYPTION==1
+        vout_sethdcpparams hndl_dvi
+        end
+
+        if INTERFACE==0 ;DVI interface
+           if ENCRYPTION==1
+                 vout_setparams hndl_dvi OUTPUTTYPE 1 1
+                 print "Encrypted DVI"
+          end
+          else
+                vout_setparams hndl_dvi OUTPUTTYPE 1 0
+                print "non Encrypted DVI"
+          end
+        end
+        else    ;HDMI interface
+          if ENCRYPTION==1
+                 vout_setparams hndl_dvi OUTPUTTYPE 0 1
+                 print "Encrypted HDMI"
+          end
+          else
+                vout_setparams hndl_dvi OUTPUTTYPE 0 0
+                print "non Encrypted HDMI"
+          end
+        end
+        vout_capa "VoutDvi"
+        vout_enable hndl_dvi
+        M_CHECK_RETCODE ERR_NO_ERROR
+        ; Resizing HDMI active window
+        ;for both platforms STi7710 STb7100
+        ;vout_setav hndl_dvi 122 841 35 514
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Mode 720p OK on Monitor ?"
+        M_CHECK_RETCODE 0
+    end
+    ; MODE_1080I60000_74250
+    if MODE=="1080I"
+        if (API_CHIPID=="7200")
+          GammaDisplay 1 253 55 1920 1080
+          vtg_init "VTG" , hFD10C300
+        end
+        else
+           if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+             vtg_init "VTG"
+           end
+           else
+             if (CHIP_CUT=="STI7710_CUT2x")
+               vtg_init "VTG" 5 h20103000
+             end
+             else
+               vtg_init "VTG" 5 h20103c00
+             end
+          end
+        end
+        hdl_vtg = vtg_open "VTG"
+        M_DISP_SET_MODE "VTG" hdl_vtg "MODE_1080I60000_74250"
+        print "--- start -------------------------------------------------------"
+        print "            Capabilities expected :"
+        print "    Capability : SupportedOutputs :"
+        print "     Analog    : RGB YUV YC CVBS "
+        print "     Digital   : HDMI_RGB888 HDMI_YCbCr444 HDMI_YCbCr422 HD_RGB HD_YUV"
+        print "    Capability : Selected : DIGITAL_YCbCr444_24bitsComponents"
+        ;Choose the interface DVI/HDMI
+        M_TEST_INTERFACE
+        ; Encryption Enable/Disable
+        M_TEST_ENCRYPTION
+        M_TEST_HPD
+        vout_init "VoutDvi" DEVICETYPE OUTPUTTYPE , , , , , , , , , , , ENCRYPTION HPD
+        hndl_dvi = vout_open "VoutDvi"
+        vout_start hndl_dvi
+
+        if ENCRYPTION==1
+        vout_sethdcpparams hndl_dvi
+        end
+
+         if INTERFACE==0 ;DVI interface
+           if ENCRYPTION==1
+                 vout_setparams hndl_dvi OUTPUTTYPE 1 1
+                print "Encrypted DVI"
+          end
+          else
+                vout_setparams hndl_dvi OUTPUTTYPE 1 0
+                print "non Encrypted DVI"
+          end
+        end
+        else    ;HDMI interface
+          if ENCRYPTION==1
+                 vout_setparams hndl_dvi OUTPUTTYPE 0 1
+                print "Encrypted HDMI"
+          end
+          else
+                vout_setparams hndl_dvi OUTPUTTYPE 0 0
+                print "non Encrypted HDMI"
+          end
+        end
+
+        vout_capa "VoutDvi"
+        vout_enable hndl_dvi
+        M_CHECK_RETCODE ERR_NO_ERROR
+        ; Resizing the hdmi active video
+        ;for DVI display for STi7710  & STb7100
+        ;if INTERFACE==0
+        ;vout_setav hndl_dvi 60 2110 20 480
+        ;end
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Mode 1080i OK on Monitor ?"
+        M_CHECK_RETCODE 0
+     end
+   if MODE=="480P"
+        if (API_CHIPID=="7200")
+          GammaDisplay 0 122 55 720 480
+          vtg_init "VTG" , hFD10C300
+        end
+        else
+           if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+             vtg_init "VTG"
+           end
+           else
+             if (CHIP_CUT=="STI7710_CUT2x")
+               vtg_init "VTG" 5 h20103000
+             end
+             else
+               vtg_init "VTG" 5 h20103c00
+             end
+          end
+        end
+    hdl_vtg = vtg_open "VTG"
+    M_DISP_SET_MODE "VTG" hdl_vtg "MODE_480P60000_27027"
+
+
+    print "--- start -------------------------------------------------------"
+    print "            Capabilities expected :"
+    print "    Capability : SupportedOutputs :"
+    print "     Analog    : RGB YUV YC CVBS "
+    print "     Digital   : HDMI_RGB888 HDMI_YCbCr444 HDMI_YCbCr422 HD_RGB HD_YUV"
+    print "    Capability : Selected : DIGITAL_YCbCr444_24bitsComponents"
+    ;
+    M_TEST_INTERFACE
+    ; Encryption Enable/Disable
+    M_TEST_ENCRYPTION
+    M_TEST_HPD
+
+    vout_init "VoutDvi" DEVICETYPE OUTPUTTYPE , , , , , , , , , , , ENCRYPTION HPD
+
+    hndl_dvi = vout_open "VoutDvi"
+    vout_start hndl_dvi
+
+    if ENCRYPTION==1
+    vout_sethdcpparams hndl_dvi
+    end
+        if INTERFACE==0 ;DVI interface
+           if ENCRYPTION==1
+                vout_setparams hndl_dvi OUTPUTTYPE 1 1
+                print "Encrypted DVI"
+          end
+          else
+                vout_setparams hndl_dvi OUTPUTTYPE 1 0
+                print "non Encrypted DVI"
+          end
+        end
+        else    ;HDMI interface
+          if ENCRYPTION==1
+                vout_setparams hndl_dvi OUTPUTTYPE 0 1
+                print "Encrypted HDMI"
+          end
+          else
+                vout_setparams hndl_dvi OUTPUTTYPE 0 0
+                print "non Encrypted HDMI"
+          end
+        end
+    vout_capa "VoutDvi"
+    vout_enable hndl_dvi
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest "Mode 480p OK on Monitor ?"
+    M_CHECK_RETCODE 0
+   end
+    print "--- end -------------------------------"
+    M_CHECK_TEST_ERROR 0
+    ERR_T800=GLOBERR
+    print " disable/close/term the driver."
+    vout_disable hndl_dvi
+    vout_close hndl_dvi
+    vout_term "VoutDvi"
+    vtg_close
+    vtg_term "VTG"
+    if (API_CHIPID=="7200")
+    ; reset gamma display view port
+      GammaDisplay
+    end
+  end
+end
+
+define M_TEST_STATE_MACHINE
+  api_checkerr
+  hndl_dvi=0
+  if HDOUT==0
+    print " capabilities not available! "
+    TEST444_24=FALSE_
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    print " -----------------------------------------------"
+    print "              STATE MACHINE TEST                "
+    print " test DVI/HDMI OUTPUT RGB888 24 bits Components "
+    print " -----------------------------------------------"
+    print " init/open/Get State/ Get Sink Infos/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+
+    ; MODE_720P60000_74250
+    if API_CHIPID=="7710"
+       if (CHIP_CUT=="STI7710_CUT2x")
+             vtg_init "VTG" 5 h20103000
+       end
+       else
+             vtg_init "VTG" 5 h20103c00
+       end
+    end
+    else
+    if API_CHIPID=="7200"
+    GammaDisplay 1 253 55 1920 1080
+    end
+    vtg_init "VTG"
+    end
+    hdl_vtg = vtg_open "VTG"
+    M_DISP_SET_MODE "VTG" hdl_vtg "MODE_1080I60000_74250"
+
+    print "--- start -------------------------------------------------------"
+    print "            Capabilities expected :"
+    print "    Capability : SupportedOutputs :"
+    print "     Analog    : RGB YUV YC CVBS "
+    print "     Digital   : HDMI_RGB888 HDMI_YCbCr444 HDMI_YCbCr422 HD_RGB HD_YUV"
+    print "    Capability : Selected : DIGITAL_YCbCr444_24bitsComponents"
+
+    M_TEST_HPD
+
+    ;vout_init "VoutDvi" DEVICETYPE OUTPUTTYPE
+    vout_init "VoutDvi" DEVICETYPE OUTPUTTYPE , , , , , , , , , , , 0 HPD
+    hndl_dvi = vout_open "VoutDvi"
+    vout_start hndl_dvi
+    ;vout_sethdcpparams hndl_dvi
+    vout_setparams hndl_dvi OUTPUTTYPE 0 0
+    vout_capa "VoutDvi"
+    vout_enable hndl_dvi
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+
+    M_CHECK_RETCODE ERR_NO_ERROR
+    print "keep the sink connected Please ..."
+    api_quest " STATE is OK ?"
+    vout_getstate hndl_dvi
+
+    print " Disconnect the Sink Please ..."
+    api_quest " STATES: (NO_RECEIVER) was reached ?"
+    vout_getstate hndl_dvi
+    M_CHECK_EXPECTED_PARAM STATE 2
+
+    print "keep the sink disconnected Please ..."
+    api_quest " STATES: (NO_RECEIVER) was reached ?"
+    vout_getstate hndl_dvi
+    M_CHECK_EXPECTED_PARAM STATE 2
+
+
+    api_quest "Can you connect again the sink Please ?"
+
+    vout_disable hndl_dvi
+    ;vout_sethdcpparams hndl_dvi
+    vout_enable hndl_dvi
+    api_quest "STATE is OK?"
+    vout_getstate hndl_dvi
+
+    ;print " disable/close/term the driver."
+    print "Disable the Encryption ..."
+    vout_disable hndl_dvi
+    vout_close hndl_dvi
+    vout_term "VoutDvi" 1
+
+    vout_init "VoutDvi" DEVICETYPE OUTPUTTYPE , , , , , , , , , , , 0 HPD
+    hndl_dvi = vout_open "VoutDvi"
+    vout_start hndl_dvi
+    ;vout_sethdcpparams hndl_dvi
+    vout_setparams hndl_dvi OUTPUTTYPE 0 0
+    vout_capa "VoutDvi"
+    vout_enable hndl_dvi
+    print " STATES: (NO_ENCRYPTION) was reached ?"
+    vout_getstate hndl_dvi
+    api_quest " STATE is OK?"
+
+    M_CHECK_EXPECTED_PARAM STATE 4
+
+    print "--- end -------------------------------"
+    M_CHECK_TEST_ERROR 0
+    ERR_T801=GLOBERR
+    print " disable/close/term the driver."
+    vout_disable hndl_dvi
+    vout_close hndl_dvi
+    vout_term "VoutDvi" 1
+    vtg_close
+    vtg_term "VTG"
+    end
+ end
+
+ define M_TEST_EDID_RETRIEVAL
+  api_checkerr
+  hndl_dvi=0
+  if HDOUT==0
+    print " capabilities not available! "
+    TEST444_24=FALSE_
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    print " -----------------------------------------------"
+    print "              EDID RETRIEVAL TEST               "
+    print " test DVI/HDMI OUTPUT RGB888 24 bits Components "
+    print " -----------------------------------------------"
+    print " init/open/Get State/ Get Sink Infos/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+
+    ; MODE_720P60000_74250
+    if API_CHIPID=="7710"
+       if (CHIP_CUT=="STI7710_CUT2x")
+             vtg_init "VTG" 5 h20103000
+       end
+       else
+             vtg_init "VTG" 5 h20103c00
+       end
+    end
+    else
+    if API_CHIPID=="7200"
+    GammaDisplay 1 253 55 1920 1080
+    end
+    vtg_init "VTG"
+    end
+    hdl_vtg = vtg_open "VTG"
+    M_DISP_SET_MODE "VTG" hdl_vtg "MODE_1080I60000_74250"
+
+    print "--- start -------------------------------------------------------"
+    print "            Capabilities expected :"
+    print "    Capability : SupportedOutputs :"
+    print "     Analog    : RGB YUV YC CVBS "
+    print "     Digital   : HDMI_RGB888 HDMI_YCbCr444 HDMI_YCbCr422 HD_RGB HD_YUV"
+    print "    Capability : Selected : DIGITAL_YCbCr444_24bitsComponents"
+
+    M_TEST_HPD
+   ;M_TEST_INTERFACE
+    vout_init "VoutDvi" DEVICETYPE OUTPUTTYPE , , , , , , , , , , , 0 HPD
+    hndl_dvi = vout_open "VoutDvi"
+    vout_start hndl_dvi
+    ;vout_sethdcpparams hndl_dvi
+    vout_setparams hndl_dvi OUTPUTTYPE 0 0
+    vout_capa "VoutDvi"
+    vout_enable hndl_dvi
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ; Resizing HDMI active window
+    ;for DVI display for STi7710  & STb7100
+    if INTERFACE==0
+        vout_setav hndl_dvi 193 2112 21 560
+    end
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vout_getstate hndl_dvi
+    api_quest "Is the Sink Connected ?"
+    vout_gettarinfo hndl_dvi
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    print "--- end -------------------------------"
+
+    M_CHECK_TEST_ERROR 0
+    ERR_T802=GLOBERR
+    print " disable/close/term the driver."
+    vout_disable hndl_dvi
+    vout_close hndl_dvi
+    vout_term "VoutDvi"
+    vtg_close
+    vtg_term "VTG"
+    end
+ end
+
+define M_TEST_INFOFRAME_TRANS
+  api_checkerr
+  hndl_dvi=0
+  if HDOUT==0
+    print " capabilities not available! "
+    TEST444_24=FALSE_
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    print " -----------------------------------------------"
+    print "         INFO FRAMES TRANSMISSION TEST          "
+    print " test DVI/HDMI OUTPUT RGB888 24 bits Components "
+    print " -----------------------------------------------"
+    print " init/open/Get State/ Get Sink Infos/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+    if API_CHIPID=="7710"
+       if (CHIP_CUT=="STI7710_CUT2x")
+           vtg_init "VTG" 5 h20103000
+       end
+       else
+           vtg_init "VTG" 5 h20103c00
+       end
+    end
+    else
+    if API_CHIPID=="7200"
+    GammaDisplay 1 253 55 1920 1080
+    end
+    vtg_init "VTG"
+    end
+    hdl_vtg = vtg_open "VTG"
+    M_DISP_SET_MODE "VTG" hdl_vtg "MODE_1080I60000_74250"
+
+    print "--- start -------------------------------------------------------"
+    print "            Capabilities expected :"
+    print "    Capability : SupportedOutputs :"
+    print "     Analog    : RGB YUV YC CVBS "
+    print "     Digital   : HDMI_RGB888 HDMI_YCbCr444 HDMI_YCbCr422 HD_RGB HD_YUV"
+    print "    Capability : Selected : DIGITAL_YCbCr444_24bitsComponents"
+    M_TEST_INTERFACE
+    M_TEST_HPD
+
+    vout_init "VoutDvi" DEVICETYPE OUTPUTTYPE , , , , , , , , , , , 0 HPD
+    hndl_dvi = vout_open "VoutDvi"
+    vout_start hndl_dvi
+
+    if INTERFACE==0
+    vout_setparams hndl_dvi OUTPUTTYPE 1 0
+    end
+    else
+    ;HDMI mode with compatible frame generation
+    vout_setparams hndl_dvi OUTPUTTYPE 0 0
+    end
+    vout_capa "VoutDvi"
+    vout_enable hndl_dvi
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ; Resizing HDMI active window
+    ;for DVI display for STi7710  & STb7100
+    if INTERFACE==0
+        vout_setav hndl_dvi 193 2112 21 560
+    end
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vout_getstate hndl_dvi
+    api_quest "Mode 1080i OK on Monitor ?"
+
+    if ((API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7710")||(API_CHIPID=="7200"))&&(INTERFACE==1)&&(CHIP_CUT!="STI7710_CUT2x")
+    vout_senddata hndl_dvi
+    end
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    print "--- end -------------------------------"
+
+    M_CHECK_TEST_ERROR 0
+    ERR_T802=GLOBERR
+    print " disable/close/term the driver."
+    vout_disable hndl_dvi
+    vout_close hndl_dvi
+    vout_term "VoutDvi"
+    vtg_close
+    vtg_term "VTG"
+    end
+ end
+
+define M_TEST_HDCP_Revok_Enable
+  api_checkerr
+  hndl_dvi=0
+  if HDOUT==0
+    print " capabilities not available! "
+    TEST444_24=FALSE_
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    print " -----------------------------------------------"
+    print "         HDCP Revok Enable                      "
+    print " test HDCP Key revocation and Default Screen    "
+    print " -----------------------------------------------"
+    print " init/open/Get State/ Get Sink Infos/enable driver,"
+    ERRORCOUNT=0
+    api_checkerr
+    M_TEST_ENCRYPTION
+    M_TEST_HPD
+
+if (ENCRYPTION==1)
+        if API_CHIPID=="7710"
+        if (CHIP_CUT=="STI7710_CUT2x")
+                vtg_init "VTG" 5 h20103000
+        end
+        else
+                vtg_init "VTG" 5 h20103c00
+        end
+        end
+        else
+        if API_CHIPID=="7200"
+        GammaDisplay 1 253 55 1920 1080
+        end
+        vtg_init "VTG"
+        end
+        hdl_vtg = vtg_open "VTG"
+        M_DISP_SET_MODE "VTG" hdl_vtg "MODE_1080I60000_74250"
+        print "--- start -------------------------------------------------------"
+        print "            Capabilities expected :"
+        print "    Capability : SupportedOutputs :"
+        print "     Analog    : RGB YUV YC CVBS "
+        print "     Digital   : HDMI_RGB888 HDMI_YCbCr444 HDMI_YCbCr422 HD_RGB HD_YUV"
+        print "    Capability : Selected : DIGITAL_YCbCr444_24bitsComponents"
+
+        vout_init "VoutDvi" DEVICETYPE OUTPUTTYPE , , , , , , , , , , , 1 HPD
+
+        hndl_dvi = vout_open "VoutDvi"
+        vout_start hndl_dvi
+
+
+        vout_sethdcpparams hndl_dvi
+        vout_setparams hndl_dvi OUTPUTTYPE 0 1
+
+        print "Sharp-Sony TVs revokation test"
+        vout_setforbiddenksvs hndl_dvi 4
+        VOUT_EnDefaultOut
+        vout_capa "VoutDvi"
+        vout_enable hndl_dvi
+
+        api_quest "Is Blue Screen Activated Because of -Revocation- ?"
+        VOUT_DisDefaultOut
+        api_quest "Is display visible ? "
+        VOUT_EnDefaultOut
+        api_quest "Is Blue Screen Re-Activated ?"
+
+        M_CHECK_RETCODE ERR_NO_ERROR
+        M_CHECK_RETCODE ERR_NO_ERROR
+        M_CHECK_RETCODE 0
+
+    print "--- end -------------------------------"
+
+    M_CHECK_TEST_ERROR 0
+    ERR_T802=GLOBERR
+    print " disable/close/term the driver."
+    vout_disable hndl_dvi
+    vout_close hndl_dvi
+    vout_term "VoutDvi"
+    vtg_close
+    vtg_term "VTG"
+  end
+else
+    print "Feature not availaible!!"
+end
+end
+end
+
+define M_TEST_HDCP_Auth_Dis
+  api_checkerr
+  hndl_dvi=0
+  if HDOUT==0
+    print " capabilities not available! "
+    TEST444_24=FALSE_
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    print " -----------------------------------------------"
+    print "     Default Screen disable during              "
+    print " authentication in progress and enable after it "
+    print " -----------------------------------------------"
+    ERRORCOUNT=0
+    api_checkerr
+    M_TEST_ENCRYPTION
+    M_TEST_HPD
+
+    if (ENCRYPTION==1)
+        if API_CHIPID=="7710"
+        if (CHIP_CUT=="STI7710_CUT2x")
+                vtg_init "VTG" 5 h20103000
+        end
+        else
+                vtg_init "VTG" 5 h20103c00
+        end
+        end
+        else
+        if API_CHIPID=="7200"
+         GammaDisplay 1 253 55 1920 1080
+        end
+        vtg_init "VTG"
+        end
+        hdl_vtg = vtg_open "VTG"
+        M_DISP_SET_MODE "VTG" hdl_vtg "MODE_1080I60000_74250"
+        print "--- start -------------------------------------------------------"
+        print "            Capabilities expected :"
+        print "    Capability : SupportedOutputs :"
+        print "     Analog    : RGB YUV YC CVBS "
+        print "     Digital   : HDMI_RGB888 HDMI_YCbCr444 HDMI_YCbCr422 HD_RGB HD_YUV"
+        print "    Capability : Selected : DIGITAL_YCbCr444_24bitsComponents"
+
+        vout_init "VoutDvi" DEVICETYPE OUTPUTTYPE , , , , , , , , , , , 1 HPD
+
+        hndl_dvi = vout_open "VoutDvi"
+        vout_start hndl_dvi
+
+
+        vout_sethdcpparams hndl_dvi
+
+        ;first set params without encryption (OUTPUTTYPE 0 0)
+        vout_setparams hndl_dvi OUTPUTTYPE 0 0
+        vout_capa "VoutDvi"
+        vout_enable hndl_dvi
+
+     ;   api_quest "Enable default screen ? 1 / 0"
+     print " ----Enable default screen-----"
+     print " Enter your choice 1/0:"
+     choice_EN=getstring
+     if choice_EN=="1"
+       print " enable dafault screen......"
+       VOUT_EnDefaultOut
+       vout_getstate
+     end
+    api_quest "Next step is : start Encryption"
+    vout_setparams hndl_dvi OUTPUTTYPE 0 1
+    api_quest "Is authentication succeeding ?"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    M_CHECK_RETCODE 0
+
+    print "--- end -------------------------------"
+
+    M_CHECK_TEST_ERROR 0
+    ERR_T802=GLOBERR
+    print " disable/close/term the driver."
+    vout_disable hndl_dvi
+    vout_close hndl_dvi
+    vout_term "VoutDvi"
+    vtg_close
+    vtg_term "VTG"
+  end
+  else
+   print "Feature not availaible!!"
+  end
+end
+end
+
+define M_TEST_CEC_Send
+  api_checkerr
+  hndl_dvi=0
+  if HDOUT==0
+    print " capabilities not available! "
+    TEST444_24=FALSE_
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    print " -----------------------------------------------"
+    print "     Default Screen disable during              "
+    print " authentication in progress and enable after it "
+    print " -----------------------------------------------"
+    ERRORCOUNT=0
+    api_checkerr
+    M_TEST_HPD
+
+        if API_CHIPID=="7710"
+        if (CHIP_CUT=="STI7710_CUT2x")
+                vtg_init "VTG" 5 h20103000
+        end
+        else
+                vtg_init "VTG" 5 h20103c00
+        end
+        end
+        else
+        if API_CHIPID=="7200"
+         GammaDisplay 1 253 55 1920 1080
+        end
+        vtg_init "VTG"
+        end
+        hdl_vtg = vtg_open "VTG"
+        M_DISP_SET_MODE "VTG" hdl_vtg "MODE_1080I60000_74250"
+        print "--- start -------------------------------------------------------"
+        print "            Capabilities expected :"
+        print "    Capability : SupportedOutputs :"
+        print "     Analog    : RGB YUV YC CVBS "
+        print "     Digital   : HDMI_RGB888 HDMI_YCbCr444 HDMI_YCbCr422 HD_RGB HD_YUV"
+        print "    Capability : Selected : DIGITAL_YCbCr444_24bitsComponents"
+
+        vout_init "VoutDvi" DEVICETYPE OUTPUTTYPE , , , , , , , , , , , 0 HPD
+
+        hndl_dvi = vout_open "VoutDvi"
+        vout_start hndl_dvi
+
+
+        ;first set params without encryption (OUTPUTTYPE 0 0)
+        vout_setparams hndl_dvi OUTPUTTYPE 0 0
+        vout_capa "VoutDvi"
+        vout_enable hndl_dvi
+
+
+        api_quest "Start logical address allocation ?"
+        VOUT_CECPhyAdd ,
+
+        api_quest "Start second logical address allocation for PVR ?"
+        ; -Handle -Role
+        VOUT_CECAddAdr , 2
+
+        api_quest "Start Sending CEC Message ? Next is Polling (TV) ?"
+        ; -Handle -Source -Dest -Length -DataList
+        print "Polling for  TV"
+        VOUT_CECSendMessage , 15 0 0
+        api_quest "Next is Polling (3) ?"
+
+        print "Polling for (3)"
+        VOUT_CECSendMessage , 15 3 0
+        api_quest "Next is OSD Display ?"
+
+
+        print "OSD Display"
+        VOUT_CECSendMessage , 15 0 5 100 0 48 49 50
+        api_quest "Next is Give Physical Address ?"
+
+        print "Give Physical Address"
+        VOUT_CECSendMessage , 3 0 1 131
+        api_quest "Next is One Touch Play ?"
+
+        print "One Touch Play(Image View On + Active Source) "
+        VOUT_CECSendMessage , 3 0 1 4
+        VOUT_CECSendMessage , 3 15 3 130 0 1
+        api_quest "Next is Give Device Power Status ?"
+
+        print "Give Device Power Status"
+        VOUT_CECSendMessage , 3 0 1 143
+        api_quest "Next is Set Menu Language FRA ?"
+
+        print "Set Menu Language FRA"
+        VOUT_CECSendMessage , 3 0 4 50 70 82 65
+        api_quest "Next is Set Menu Language ENG ?"
+
+        print "Set Menu Language ENG"
+        VOUT_CECSendMessage , 3 0 4 50 69 78 71
+        api_quest "Next is Standby ?"
+
+        print "Standby"
+        VOUT_CECSendMessage , 3 0 1 54
+        api_quest "Next is Standby for PVR ?"
+
+        print "Standby/PVR"
+        VOUT_CECSendMessage , 1 0 1 54
+        api_quest "End of Test, Quit ?"
+
+
+        M_CHECK_RETCODE ERR_NO_ERROR
+        M_CHECK_RETCODE ERR_NO_ERROR
+        M_CHECK_RETCODE 0
+
+    print "--- end -------------------------------"
+
+    M_CHECK_TEST_ERROR 0
+    ERR_T802=GLOBERR
+    print " disable/close/term the driver."
+    vout_disable hndl_dvi
+    vout_close hndl_dvi
+    vout_term "VoutDvi"
+    vtg_close
+    vtg_term "VTG"
+    end
+end
+

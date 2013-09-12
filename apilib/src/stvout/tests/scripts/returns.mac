@@ -1,0 +1,599 @@
+ ; ****************************************************************************
+; File         : RETURNS.MAC
+; Requirements :
+; Author       : Jacques GAMON - November 2000
+; ****************************************************************************
+; Test returned error codes
+
+; general behavior :
+; driver is assumed to be not initialized before starting these file tests
+; all the M_RET_xxx macros set the driver closed and terminated when they leave
+
+; Test to check VOUT driver error codes returned
+define M_RET_ALL ALL_TEST_R
+  loop=0
+  retchoice=""
+  while loop==0
+    if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+      OUTPUTTYPE="CVBS"
+    end
+    else
+      OUTPUTTYPE="YCbCr422_8"
+    end
+    if ALL_TEST_R==1
+      retchoice="13"
+    end
+    else
+      print ">-----------------------------------------"
+      print ">Test VOUT API routines robustness on bad inputs "
+      retchoice=""
+      print "> 1  - test case M_RET_ALREADY_INITIALIZED"
+      print "> 2  - test case M_RET_BAD_PARAMETER"
+      print "> 3  - test case M_RET_NO_MEMORY"
+      if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+        print "> 4  - test case M_RET_DENC_ACCESS"
+      end
+      print "> 5  - test case M_RET_INVALID_HANDLE"
+      print "> 6  - test case M_RET_NO_FREE_HANDLE"
+      print "> 7  - test case M_RET_OPEN_HANDLE"
+      print "> 8  - test case M_RET_UNKNOWN_DEVICE"
+      print "> 9  - test case M_RET_VOUT_NOT_AVAILABLE"
+      print "> 10 - test case M_RET_VOUT_NOT_ENABLE"
+      print "> 11 - test case M_RET_VOUT_ENABLE"
+      if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+        print "> 12 - test case M_RET_VOUT_INCOMPATIBLE"
+      end
+      print "> 13 - thread cases 1 to 12"
+      if (ST_OS=="LINUX")
+        print " x - to Quit this menu"
+      end
+      elif (API_CHIPID=="5301")
+      print " hit Spacebar to Quit this menu"
+      end
+      else
+      print " hit return to Quit this menu"
+      end
+      print " Enter your choice :"
+      retchoice=getstring
+    end
+
+    if (ST_OS=="LINUX")
+        if retchoice=="x"
+                print "exit"
+                loop=1
+        end
+    end
+
+    if (API_CHIPID=="5301")
+       if retchoice==" "
+        loop=1
+       end
+    end
+    else
+     if retchoice==""
+;         retchoice="14"
+        loop=1
+     end
+    end
+    if retchoice=="1"
+        M_RET_ALREADY_INITIALIZED
+    end
+    if retchoice=="2"
+        M_RET_BAD_PARAMETER
+    end
+    if retchoice=="3"
+        M_RET_NO_MEMORY
+    end
+    if retchoice=="4"
+        M_RET_DENC_ACCESS
+    end
+    if retchoice=="5"
+        M_RET_INVALID_HANDLE
+    end
+    if retchoice=="6"
+        M_RET_NO_FREE_HANDLE
+    end
+    if retchoice=="7"
+        M_RET_OPEN_HANDLE
+    end
+    if retchoice=="8"
+        M_RET_UNKNOWN_DEVICE
+    end
+    if retchoice=="9"
+        M_RET_VOUT_NOT_AVAILABLE
+    end
+    if retchoice=="10"
+        M_RET_VOUT_NOT_ENABLE
+    end
+    if retchoice=="11"
+        M_RET_VOUT_ENABLE
+    end
+    if retchoice=="12"
+        M_RET_VOUT_INCOMPATIBLE
+    end
+    if retchoice=="13"
+        ERR_ALRIN=FALSE_
+        ERR_BADP=FALSE_
+        ERR_NOMEM=FALSE_
+        ERR_DENCA=FALSE_
+        ERR_INVHN=FALSE_
+        ERR_NOFRE=FALSE_
+        ERR_OPENH=FALSE_
+        ERR_UNKDE=FALSE_
+        ERR_VNOTA=FALSE_
+        ERR_VNOTE=FALSE_
+        ERR_VENAB=FALSE_
+        ERR_VINCO=FALSE_
+        M_RET_ALREADY_INITIALIZED
+        M_RET_BAD_PARAMETER
+        M_RET_NO_MEMORY
+        if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+          M_RET_DENC_ACCESS
+        end
+        M_RET_INVALID_HANDLE
+        M_RET_NO_FREE_HANDLE
+        M_RET_OPEN_HANDLE
+        M_RET_UNKNOWN_DEVICE
+        M_RET_VOUT_NOT_AVAILABLE
+        M_RET_VOUT_NOT_ENABLE
+        M_RET_VOUT_ENABLE
+        if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+          M_RET_VOUT_INCOMPATIBLE
+        end
+        if ALL_TEST_R!=1
+          M_CHECK_RET_ERR ERR_ALRIN ERR_BADP ERR_NOMEM ERR_DENCA ERR_INVHN ERR_NOFRE ERR_OPENH ERR_UNKDE ERR_VNOTA ERR_VNOTE ERR_VENAB ERR_VINCO
+        end
+        loop=1
+    end
+  end
+end
+
+
+; this macro tests the already initialized return code
+define M_RET_ALREADY_INITIALIZED
+  M_DENC_INIT
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_ALREADY_INITIALIZED.    ###"
+  print ""
+  print "    STVOUT_Init called twice with same DeviceName:"
+  ERRORCOUNT=0
+  print " "
+  print " First STVOUT_Init call. ST_NO_ERROR expected"
+  vout_init "Voutput0" DEVICETYPE OUTPUTTYPE
+  M_CHECK_RETCODE 0
+  print " Second STVOUT_Init call with same DeviceName."
+  vout_init "Voutput0" DEVICETYPE OUTPUTTYPE
+  M_CHECK_RETCODE ERR_ALREADY_INITIALIZED
+  M_CHECK_ERROR
+  ERR_ALRIN=GLOBERR
+  ; driver must be terminated before leaving
+  vout_term "Voutput0"
+  print ""
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+    M_DENC_TERM
+  end
+end
+
+
+; this macro tests the bad parameter return code
+define M_RET_BAD_PARAMETER
+  M_DENC_INIT
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_BAD_PARAMETER.          ###"
+  print ""
+  print "    Functions called with bad parameters "
+  print "     (included NULL pointers) :"
+  ERRORCOUNT=0
+  ; string too long : give a DeviceName longer than max allowed : ST_MAX_DEVICE_NAME (16) in stddefs.h
+  ; too many open & no open available : give a MaxOpen parameter greater than STVOUT_MAX_OPEN(20) : 21 or 0
+  BADNAME="12345678901234567890"
+  TOO_BIG_MAX_OPEN = 4
+  ZERO_DEVICE_TYPE=VOUT_DEVICE_TYPE_DENC-1
+  TOOBIG_DEVICE_TYPE=VOUT_DEVICE_TYPE_7200+1
+  ZERO_OUTPUT_TYPE="<"
+  TOOBIG_OUTPUT_TYPE=">"
+  vout_init BADNAME DEVICETYPE
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+  vout_init "voutput0" ZERO_DEVICE_TYPE OUTPUTTYPE
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+  vout_init "voutput0" TOOBIG_DEVICE_TYPE OUTPUTTYPE
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+  vout_init "voutput0" DEVICETYPE ZERO_OUTPUT_TYPE
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+  vout_init "voutput0" DEVICETYPE TOOBIG_OUTPUT_TYPE
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+  print "ERRORCOUNT " ERRORCOUNT
+
+  if (DEVICETYPE==VOUT_DEVICE_TYPE_7020)||(DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_GX1)||(DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)||(DEVICETYPE==VOUT_DEVICE_TYPE_4629)
+      vout_init "voutput0" DEVICETYPE OUTPUTTYPE , , TOO_BIG_MAX_OPEN
+  end
+  else
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_7100)||(DEVICETYPE==VOUT_DEVICE_TYPE_5525)
+        vout_init "voutput0" DEVICETYPE OUTPUTTYPE , , TOO_BIG_MAX_OPEN
+    end
+    else
+         if (DEVICETYPE==VOUT_DEVICE_TYPE_7200)
+          vout_init "voutput0" DEVICETYPE OUTPUTTYPE , , , TOO_BIG_MAX_OPEN
+         end
+         else
+         vout_init "voutput0" DEVICETYPE OUTPUTTYPE , TOO_BIG_MAX_OPEN
+         end
+    end
+  end
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+
+  vout_capa BADNAME
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+
+  vout_open BADNAME
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+
+  vout_term BADNAME
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+
+  nberrnull=vout_badparam DEVICETYPE
+  ERRORCOUNT=ERRORCOUNT+nberrnull
+ ; nberrnull=vout_nullpt DEVICETYPE
+ ; ERRORCOUNT=ERRORCOUNT+nberrnull
+
+  M_CHECK_ERROR
+  ERR_BADP=GLOBERR
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+    M_DENC_TERM
+  end
+end
+
+; this macro tests the hardware failure return code
+define M_RET_NO_MEMORY
+  M_DENC_INIT
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_NO_MEMORY.              ###"
+  print ""
+  ERRORCOUNT=0
+  if (DEVICETYPE==VOUT_DEVICE_TYPE_DENC)||(DEVICETYPE==VOUT_DEVICE_TYPE_DENC_ENHANCED)
+    print ">error not returned on Denc outputs"
+  end
+  else
+    if DEVICETYPE==VOUT_DEVICE_TYPE_GX1
+      print ">error not returned on Denc outputs"
+    end
+    else
+      print "> "
+      ; intialise MAX_DEVICE to fill init table driver
+      ; the last + 1 init give a ST_ERROR_NO_MEMORY error.
+      print "> MAX_DEVICE STVOUT_Init call to fill device table"
+      nberrlim=vout_testlimit DEVICETYPE
+      ERRORCOUNT=ERRORCOUNT+nberrlim
+    end
+  end
+
+  M_CHECK_ERROR
+  ERR_NOMEM=GLOBERR
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+    M_DENC_TERM
+  end
+end
+
+; this macro tests the hardware failure return code
+define M_RET_DENC_ACCESS
+  print ""
+  print "#########################################################"
+  print "### Expected error : STVOUT_ERROR_DENC_ACCESS.        ###"
+  print ""
+  ERRORCOUNT=0
+  print "> "
+  ; calls with denc not initialized,
+  vout_init "Vout0" DEVICETYPE OUTPUTTYPE "Dencxx"
+  M_CHECK_RETCODE ERR_DENC_ACCESS
+  print " ERR_DENC_ACCESS " ERR_DENC_ACCESS
+
+  M_DENC_INIT
+  vout_init "Vout0" DEVICETYPE OUTPUTTYPE
+  hndl=vout_open "Vout0"
+
+  M_DENC_TERM
+  vout_setparams hndl OUTPUTTYPE
+  M_CHECK_RETCODE ERR_DENC_ACCESS
+
+  ; VOUT_SetOption/GetOption(not supported in first version on stvout)
+  ; if DENCVERSION>11
+  ;      if (API_BOARDID != "mb376")&&(API_BOARDID != "espresso")
+  ;              vout_setoption hndl GENERAL_AUX_NOT_MAIN 0
+  ;              M_CHECK_RETCODE ERR_DENC_ACCESS
+  ;              vout_getoption hndl
+  ;              M_CHECK_RETCODE ERR_DENC_ACCESS
+  ;      end
+  ; end
+  vout_enable hndl
+  M_CHECK_RETCODE ERR_DENC_ACCESS
+  vout_disable hndl
+  M_CHECK_RETCODE ERR_DENC_ACCESS
+  ;vout_close hndl
+  ;M_CHECK_RETCODE ERR_DENC_ACCESS
+  vout_term "Vout0" 1
+  M_CHECK_RETCODE ERR_DENC_ACCESS
+  M_CHECK_ERROR
+  ERR_DENCA=GLOBERR
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+end
+
+; this macro tests the invalid handle return code
+define M_RET_INVALID_HANDLE
+  M_DENC_INIT
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_INVALID_HANDLE.         ###"
+  print ""
+  print "    Functions calls without previous STVOUT_Open         "
+  print "        (but on initialized device)                      "
+  ERRORCOUNT=0
+  print "> "
+  vout_init "Voutput0" DEVICETYPE OUTPUTTYPE
+  if ERRORCODE!=0
+      print ">Unable to initialize driver. Macro M_RET_INVALID_HANDLE has been stopped."
+  end
+  else
+    BADHANDLE = -1
+    vout_close BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vout_setparams BADHANDLE 6
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vout_getparams BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+
+    ; VOUT_SetOption/GetOption(not supported in first version on stvout)
+    ; if DENCVERSION>11
+    ;  vout_setoption BADHANDLE GENERAL_AUX_NOT_MAIN 0
+    ;  M_CHECK_RETCODE ERR_INVALID_HANDLE
+    ;  vout_getoption BADHANDLE
+    ;  M_CHECK_RETCODE ERR_INVALID_HANDLE
+    ; end
+
+    vout_enable BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vout_disable BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    M_CHECK_ERROR
+    ERR_INVHN=GLOBERR
+  end
+
+  ; driver must be terminated before leaving
+  vout_term "Voutput0"
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+    M_DENC_TERM
+  end
+end
+
+
+; this macro tests the no free handle return code
+define M_RET_NO_FREE_HANDLE
+  M_DENC_INIT
+  print ""
+  print "#########################################################"
+  print "### Expected error :  ST_ERROR_NO_FREE_HANDLES.       ###"
+  print ""
+  print "    STVOUT_Open called more times than allowed on        "
+  print "        same device."
+  ERRORCOUNT=0
+  print "> "
+  if (DEVICETYPE==VOUT_DEVICE_TYPE_7020)||(DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_GX1)||(DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)||(DEVICETYPE==VOUT_DEVICE_TYPE_4629)
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , 1
+  end
+  if (DEVICETYPE==VOUT_DEVICE_TYPE_7100)||(DEVICETYPE==VOUT_DEVICE_TYPE_5525)
+  vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , 1
+  end
+  else
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_7200)
+      vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 1
+      end
+      else
+      vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , 1
+      end
+  end
+  hnd = vout_open "Voutput0"
+  hnd2 = vout_open "Voutput0"
+  M_CHECK_RETCODE ERR_NO_FREE_HANDLES
+  M_CHECK_ERROR
+  ERR_NOFRE=GLOBERR
+  ; driver is terminated before leaving.
+  vout_close hnd
+  vout_term "Voutput0"
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+    M_DENC_TERM
+  end
+end
+
+
+; this macro tests the open handle return code
+define M_RET_OPEN_HANDLE
+  M_DENC_INIT
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_OPEN_HANDLE.            ###"
+  print ""
+  print "    STVOUT_Term called when an opened handle and         "
+  print "     ForceTerminate false."
+  ERRORCOUNT=0
+  print "> "
+  vout_init "Voutput0" DEVICETYPE OUTPUTTYPE
+  hnd=vout_open "Voutput0"
+  vout_term "Voutput0" 0
+  M_CHECK_RETCODE ERR_OPEN_HANDLE
+  M_CHECK_ERROR
+  ERR_OPENH=GLOBERR
+  ; driver must be terminated before leaving
+  vout_close hnd
+  vout_term "Voutput0"
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+    M_DENC_TERM
+  end
+end
+
+; this macro tests the unknown device return code
+define M_RET_UNKNOWN_DEVICE
+  M_DENC_INIT
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_UNKNOWN_DEVICE.         ###"
+  print ""
+  print "    Functions called for a non initialized device."
+  ERRORCOUNT=0
+  print "> "
+  vout_term "Voutput0"
+  M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+  vout_open "Voutput0"
+  M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+  vout_capa "Voutput0"
+  M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+  vout_init "Voutput0" DEVICETYPE OUTPUTTYPE
+  vout_capa "BADPARAM"
+  M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+  vout_term "Voutput0"
+  M_CHECK_ERROR
+  ERR_UNKDE=GLOBERR
+  ; driver is terminated before leaving.
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+    M_DENC_TERM
+  end
+end
+
+
+; this macro tests the vout not available return code
+define M_RET_VOUT_NOT_AVAILABLE
+  print ""
+  print "#########################################################"
+  print "### Expected error : STVOUT_ERROR_VOUT_NOT_AVAILABLE. ###"
+  print ""
+  print "> test the different capabilities listed below"
+  print "> Output Type :   1   2   4   8  16  32  64 128 256 512 1024"
+  print "> Device Type :"
+  print ">      0 V3/5    OK  no  OK  OK  no  no  no  no  no  no  no"
+  print ">      0 >V5     OK  OK  OK  OK  no  no  no  no  no  no  no"
+  print ">      1         OK  OK  OK  OK  OK  OK  OK  OK  OK  OK  OK"
+  print ">      2         OK  OK  OK  OK  OK  OK  OK  OK  OK  OK  OK"
+  print ">      3         OK  OK  OK  OK  no  no  no  no  no  no  no"
+  print ">      4         no  no  no  no  no  no  no  OK  no  no  no"
+  ERRORCOUNT=0
+  print "> "
+  if HDOUT==1
+    print "Everything supported - Error code never returned "
+  end
+  else
+    vout_init "Voutput0" DEVICETYPE "SVM"
+    M_CHECK_RETCODE ERR_VOUT_NOT_AVAILABLE
+    vout_init "Voutput0" DEVICETYPE "YCbCr444"
+    M_CHECK_RETCODE ERR_VOUT_NOT_AVAILABLE
+
+    vout_init "Voutput0" DEVICETYPE "YCbCr422_16"
+    M_CHECK_RETCODE ERR_VOUT_NOT_AVAILABLE
+
+    if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+    vout_init "Voutput0" DEVICETYPE "YCbCr422_8"
+    end
+    M_CHECK_RETCODE ERR_VOUT_NOT_AVAILABLE
+
+
+    vout_init "Voutput0" DEVICETYPE "RGB888"
+    M_CHECK_RETCODE ERR_VOUT_NOT_AVAILABLE
+
+    vout_init "Voutput0" DEVICETYPE "HD_RGB"
+    M_CHECK_RETCODE ERR_VOUT_NOT_AVAILABLE
+
+    vout_init "Voutput0" DEVICETYPE "HD_YUV"
+    M_CHECK_RETCODE ERR_VOUT_NOT_AVAILABLE
+
+  end
+  M_CHECK_ERROR
+  ERR_VNOTA=GLOBERR
+  ; driver is terminated before leaving.
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+end
+
+
+; this macro tests the vout not enable return code
+define M_RET_VOUT_NOT_ENABLE
+  M_DENC_INIT
+  print ""
+  print "#########################################################"
+  print "### Expected error : STVOUT_ERROR_VOUT_NOT_ENABLE.    ###"
+  print ""
+  print "> function STVOUT_Disable call when driver is not enable"
+  ERRORCOUNT=0
+  print "> "
+  vout_init "Voutput0" DEVICETYPE OUTPUTTYPE
+  hnd=vout_open "Voutput0"
+  vout_disable hnd
+  M_CHECK_RETCODE ERR_VOUT_NOT_ENABLE
+  M_CHECK_ERROR
+  ERR_VNOTE=GLOBERR
+  ; driver must be terminated before leaving
+  vout_term "Voutput0" 1
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+    M_DENC_TERM
+  end
+end
+
+
+; this macro tests the vout enable return code
+define M_RET_VOUT_ENABLE
+  M_DENC_INIT
+  print ""
+  print "#########################################################"
+  print "### Expected error : STVOUT_ERROR_VOUT_ENABLE.        ###"
+  print ""
+  print "> function STVOUT_Enable call two times"
+  ERRORCOUNT=0
+  print "> "
+  vout_init "Voutput0" DEVICETYPE OUTPUTTYPE
+  hnd=vout_open "Voutput0"
+  vout_enable hnd
+  vout_enable hnd
+  M_CHECK_RETCODE ERR_VOUT_ENABLE
+  M_CHECK_ERROR
+  ERR_VENAB=GLOBERR
+  ; driver must be terminated before leaving
+  vout_term "Voutput0" 1
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+    M_DENC_TERM
+  end
+end
+
+; this macro tests the vout incompatible return code
+define M_RET_VOUT_INCOMPATIBLE
+  PRNT=0
+  M_DENC_INIT
+  print ""
+  print "#########################################################"
+  print "### Expected error : STVOUT_ERROR_VOUT_INCOMPATIBLE.  ###"
+  print ""
+  ERRORCOUNT=0
+  print "> "
+  nberrinc = vout_testincout DEVICETYPE PRNT
+  ERRORCOUNT=ERRORCOUNT+nberrinc
+  M_CHECK_ERROR
+  ERR_VINCO=GLOBERR
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+    M_DENC_TERM
+  end
+end

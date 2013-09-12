@@ -1,0 +1,490 @@
+ ; ****************************************************************************
+; File         : RETURNS.MAC
+; Requirements :
+; Author       : Adel Chaouch - June 2005
+; ****************************************************************************
+; Test returned error codes
+
+; general behavior :
+; driver is assumed to be not initialized before starting these file tests
+; all the M_RET_xxx macros set the driver closed and terminated when they leave
+
+; Test to check VOUT driver error codes returned
+define M_RET_ALL ALL_TEST_R
+  loop=0
+  retchoice=""
+  while loop==0
+      OUTPUTTYPE="HDMI_RGB888"
+      print ">-------------------------------------------------"
+      print ">Test HDMI API routines robustness on bad inputs "
+      retchoice=""
+      print "> 1   - test case M_RET_ALREADY_INITIALIZED"
+      print "> 2   - test case M_RET_BAD_PARAMETER"
+      print "> 3   - test case M_RET_NO_MEMORY"
+      print "> 4   - test case M_RET_INVALID_HANDLE"
+      print "> 5   - test case M_RET_NO_FREE_HANDLE"
+      print "> 6   - test case M_RET_OPEN_HANDLE"
+      print "> 7   - test case M_RET_UNKNOWN_DEVICE"
+      print "> 8   - test case M_RET_VTG_UNKNOWN"
+      print "> 9   - test case M_RET_VOUT_UNKNOWN"
+      print "> 10  - test case M_RET_INVALID_PACKET_FORMAT"
+      print "> 11  - test case M_RET_INFORMATION_NOT_AVAILABLE"
+      print "> 12  - thread cases 1 to 11 "
+      print "> 13  - To Exit"
+      print " hit return to Quit this menu"
+      print " Enter your choice :"
+      retchoice=getstring
+    if retchoice=="13"
+          loop=1
+    end
+    if retchoice=="55"
+;         retchoice="14"
+        loop=1
+    end
+    if retchoice=="1"
+        M_RET_ALREADY_INITIALIZED
+    end
+    if retchoice=="2"
+        M_RET_BAD_PARAMETER
+    end
+    if retchoice=="3"
+        M_RET_NO_MEMORY
+    end
+    if retchoice=="4"
+        M_RET_INVALID_HANDLE
+    end
+    if retchoice=="5"
+        M_RET_NO_FREE_HANDLE
+    end
+    if retchoice=="6"
+        M_RET_OPEN_HANDLE
+    end
+    if retchoice=="7"
+        M_RET_UNKNOWN_DEVICE
+    end
+    if retchoice=="8"
+        M_RET_VTG_UNKNOWN
+    end
+    if retchoice=="9"
+        M_RET_VOUT_UNKNOWN
+    end
+    if retchoice=="10"
+        M_RET_INVALID_PACKET_FORMAT
+    end
+    if retchoice=="11"
+        M_RET_INFORMATION_NOT_AVAILABLE
+    end
+    if retchoice=="12"
+        ERR_ALRIN=FALSE_
+        ERR_BADP=FALSE_
+        ERR_NOMEM=FALSE_
+        ERR_INVHN=FALSE_
+        ERR_NOFRE=FALSE_
+        ERR_OPENH=FALSE_
+        ERR_UNKDE=FALSE_
+        ERR_INVPF=FALSE_
+        ERR_INFNA=FALSE_
+        ERR_VIDUN=FALSE_
+        ERR_VTGUN=FALSE_
+        ERR_VMIXUN=FALSE_
+        ERR_AUDUN=FALSE_
+        ERR_VOUTUN=FALSE_
+        M_RET_ALREADY_INITIALIZED
+        M_RET_BAD_PARAMETER
+        M_RET_NO_MEMORY
+        M_RET_INVALID_HANDLE
+        M_RET_NO_FREE_HANDLE
+        M_RET_OPEN_HANDLE
+        M_RET_UNKNOWN_DEVICE
+        M_RET_VTG_UNKNOWN
+        M_RET_VOUT_UNKNOWN
+        M_RET_INVALID_PACKET_FORMAT
+        M_RET_INFORMATION_NOT_AVAILABLE
+        if ALL_TEST_R!=1
+          M_CHECK_RET_ERR ERR_ALRIN ERR_BADP ERR_NOMEM ERR_INVHN ERR_NOFRE ERR_OPENH ERR_UNKDE ERR_VTGUN ERR_VOUTUN ERR_INVPF ERR_INFNA
+        end
+       loop=1
+    end
+  end
+end
+
+define M_HDMI_INIT
+ if API_CHIPID=="7710"
+   if (CHIP_CUT=="STI7710_CUT2x")
+     vtg_init "VTG" , h20103000
+   end
+   else
+    vtg_init "VTG" , h20103c00
+   end
+    ;vtg_init ,,h20103034
+ end
+ elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+     vtg_init
+ end
+ else
+     ckg_init
+     vtg_init "VTG" , hFD10C300
+ end
+ if API_CHIPID=="7710"
+ vout_init "VOUT" VOUT_DEVICE_TYPE_7710 "HDMI_RGB888" , , , , , , , , , , , 0
+ end
+ elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+ vout_init "VOUT" VOUT_DEVICE_TYPE_7100 "HDMI_RGB888" , , , , , , , , , , , 0
+ end
+ else
+ vout_init "VOUT" VOUT_DEVICE_TYPE_7200 "HDMI_RGB888" , , , , , , , , , , , 0
+ end
+ vmix_init "VMIX" , , , 2 5
+ vid_init "VID1" "MPEG"
+ if API_CHIPID=="7710"
+ aud_init , , 4
+ end
+end
+
+define M_HDMI_TERM
+  vtg_term , 1
+  vout_term , 1
+  vmix_term , 1
+  vid_term , 1
+  if API_CHIPID=="7710"
+  aud_term , 1
+  end
+end
+
+; this macro tests the already initialized return code
+define M_RET_ALREADY_INITIALIZED
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_ALREADY_INITIALIZED.    ###"
+  print ""
+  print "    STHDMI_Init called twice with same DeviceName:"
+  ERRORCOUNT=0
+  print " "
+  print " First STHDMI_Init call. ST_NO_ERROR expected"
+  M_HDMI_INIT
+  hdmi_init "Hdmi0" DEVICETYPE OUTPUTTYPE
+  ;M_CHECK_RETCODE 0
+  print " Second STHDMI_Init call with same DeviceName."
+  hdmi_init "Hdmi0" DEVICETYPE OUTPUTTYPE
+  M_CHECK_RETCODE ERR_ALREADY_INITIALIZED
+  M_CHECK_ERROR
+  ERR_ALRIN=GLOBERR
+  ; driver must be terminated before leaving
+  hdmi_term "Hdmi0"
+  M_HDMI_TERM
+  print ""
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+end
+
+
+; this macro tests the bad parameter return code
+define M_RET_BAD_PARAMETER
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_BAD_PARAMETER.          ###"
+  print ""
+  print "    Functions called with bad parameters "
+  ;print "     (included NULL pointers) :"
+  ERRORCOUNT=0
+  ; string too long : give a DeviceName longer than max allowed : ST_MAX_DEVICE_NAME (16) in stddefs.h
+  ; too many open & no open available : give a MaxOpen parameter greater than STHDMI_MAX_OPEN(20) : 21 or 0
+  BADNAME="12345678901234567890"
+  TOO_BIG_MAX_OPEN = 4
+  ZERO_DEVICE_TYPE=HDMI_DEVICE_TYPE_7710-1
+  TOOBIG_DEVICE_TYPE=HDMI_DEVICE_TYPE_7200+1
+  ZERO_OUTPUT_TYPE="<"
+  TOOBIG_OUTPUT_TYPE=">"
+  hdmi_init BADNAME DEVICETYPE
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+  hdmi_init "hdmi" ZERO_DEVICE_TYPE OUTPUTTYPE AVITYPE SPDTYPE MSTYPE AUDIOTYPE VSTYPE
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+  hdmi_init "hdmi" TOOBIG_DEVICE_TYPE OUTPUTTYPE AVITYPE SPDTYPE MSTYPE AUDIOTYPE VSTYPE
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+  hdmi_init "hdmi" DEVICETYPE ZERO_OUTPUT_TYPE AVITYPE SPDTYPE MSTYPE AUDIOTYPE VSTYPE
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+  hdmi_init "hdmi" DEVICETYPE TOOBIG_OUTPUT_TYPE AVITYPE SPDTYPE MSTYPE AUDIOTYPE VSTYPE
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+  print "ERRORCOUNT " ERRORCOUNT
+  hdmi_init "hdmi" DEVICETYPE OUTPUTTYPE AVITYPE SPDTYPE MSTYPE AUDIOTYPE VSTYPE , TOO_BIG_MAX_OPEN
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+
+  hdmi_open BADNAME
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+
+  hdmi_term BADNAME
+  M_CHECK_RETCODE ERR_BAD_PARAMETER
+
+  M_CHECK_ERROR
+  ERR_BADP=GLOBERR
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+end
+
+; this macro tests the hardware failure return code
+define M_RET_NO_MEMORY
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_NO_MEMORY.              ###"
+  print ""
+  ERRORCOUNT=0
+  print "> "
+  M_HDMI_INIT
+  ; intialise MAX_DEVICE to fill init table driver
+  ; the last + 1 init give a ST_ERROR_NO_MEMORY error.
+  print "> MAX_DEVICE STVOUT_Init call to fill device table"
+  nberrlim=hdmi_testlimit DEVICETYPE
+  ERRORCOUNT=ERRORCOUNT+nberrlim
+  M_CHECK_ERROR
+  ERR_NOMEM=GLOBERR
+  M_HDMI_TERM
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+end
+
+; this macro tests the invalid handle return code
+define M_RET_INVALID_HANDLE
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_INVALID_HANDLE.         ###"
+  print ""
+  print "    Functions calls without previous STHDMI_Open         "
+  print "        (but on initialized device)                      "
+  ERRORCOUNT=0
+  print "> "
+  M_HDMI_INIT
+  hdmi_init "Hdmi0" DEVICETYPE OUTPUTTYPE
+  if ERRORCODE!=0
+      print ">Unable to initialize driver. Macro M_RET_INVALID_HANDLE has been stopped."
+  end
+  else
+    BADHANDLE = -1
+    hdmi_close BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    hdmi_fillavi BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    hdmi_fillspd BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    hdmi_fillaudio BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    hdmi_fillms BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    hdmi_fillvs BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    hdmi_filledid BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    M_CHECK_ERROR
+    ERR_INVHN=GLOBERR
+  end
+  ;driver must be terminated before leaving
+  hdmi_term "Hdmi0"
+  M_HDMI_TERM
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+end
+
+; this macro tests the no free handle return code
+define M_RET_NO_FREE_HANDLE
+  print ""
+  print "#########################################################"
+  print "### Expected error :  ST_ERROR_NO_FREE_HANDLES.       ###"
+  print ""
+  print "    STHDMI_Open called more times than allowed on        "
+  print "        same device."
+  M_HDMI_INIT
+  ERRORCOUNT=0
+  print "> "
+  hdmi_init "Hdmi0" DEVICETYPE OUTPUTTYPE , , , , , , 1
+  hnd = hdmi_open "Hdmi0"
+  hnd2 = hdmi_open "Hdmi0"
+  M_CHECK_RETCODE ERR_NO_FREE_HANDLES
+  M_CHECK_ERROR
+  ERR_NOFRE=GLOBERR
+  ; driver is terminated before leaving.
+  hdmi_close hnd
+  hdmi_term "Hdmi0"
+  M_HDMI_TERM
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+end
+
+; this macro tests the open handle return code
+define M_RET_OPEN_HANDLE
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_OPEN_HANDLE.            ###"
+  print ""
+  print "    STHDMI_Term called when an opened handle and         "
+  print "     ForceTerminate false."
+  M_HDMI_INIT
+  ERRORCOUNT=0
+  print "> "
+  hdmi_init "Hdmi0" DEVICETYPE OUTPUTTYPE
+  hnd=hdmi_open "Hdmi0"
+  hdmi_term "Hdmi0" 0
+  M_CHECK_RETCODE ERR_OPEN_HANDLE
+  M_CHECK_ERROR
+  ERR_OPENH=GLOBERR
+  ; driver must be terminated before leaving
+  hdmi_close hnd
+  hdmi_term "Hdmi0"
+  M_HDMI_TERM
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+end
+
+; this macro tests the unknown device return code
+define M_RET_UNKNOWN_DEVICE
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_UNKNOWN_DEVICE.         ###"
+  print ""
+  print "    Functions called for a non initialized device."
+  M_HDMI_INIT
+  ERRORCOUNT=0
+  print "> "
+  hdmi_term "Hdmi0"
+  M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+  hdmi_open "Hdmi0"
+  M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+  hdmi_capa "Hdmi0"
+  M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+  hdmi_srccapa "Hdmi0"
+  M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+  hdmi_snkcapa "Hdmi0"
+  M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+  ;hdmi_fillavi "Hdmi0"
+  ;M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+   ;hdmi_init "Hdmi0" DEVICETYPE OUTPUTTYPE
+  ; hdmi_fillavi "BADPARAM"
+  ;M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+  ;hdmi_term "Hdmi0"
+  M_CHECK_ERROR
+  ERR_UNKDE=GLOBERR
+  ; driver is terminated before leaving.
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  M_HDMI_TERM
+end
+
+
+; this macro tests the vtg unknown return code
+define M_RET_VTG_UNKNOWN
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_VTG_UNKNOWN.            ###"
+  print ""
+  print "    Functions calls without previous STVTG_Init         "
+  ERRORCOUNT=0
+  vout_init "VOUT" VOUT_DEVICE_TYPE_7710 "HDMI_RGB888"
+  vmix_init "VMIX"
+  vid_init "VID1" "MPEG"
+  if API_CHIPID=="7710"
+  aud_init
+  end
+  hdmi_init "Hdmi0"
+  M_CHECK_RETCODE ERR_HDMI_VTG_UNKOWN
+  M_CHECK_ERROR
+  ERR_VTGUN=GLOBERR
+
+  ; driver is terminated before leaving.
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  vout_term , 1
+  vmix_term , 1
+  vid_term , 1
+  if API_CHIPID=="7710"
+  aud_term , 1
+  end
+end
+
+; this macro tests the vout unknown return code
+define M_RET_VOUT_UNKNOWN
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_VOUT_UNKNOWN.            ###"
+  print ""
+  print "    Functions calls without previous STVOUT_Init         "
+  ERRORCOUNT=0
+  if API_CHIPID=="7710"
+     if (CHIP_CUT=="STI7710_CUT2x")
+       vtg_init "VTG" , h20103000
+    end
+    else
+      vtg_init "VTG" , h20103c00
+    end
+  end
+  elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+     vtg_init
+  end
+  else
+     ckg_init
+     vtg_init "VTG" , hFD10C300
+  end
+
+  vmix_init "VMIX"
+ ;LAYER_Init "LAYER1"
+  vid_init "VID1" "MPEG"
+  if API_CHIPID=="7710"
+  aud_init
+  end
+  hdmi_init "Hdmi0"
+  M_CHECK_RETCODE ERR_HDMI_VOUT_UNKOWN
+  M_CHECK_ERROR
+  ERR_VOUTUN=GLOBERR
+  ; driver is terminated before leaving.
+  vtg_term , 1
+  vmix_term , 1
+  vid_term , 1
+  if API_CHIPID=="7710"
+  aud_term , 1
+  end
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+end
+
+; this macro tests the invalid packet format return code
+define M_RET_INVALID_PACKET_FORMAT
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_INVALID_PACKET_FORMAT.  ###"
+  print ""
+  ERRORCOUNT=0
+  M_HDMI_INIT
+  hdmi_init "Hdmi0" DEVICETYPE OUTPUTTYPE HDMI_AVI_TYPE_NONE HDMI_SPD_TYPE_ONE
+  M_CHECK_RETCODE ERR_HDMI_INVALID_PACKET
+  hdmi_init "Hdmi0" DEVICETYPE OUTPUTTYPE HDMI_AVI_TYPE_ONE HDMI_SPD_TYPE_ONE
+  M_CHECK_RETCODE ERR_HDMI_INVALID_PACKET
+  M_CHECK_ERROR
+  ERR_INVPF=GLOBERR
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  M_HDMI_TERM
+ end
+
+; this macro tests the information availability return code
+define M_RET_INFORMATION_NOT_AVAILABLE
+  print ""
+  print "#########################################################"
+  print "### Expected error : STVOUT_ERROR_INFO_NOT_AVAILABLE. ###"
+  print ""
+  ERRORCOUNT=0
+  M_HDMI_INIT
+  hdmi_init "Hdmi0" DEVICETYPE OUTPUTTYPE , , , , , , 1
+  hndl_hdmi=hdmi_open "Hdmi0"
+  ; terminate vtg instance
+  vtg_term , 1
+  hdmi_fillavi hndl_hdmi
+  M_CHECK_RETCODE ERR_HDMI_INVALID_INFO
+  print "> "
+  M_CHECK_ERROR
+  ERR_INFNA=GLOBERR
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  hdmi_close
+  hdmi_term
+  vout_term , 1
+  vmix_term , 1
+  vid_term , 1
+  if API_CHIPID=="7710"
+  aud_term , 1
+  end
+end

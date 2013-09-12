@@ -1,0 +1,46 @@
+# Sample ST20/ST40/ST200 makefile
+
+DVD_MAKE_VERSION := 2
+ifdef IN_OBJECT_DIR
+
+include $(DVD_MAKE)/generic.mak
+
+HEADER_IMPORTS := <components with header files only>
+
+ST20_IMPORTS := <ST20 imported components>
+ST20_EXPORTS := <likely to be blank - nothing exported>
+ST20_TARGETS := <list of .lku files to build>
+
+ST40_IMPORTS := <ST40 imported components>|$(ST20_IMPORTS)
+ST40_EXPORTS := <likely to be blank - nothing exported>
+ST40_TARGETS := <list of .exe files to build>
+
+ST200_IMPORTS := <ST200 imported components>|$(ST20_IMPORTS)
+ST200_EXPORTS := <likely to be blank - nothing exported>
+ST200_TARGETS := <list of .exe files to build>
+
+<target>_ST20_OBJS := <objects in particular .lku target>
+<target>_ST40_OBJS := <objects in particular .exe target>
+<target>_ST200_OBJS := <objects in particular .exe target>
+
+include $(DVD_MAKE)/defrules.mak
+
+<.lku target basename>_INIT := <entry point>
+<target>$(EXE_SUFFIX): $($(ARCHITECTURE)_OBJS) $(IMPORT_LIBS)
+	@$(ECHO) Linking $@
+	$(LINK_EXECUTABLE)
+
+clean:
+	@$(ECHO) Cleaning $($(ARCHITECTURE)_TARGETS)
+	-$(RM) $(<target>_$(ARCHITECTURE)_OBJS)
+	-$(RM) $($(ARCHITECTURE)_TARGETS)
+
+# Local header dependencies
+
+else
+
+include $(DVD_MAKE)/builddir.mak
+
+endif
+
+# End of sample ST20/ST40/ST200 makefile

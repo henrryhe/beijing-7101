@@ -1,0 +1,83 @@
+#!/bin/sh
+
+DEST=$ROOTFS_DIR
+EXE=vid_test.exe
+SCRIPTS=vid/
+
+if !(test -d $DEST/scripts)
+then
+    echo "Creating $DEST/scripts"
+    mkdir $DEST/scripts
+fi
+if !(test -d $DEST/scripts/$SCRIPTS)
+then
+    echo "Creating $DEST/scripts/$SCRIPTS"
+    mkdir $DEST/scripts/$SCRIPTS
+fi
+
+chmod -R 755 $DEST/scripts/$SCRIPTS
+
+echo; echo "Install 'exe' file..."
+CMD='/bin/rm -f '$DEST'/'$EXE
+echo $CMD
+$CMD
+
+CMD='/bin/ln -s exports/bin/'$EXE' '$ROOTFS_DIR'/'$EXE
+echo $CMD
+$CMD
+
+echo; echo "Install macros ..."
+if !(test -d $DEST/scripts/$SCRIPTS)
+then
+    echo "CRITICAL error !!! cannot copy scripts and *.bin on target, exiting ..."
+    exit
+fi
+CMD='/bin/cp '$DVD_ROOT'/dvdgr-prj-stvid/tests/scripts/* '$DEST'/scripts/'$SCRIPTS
+echo $CMD
+$CMD
+
+echo; echo "Install firmwares..."
+CMD='/bin/cp '$DVD_ROOT'/dvdgr-prj-stvid/video_firmware/*.bin '$DEST'/scripts/'$SCRIPTS
+echo $CMD
+$CMD
+CMD='/bin/cp *.bin '$DEST'/scripts/'$SCRIPTS
+echo $CMD
+$CMD
+
+echo; echo "Install 'gam' files..."
+if !(test -d $DEST/scripts/data)
+then
+   mkdir $DEST/scripts/data
+fi
+chmod -R 755 $DEST/scripts/data
+CMD='/bin/cp '$DVD_ROOT'/dvdgr-prj-stapigat/data/* '$DEST'/scripts/data'
+echo $CMD
+$CMD
+
+echo; echo "Install config files..."
+if !(test -d $DEST/scripts/utils)
+then
+   mkdir $DEST/scripts/utils
+fi
+chmod -R 755 $DEST/scripts/utils
+CMD='/bin/cp '$DVD_ROOT'/dvdno-prj-staudlx/linux/staudlx_core/*.sh '$DVD_ROOT'/dvdno-prj-staudlx/linux/staudlx_ioctl/*.sh '$DEST'/scripts/utils/'
+echo $CMD
+$CMD
+CMD='/bin/cp '$DVD_ROOT'/dvdbr-prj-stcc/linux/stcc_core/*.sh '$DVD_ROOT'/dvdbr-prj-stcc/linux/stcc_ioctl/*.sh '$DEST'/scripts/utils/'
+echo $CMD
+$CMD
+CMD='/bin/cp '$DVD_ROOT'/dvdbr-prj-stclkrv/linux/stclkrv_core/*.sh '$DVD_ROOT'/dvdbr-prj-stclkrv/linux/stclkrv_ioctl/*.sh '$DEST'/scripts/utils/'
+echo $CMD
+$CMD
+CMD='/bin/cp '$DVD_ROOT'/dvdbr-prj-stmerge/linux/stmerge_core/*.sh '$DVD_ROOT'/dvdbr-prj-stmerge/linux/stmerge_ioctl/*.sh '$DEST'/scripts/utils/'
+echo $CMD
+$CMD
+CMD='/bin/cp '$DVD_ROOT'/dvdbr-prj-stpti4/linux/stpti4_core/*.sh '$DVD_ROOT'/dvdbr-prj-stpti4/linux/stpti4_ioctl/*.sh '$DEST'/scripts/utils/'
+echo $CMD
+$CMD
+
+chmod 755 $DEST/loadmods $DEST/target.cfg 
+CMD='/bin/cp '$DVD_ROOT'/dvdgr-prj-stvid/tests/setup/linux/loadmods '$DVD_ROOT'/dvdgr-prj-stvid/tests/setup/linux/target.cfg '$DEST'/'
+echo $CMD
+$CMD
+

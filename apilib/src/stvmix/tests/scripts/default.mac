@@ -1,0 +1,407 @@
+; ****************************************************************************
+; File         : DEFAULT.MAC
+; Requirements :
+; Author       : AC - Reviewed December 2003
+; ****************************************************************************
+
+; general behavior :
+; driver is assumed to be not initialized before starting these file tests
+;sortir
+source OSPATH+DRV_PATH_VMIX+"commons.mac"
+
+api_settestmode 1
+api_error 0
+
+; This macro need to have HDLVOUTYC declared
+define M_VOUTDENC_YC P_MODE
+    if P_MODE=="ON"
+        ; Init VOUT YC
+        vout_init "VOUTYC" , "YC" ,
+        HDLVOUTYC=vout_open "VOUTYC"
+        vout_setparams HDLVOUTYC
+        vout_enable HDLVOUTYC
+    end
+    else
+        ; Term VOUT YC
+        vout_disable HDLVOUTYC
+        vout_close HDLVOUTYC
+        vout_term "VOUTYC"
+    end
+end
+
+; This macro need to have HDLVOUTYUV declared
+define M_VOUTDENC_YUV P_MODE
+    if P_MODE=="ON"
+        ; Init VOUT YUV
+        vout_init "VOUTYUV" , "YUV" ,
+        HDLVOUTYUV=vout_open "VOUTYUV"
+        vout_setparams HDLVOUTYUV
+        vout_enable HDLVOUTYUV
+    end
+    else
+        ; Term VOUT YUV
+        vout_disable HDLVOUTYUV
+        vout_close HDLVOUTYUV
+        vout_term "VOUTYUV"
+    end
+end
+
+; This macro need to have HDLVOUTRGB declared
+define M_VOUTDENC_RGB P_MODE
+    if P_MODE=="ON"
+        ; Init VOUT RGB
+        vout_init "VOUTRGB" , "RGB" ,
+        HDLVOUTRGB=vout_open "VOUTRGB"
+        vout_setparams HDLVOUTRGB
+        vout_enable HDLVOUTRGB
+    end
+    else
+        ; Term VOUT RGB
+        vout_disable HDLVOUTRGB
+        vout_close HDLVOUTRGB
+        vout_term "VOUTRGB"
+    end
+end
+
+; This macro need to have HDLVOUTCVBS declared
+define M_VOUTDENC_CVBS P_MODE
+    if P_MODE=="ON"
+        ; Init VOUT CVBS
+        vout_init "VOUTCVBS" , "CVBS" ,
+        HDLVOUTCVBS=vout_open "VOUTCVBS"
+        vout_setparams HDLVOUTCVBS
+        vout_enable HDLVOUTCVBS
+    end
+    else
+        ; Term VOUT CVBS
+        vout_disable HDLVOUTCVBS
+        vout_close HDLVOUTCVBS
+        vout_term "VOUTCVBS"
+    end
+end
+
+define M_TST_MENU
+    EXEC_ALL_TEST=0
+
+    if (API_CHIPID=="5301")
+        poke h20f00014 hebf
+        poke h20d00004 h18000
+    end
+
+    if (API_CHIPID=="5525")
+        poke h1980002C hc00000
+        poke h19a00000 h38
+        poke h19a00018 h80
+        poke h19a0017c h00
+        poke h19b00000 h38
+        poke h19b00018 h80
+        poke h19b0017c h00
+
+    end
+
+
+    if (API_CHIPID=="5188")||(API_CHIPID=="5162")
+        poke h20402004 h18000
+    end
+
+    if (API_CHIPID=="5100")||(API_CHIPID=="5301")||(API_CHIPID=="5525")
+        print ""
+        print "Choose STVMIX device Type"
+        print "    0 - STVMIX_COMPOSITOR"
+        print "    1 - STVMIX_COMPOSITOR_422"
+        print "    Enter your choice :"
+        x=getkey
+        if x>=48
+           x=x-48
+        end
+        choice=1
+        if x==0
+            G_DeviceType=0
+            print "COMPOSITOR Frame - Output 444"
+        end
+        if x==1
+            G_DeviceType=1
+            print "COMPOSITOR Frame - Output 422"
+        end
+    end
+
+    if (API_CHIPID=="5105")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+        if (DEVICE_SELECTED_5118==0)
+            print ""
+            print "Choose STVMIX device Type"
+            print "    0 - STVMIX_COMPOSITOR"
+            print "    1 - STVMIX_COMPOSITOR_422"
+            print "    2 - STVMIX_COMPOSITOR_FIELD_COMBINED"
+            print "    3 - STVMIX_COMPOSITOR_FIELD_COMBINED_422"
+            print "    4 - STVMIX_COMPOSITOR_FIELD_COMBINED_SDRAM"
+            print "    5 - STVMIX_COMPOSITOR_FIELD_COMBINED_SDRAM_422"
+            print "    Enter your choice :"
+            x=getkey
+            if x>=48
+            x=x-48
+            end
+            choice=1
+            if x==0
+                G_DeviceType=0
+                print "COMPOSITOR Frame - Output 444"
+            end
+            if x==1
+               G_DeviceType=1
+               print "COMPOSITOR Frame - Output 422"
+            end
+            if x==2
+                G_DeviceType=6
+                print "COMPOSITOR Field COMBINED - Output 444"
+            end
+            if x==3
+                G_DeviceType=7
+                print "COMPOSITOR Field COMBINED - Output 422"
+            end
+            if x==4
+                G_DeviceType=8
+                print "COMPOSITOR Field COMBINED SDRAM - Output 444"
+            end
+            if x==5
+                G_DeviceType=9
+                print "COMPOSITOR Field COMBINED SDRAM - Output 422"
+            end
+
+        end
+        else
+            print ""
+            print "Choose STVMIX device Type"
+            print "    0 - STVMIX_COMPOSITOR_FIELD_COMBINED"
+            print "    1 - STVMIX_COMPOSITOR_FIELD_COMBINED_422"
+            print "    2 - STVMIX_COMPOSITOR_FIELD_COMBINED_SDRAM"
+            print "    3 - STVMIX_COMPOSITOR_FIELD_COMBINED_SDRAM_422"
+            print "    Enter your choice :"
+            x=getkey
+            if x>=48
+            x=x-48
+            end
+            choice=1
+            if x==0
+                G_DeviceType=6
+                print "COMPOSITOR Field COMBINED - Output 444"
+            end
+            if x==1
+                G_DeviceType=7
+                print "COMPOSITOR Field COMBINED - Output 422"
+            end
+            if x==2
+                G_DeviceType=8
+                print "COMPOSITOR Field COMBINED SDRAM - Output 444"
+            end
+            if x==3
+                G_DeviceType=9
+                print "COMPOSITOR Field COMBINED SDRAM - Output 422"
+            end
+        end
+   end
+
+    if (API_CHIPID=="5188")
+        print ""
+        print "Choose STVMIX device Type"
+        print "    0 - STVMIX_COMPOSITOR_FIELD_COMBINED_SDRAM"
+        print "    1 - STVMIX_COMPOSITOR_FIELD_COMBINED_SDRAM_422"
+        print "    Enter your choice :"
+        x=getkey
+        if x>=48
+        x=x-48
+        end
+        choice=1
+        if x==0
+            G_DeviceType=8
+            print "COMPOSITOR Field COMBINED SDRAM - Output 444"
+        end
+        if x==1
+            G_DeviceType=9
+            print "COMPOSITOR Field COMBINED SDRAM - Output 422"
+        end
+    end
+
+    print ""
+    print "    0 - API BASIC"
+    print "    1 - LAYERs / MIXER1"
+    print "    2 - LAYERs / MIXER2"
+    print "    3 - LAYERs / MIXER3"
+    print "    4 - MIXER1 / VOUT"
+    print "    5 - MIXER2 / VOUT"
+    print "    6 - MIXER3 / VOUT"
+    print "    7 - MULTI INSTANCE"
+    print "    8 - DYNAMIC SIZINGS"
+  if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")&&(API_CHIPID!="7200")
+    print "    9 - DYNAMIC TIMINGS"
+    print "    10 - MIXER /VOUT /TRIDACCONF"
+  end
+    if (API_CHIPID=="7020")||(API_CHIPID=="7015")
+        print "    11 - TEST WITH STV0119"
+    end
+    if (API_CHIPID=="5105")||(API_CHIPID=="5188")||(API_CHIPID=="5525")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+        print "    11 - TELETEXT TEST "
+    end
+
+    print "   12 - EXECUTE ALL TESTS"
+    print ""
+    print "    Enter your choice :"
+    choice=getstring
+
+    if choice=="0"
+        ;API BASIC TESTS
+        print "In choice1"
+        source OSPATH+DRV_PATH_VMIX+"mixcomm.mac"
+        M_COM_ALL EXEC_ALL_TEST
+    end
+    if choice=="1"
+        ; LAYERs on MIXER1 tests
+        source OSPATH+DRV_PATH_VMIX+"vmix1.mac"
+        M_VMIX1_MAIN
+    end
+    if choice=="2"
+        ; LAYERs on MIXER2 tests
+        source OSPATH+DRV_PATH_VMIX+"vmix2.mac"
+        M_VMIX2_MAIN
+    end
+    if choice=="3"
+            ; LAYERs on MIXER3 tests
+            source OSPATH+DRV_PATH_VMIX+"vmix12.mac"
+            M_VMIX12_MAIN
+        end
+    if choice=="4"
+        ; VOUT/MIXER1 tests
+        source OSPATH+DRV_PATH_VMIX+"vmix3.mac"
+        M_VMIX3_MAIN
+    end
+
+    if choice=="5"
+        ; VOUT/MIXER2 tests
+        source OSPATH+DRV_PATH_VMIX+"vmix4.mac"
+        M_VMIX4_MAIN
+   end
+   if choice=="6"
+        ; VOUT/MIXER3 tests
+        source OSPATH+DRV_PATH_VMIX+"vmix13.mac"
+        M_VMIX13_MAIN
+   end
+    if choice=="7"
+        ;  MULTI INSTANCE tests
+        source OSPATH+DRV_PATH_VMIX+"vmix5.mac"
+        M_VMIX5_MAIN
+    end
+    if choice=="8"
+        ; DYNAMIC SIZING tests
+        source OSPATH+DRV_PATH_VMIX+"vmix6.mac"
+        M_VMIX6_MAIN
+    end
+    if choice=="9"
+        ; DYNAMIC TIMING tests
+        source OSPATH+DRV_PATH_VMIX+"vmix7.mac"
+        M_VMIX7_MAIN
+    end
+
+    if choice=="10"
+        print ""
+        print "    1 - MIXER1 /VOUT /TRIDACCONF"
+        print "    2 - MIXER2 /VOUT /TRIDACCONF"
+        print ""
+        print "    Enter your choice :"
+        x1=getkey
+        if x1>=48
+        x1=x1-48
+        end
+        choice1=1
+        if x1>2
+          choice1=0
+        end
+        while x1!=0
+           choice1=choice1*2
+           x1=x1-1
+        end
+        if choice1&2
+       ; VOUT/MIXER1 tests  with tridac configuration
+        source OSPATH+DRV_PATH_VMIX+"vmix8.mac"
+        M_VMIX8_MAIN
+        end
+        if choice1&4
+        ; VOUT/MIXER2 tests  with tridac configuration
+        source OSPATH+DRV_PATH_VMIX+"vmix9.mac"
+        M_VMIX9_MAIN
+        end
+    end
+
+    if choice=="11"
+
+        if (API_CHIPID=="5105")||(API_CHIPID=="5188")||(API_CHIPID=="5525")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+                source OSPATH+DRV_PATH_VMIX+"vmix10.mac"
+                if (API_CHIPID=="5525")
+        print ""
+        print "    1 - Teletext on Main"
+        print "    2 - Teletext on Aux"
+        print "    3 - Teletext on Main and Aux"
+        print ""
+
+        m=getstring
+
+        if m=="1"
+          M_VMIX10_MAIN
+        end
+        if m=="2"
+          M_VMIX10_AUX
+        end
+        if m=="3"
+          M_VMIX10_TXT_MULTI
+        end
+
+                end
+                else
+
+                        M_VMIX10_MAIN
+
+                end
+        end
+        else
+        AVAIL_STV0119=TRUE
+        M_TST_MENU
+        end
+    end
+    if choice=="12"
+        MC_CHECK_COM_ERR ERR_COM1 ERR_COM2 ERR_COM3 ERR_COM4 ERR_COM5 ERR_COM6 ERR_COM7 ERR_COM8
+        MC_CHECK_VMIX_ERR ERR_VMIX1 ERR_VMIX2 ERR_VMIX3 ERR_VMIX4 ERR_VMIX5 ERR_VMIX6 ERR_VMIX7 ERR_VMIX8
+    end
+end
+
+
+BUFF_AD=0
+
+
+if (API_CHIPID!="GX1")&&(API_CHIPID!="5100")&&(API_CHIPID!="5105")&&(API_CHIPID!="5301")&&(API_CHIPID!="7109")&&(API_CHIPID!="5188")&&(API_CHIPID!="5525")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+    if (ST_OS!="LINUX")
+        RET_STR = displayvideo
+        BUFF_ADD = api_evalstr RET_STR 1
+    end
+end
+if (API_CHIPID=="GX1")
+    print "Please set variable STAPIGATDATA to $DVD_ROOT/dvdgr-prj-stapigat/data/"
+end
+
+
+M_TST_MENU
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

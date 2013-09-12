@@ -1,0 +1,256 @@
+; ****************************************************************************
+; File         : VOUTBCS.MAC
+; Requirements :
+; Author       : Jacques GAMON - November 2000
+; ****************************************************************************
+; Tests :
+; M_TEST_BRIGHTNESS
+; M_TEST_CONTRAST
+; M_TEST_SATURATION
+; M_TEST_BCS_ON_TV
+
+
+define M_TEST_BRIGHT_DENC
+  if DENCVERSION<7
+    print " capability not available "
+    TESTBRI=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test BRIGHTNESS value, "
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    ERRORCOUNT=0
+    print " init/open/set default parameters/enable driver,"
+    vout_init "Voutput1" DEVICETYPE "CVBS"
+    hndl_cvbs=vout_open "Voutput1"
+    vout_setparams hndl_cvbs "CVBS"
+    vout_enable hndl_cvbs
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100)
+        VOUTSetDenc
+    end
+    ;
+    print "--- start -----------------------------"
+    for I 1 254 4
+      if PRNT==1
+        print "  (testing value : Brightness = " I ")"
+      end
+      vout_setbcs hndl_cvbs I 0 128
+      vout_getparams hndl_cvbs "CVBS" PRNT
+      M_CHECK_EXPECTED_PARAM P4 I
+      voutrdbcs EXTERNAL_DENC PRNT
+      ;M_CHECK_EXPECTED_PARAM BRIGHT I
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T105=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput1"
+  end
+end
+
+
+define M_TEST_BRIGHTNESS
+  api_checkerr
+  M_TEST_BRIGHT_DENC
+end
+
+define M_TEST_CONTR_DENC
+  if DENCVERSION<7
+    print " capability not available "
+    TESTCON=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test CONTRAST value, "
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    ERRORCOUNT=0
+    print " init/open/set default parameters/enable driver,"
+    vout_init "Voutput1" DEVICETYPE "CVBS"
+    hndl_cvbs=vout_open "Voutput1"
+    vout_setparams hndl_cvbs "CVBS"
+    vout_enable hndl_cvbs
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100)
+        VOUTSetDenc
+    end
+    ;
+    print "--- start -----------------------------"
+    for I -128 127 4
+      if PRNT==1
+        print "  (testing value : Contrast = " I ")"
+      end
+      vout_setbcs hndl_cvbs 128 I 128
+      vout_getparams hndl_cvbs "CVBS" PRNT
+      M_CHECK_EXPECTED_PARAM P5 I
+      voutrdbcs EXTERNAL_DENC PRNT
+      ;M_CHECK_EXPECTED_PARAM CONTRA I
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T106=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput1"
+  end
+end
+
+define M_TEST_CONTRAST
+  api_checkerr
+  M_TEST_CONTR_DENC
+end
+
+define M_TEST_SATUR_DENC
+  if DENCVERSION<7
+    print " capability not available "
+    TESTSAT=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test SATURATION value, "
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    ERRORCOUNT=0
+    print " init/open/set default parameters/enable driver,"
+    vout_init "Voutput1" DEVICETYPE "CVBS"
+    hndl_cvbs=vout_open "Voutput1"
+    vout_setparams hndl_cvbs "CVBS"
+    vout_enable hndl_cvbs
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100)
+        VOUTSetDenc
+    end
+    ;
+    print "--- start -----------------------------"
+    for I 1 254 4
+      if PRNT==1
+        print "  (testing value : Saturation = " I ")"
+      end
+      vout_setbcs hndl_cvbs 128 0 I
+      vout_getparams hndl_cvbs "CVBS" PRNT
+      M_CHECK_EXPECTED_PARAM P6 I
+      voutrdbcs EXTERNAL_DENC PRNT
+      ;M_CHECK_EXPECTED_PARAM SATURA I
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T107=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput1"
+  end
+end
+
+
+define M_TEST_SATURATION
+  api_checkerr
+  M_TEST_SATUR_DENC
+end
+
+define M_TEST_BCS_TV
+  if DENCVERSION<7
+    print " BCS capabilities not available "
+    TESTBCS=FALSE_
+  end
+  else
+    print " -------------------------------------------------"
+    print " test BCS on TV (CVBS Output)"
+    print " TV connect on Set_Top_Box with SCART or Composite"
+    print " display an image "
+    print " -------------------------------------------------"
+    ; Rgb and Cvbs outputs on STi55XX, only Cvbs on 7015/20
+    print " init/open/set default parameters/enable driver"
+    hndl_rgb=0
+    hndl_cvbs=0
+    if HDOUT==0
+      vout_init "Voutrgb" DEVICETYPE "RGB"
+      hndl_rgb=vout_open "Voutrgb"
+      vout_setparams hndl_rgb "RGB"
+      vout_enable hndl_rgb
+    end
+    vout_init "Voutcvbs" DEVICETYPE "CVBS"
+    hndl_cvbs=vout_open "Voutcvbs"
+    vout_setparams hndl_cvbs "CVBS"
+    vout_enable hndl_cvbs
+    if HDOUT==1
+      wait 5000
+    end
+    ;
+    ERRORCOUNT=0
+    api_checkerr
+    print "--- start test brightness --------------"
+    for I 16 188 8
+      vout_setbcs hndl_cvbs I 0 128
+      wait 500
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "  --> Brightness ok ?"
+    api_quest
+    ;
+    print "--- end test brightness ----------------"
+    VOUT_DotsOutIfOk 0
+    wait 500
+    print "--- start test contrast ----------------"
+    for I -128 60 8
+      vout_setbcs hndl_cvbs 128 I 128
+      wait 500
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "  --> Contrast ok ?"
+    api_quest
+    ;
+    print "--- end test contrast ------------------"
+    wait 500
+    VOUT_DotsOutIfOk 0
+    print "--- start test saturation --------------"
+    for I 16 188 8
+      vout_setbcs hndl_cvbs 128 0 I
+      wait 500
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "  --> Saturation ok ?"
+    api_quest
+    ;
+    print "--- end test saturation ----------------"
+    VOUT_DotsOutIfOk 0
+    M_CHECK_TEST_ERROR 0
+    ERR_T108=GLOBERR
+    print " disable/close/term the driver."
+    if HDOUT==0
+      vout_disable hndl_rgb
+      vout_close hndl_rgb
+      vout_term "Voutrgb"
+    end
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutcvbs"
+  end
+end
+
+define M_TEST_BCS_ON_TV
+  api_checkerr
+  M_TEST_BCS_TV
+end
+
+
+
+
+

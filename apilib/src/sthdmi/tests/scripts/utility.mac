@@ -1,0 +1,944 @@
+; ****************************************************************************
+; File         : UTILITY.MAC
+; Requirements :
+; Author       : Adel Chaouch  - May 2005
+; ****************************************************************************
+; General utilities for VOUT test
+
+; general behavior :
+; driver is assumed to be not initialized before starting these file tests
+
+del M_*
+BUFF_ADD=0
+MAIN_INITIALISED=0
+FALSE_=0
+TRUE_=1
+EXEC_ALL_TEST=0
+GLOBERR=FALSE_
+ERR_BAS=FALSE_
+
+ERR_ALRIN=FALSE_
+ERR_BADP=FALSE_
+ERR_NOMEM=FALSE_
+ERR_INVHN=FALSE_
+ERR_NOFRE=FALSE_
+ERR_OPENH=FALSE_
+ERR_UNKDE=FALSE_
+ERR_INVPF=FALSE_
+ERR_INFNA=FALSE_
+ERR_VIDUN=FALSE_
+ERR_VTGUN=FALSE_
+ERR_VMIXUN=FALSE_
+ERR_AUDUN=FALSE_
+ERR_VOUTUN=FALSE_
+
+ERR_T100=FALSE_
+ERR_T101=FALSE_
+ERR_T102=FALSE_
+ERR_T103=FALSE_
+ERR_T104=FALSE_
+ERR_T105=FALSE_
+ERR_T106=FALSE_
+ERR_T107=FALSE_
+ERR_T108=FALSE_
+ERR_T109=FALSE_
+ERR_T110=FALSE_
+ERR_T111=FALSE_
+ERR_T112=FALSE_
+ERR_T113=FALSE_
+
+ERR_T200=FALSE_
+ERR_T201=FALSE_
+ERR_T202=FALSE_
+ERR_T203=FALSE_
+ERR_T204=FALSE_
+ERR_T205=FALSE_
+ERR_T206=FALSE_
+ERR_T300=FALSE_
+ERR_T301=FALSE_
+ERR_T302=FALSE_
+ERR_T303=FALSE_
+ERR_T304=FALSE_
+ERR_T305=FALSE_
+ERR_T306=FALSE_
+ERR_T307=FALSE_
+ERR_T308=FALSE_
+ERR_T309=FALSE_
+ERR_T310=FALSE_
+ERR_T311=FALSE_
+ERR_T400=FALSE_
+ERR_T401=FALSE_
+ERR_T402=FALSE_
+ERR_T403=FALSE_
+ERR_T500=FALSE_
+ERR_T501=FALSE_
+ERR_T502=FALSE_
+ERR_T503=FALSE_
+ERR_T504=FALSE_
+ERR_T505=FALSE_
+ERR_T600=FALSE_
+ERR_T601=FALSE_
+ERR_T602=FALSE_
+ERR_T700=FALSE_
+ERR_T701=FALSE_
+ERR_T702=FALSE_
+ERR_T703=FALSE_
+ERR_T800=FALSE_
+ERR_T801=FALSE_
+ERR_T802=FALSE_
+ERR_T803=FALSE_
+ERR_MULT=FALSE_
+
+TESTRGB=TRUE_
+TESTYUV=TRUE_
+TESTYC=TRUE_
+TESTCVBS=TRUE_
+TESTDAC=TRUE_
+TESTBRI=TRUE_
+TESTCON=TRUE_
+TESTSAT=TRUE_
+TESTBCS=TRUE_
+TESTCHR=TRUE_
+TESTLUM=TRUE_
+TESTSVM=TRUE_
+TEST444_24=TRUE_
+TEST422_16=TRUE_
+TEST422_8=TRUE_
+TEST888_24=TRUE_
+TESTHDRGB=TRUE_
+TESTHDYUV=TRUE_
+
+
+DEFAULT_HD_MODE="MODE_1080I60000_74250"
+ASPECT=AR169
+MODE=NTSC
+MAIN_ONLY=TRUE
+MAIN_HD=TRUE
+P_HVTG=HDLVTGMAIN
+P_HVPGFX=0
+P_HVMIX=HDLVMIX1
+P_VTGPARAMS=DEFAULT_HD_MODE
+P_HDLVOUTDIG=0
+LAYER1_INIT=FALSE
+LAYER2_INIT=FALSE
+DEVICETYPE=HDMI_DEVICE_TYPE_7710
+LX_LOADED=FALSE
+
+; VID_xCODEC values : "MPEG"|"V" for video Mpeg, "H264" for H264 (7100/DeltaPHI)
+VID1_CODEC="V"
+VID2_CODEC="V"
+if (API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+    VID2_CODEC="H264"
+end
+
+;is there a programmable VTG cell on chip
+VTGPROG=0
+;external DENC tests
+EXTERNAL_DENC=0
+;HD capable platform
+HDOUT=0
+; Output on HD_DACS
+HDDACS=0
+; no error stop
+;api_error 0
+; error ?
+ERRORCOUNT=0
+;
+DEVICETYPE=HDMI_DEVICE_TYPE_7710
+; Denc Version :
+DENCVERSION=0
+
+VOUT1_INIT=FALSE_
+; Output Type :
+OUTPUTTYPE="..........."
+
+;AVI Type
+AVITYPE=HDMI_AVI_TYPE_NONE
+;SPD Type
+SPDTYPE=HDMI_SPD_TYPE_NONE
+;MS Type
+MSTYPE=HDMI_MS_TYPE_NONE
+;Audio Type
+AUDIOTYPE=HDMI_AUDIO_TYPE_NONE
+;VS Type
+VSTYPE=HDMI_VS_TYPE_NONE
+; Print option (no by default)
+PRNT=0
+define M_DEFINE_PRNT
+    PRNT=1
+end
+define M_PRINT
+  print " ERRORCOUNT    " ERRORCOUNT
+  print " EXTERNAL_DENC " EXTERNAL_DENC
+  print " DENCVERSION   " DENCVERSION
+  print " DEVICETYPE    " DEVICETYPE
+  print " OUTPUTTYPE    " OUTPUTTYPE
+  print " PRNT          " PRNT
+end
+
+define M_CHECK_RETCODE EXPECTED
+    if ERRORCODE!=EXPECTED
+        ERRORCOUNT=ERRORCOUNT+1
+       print ">^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected code:" EXPECTED
+    end
+end
+
+define M_CHECK_EXPECTED_PARAM PARAM EXPECTED
+    if PARAM!=EXPECTED
+        ERRORCOUNT=ERRORCOUNT+1
+        print "                " PARAM "           " EXPECTED
+        print "^^^^^^^^^^^^^^ get ^^^^^ expected"
+    end
+end
+
+define M_CHECK_UNEXPECTED_PARAM PARAM UNEXPECTED
+    if PARAM==UNEXPECTED
+        ERRORCOUNT=ERRORCOUNT+1
+        print "                " PARAM "           " UNEXPECTED
+        print "^^^^^^^^^^^^^^ get ^^^^^ unexpected"
+    end
+end
+
+
+;
+define M_CHECK_ERROR
+    print ""
+    if ERRORCOUNT>0
+        print "        ++++++++++++++++++++++++++++++++++"
+        print "        + " ERRORCOUNT " function(s) failed the test +"
+        print "        ++++++++++++++++++++++++++++++++++"
+        GLOBERR=TRUE_
+    end
+    else
+        print "        =================================="
+        print "        == TEST COMPLETED SUCCESSFULLY. =="
+        print "        =================================="
+        GLOBERR=FALSE_
+    end
+    print ""
+end
+
+define M_CHECK_TEST_ERROR EXPECTED
+    print ""
+    if ERRORCOUNT>0
+        print "        ++++++++++++++++++++++++++++++++++"
+        print "        + " ERRORCOUNT " function(s) failed the test +"
+        print "        ++++++++++++++++++++++++++++++++++"
+        GLOBERR=TRUE_
+    end
+    else
+        print "      =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+="
+        ERRCNT=api_checkerr EXPECTED "      == "
+        print "      =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+="
+        if ERRCNT!=EXPECTED
+          GLOBERR=TRUE_
+        end
+        else
+          GLOBERR=FALSE_
+        end
+    end
+    print ""
+end
+
+
+;*******************************************************************************
+;Name        : M_LAYER_ON / M_LAYER_OFF
+;Description : Start or terminate LAYER
+;              according to variables API_CHIPID, MAIN_ONLY
+;*******************************************************************************
+define M_LAYER1_ON P_WIDTH P_HEIGHT
+    print "   --- Set LAYER1 on ---"
+    ; LAYER_Init : interl=1 progr=0 4to3=1 16to9=0
+    T_GXOBJ_ASPECT=0
+    if ASPECT==AR43
+        T_GXOBJ_ASPECT=1
+    end
+    if API_CHIPID=="7015"
+        ; select STLAYER_OMEGA2_VIDEO1
+        LAYER_Init "LAYER1" OMEGA2_VIDEO1 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    elif API_CHIPID=="7020"
+        ; select STLAYER_7020_VIDEO1
+        LAYER_Init "LAYER1" 7020_VIDEO1 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    elif API_CHIPID=="5528"
+        ; select SDDISPO2_VIDEO1
+        LAYER_Init "LAYER1" SDDISPO2_VIDEO1 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    elif (API_CHIPID=="5100")||(API_CHIPID=="5301")||(API_CHIPID=="5105")
+        ; select COMPOSITOR
+        LAYER_Init "LAYER1" COMPOSITOR P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    elif API_CHIPID=="7710"
+        ; select HDDISPO2_VIDEO1
+        LAYER_Init "LAYER1" HDDISPO2_VIDEO1 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    elif API_CHIPID=="7100"
+        ; select HDDISPO2_VIDEO1
+        LAYER_Init "LAYER1" HDDISPO2_VIDEO1 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    elif API_CHIPID=="7109"
+        ; select HDDISPO2_VIDEO1
+        LAYER_Init "LAYER1" VDP_VIDEO1 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    elif API_CHIPID=="7200"
+        ; select VDP_VIDEO2
+        LAYER_Init "LAYER1" VDP_VIDEO2 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    else
+        ; select STLAYER_OMEGA1_VIDEO
+        LAYER_Init "LAYER1" OMEGA1_VIDEO , P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    LAYER1_INIT=TRUE
+end
+
+define M_LAYER2_ON P_WIDTH P_HEIGHT
+    print "   --- Set LAYER2 on ---"
+    ; LAYER_Init : interl=1 progr=0 4to3=1 16to9=0
+    T_GXOBJ_ASPECT=0
+    if ASPECT==AR43
+        T_GXOBJ_ASPECT=1
+    end
+    if API_CHIPID=="7015"
+        LAYER_Init "LAYER2" OMEGA2_VIDEO2 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    elif API_CHIPID=="7020"
+        LAYER_Init "LAYER2" 7020_VIDEO2 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    elif API_CHIPID=="5528"
+        LAYER_Init "LAYER2" SDDISPO2_VIDEO2 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    elif (API_CHIPID=="5100")||(API_CHIPID=="5301")||(API_CHIPID=="5105")
+        ; select COMPOSITOR
+        LAYER_Init "LAYER2" COMPOSITOR P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    elif API_CHIPID=="7710"
+        ; select HDDISPO2_VIDEO2
+        LAYER_Init "LAYER2" HDDISPO2_VIDEO2 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    elif API_CHIPID=="7100"
+        ; select HDDISPO2_VIDEO2
+        LAYER_Init "LAYER2" HDDISPO2_VIDEO2 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    elif API_CHIPID=="7109"
+        ; select HDDISPO2_VIDEO2
+        LAYER_Init "LAYER2" VDP_VIDEO1 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    elif API_CHIPID=="7200"
+        ; select VDP_VIDEO3
+        LAYER_Init "LAYER2" VDP_VIDEO3 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    else
+;        LAYER_Init "LAYER2" SDDISPO2_VIDEO2 P_WIDTH P_HEIGHT 1 T_GXOBJ_ASPECT
+    end
+    LAYER2_INIT=TRUE
+end
+
+define M_LAYER_ON P_WIDTH P_HEIGHT
+    M_LAYER1_ON P_WIDTH P_HEIGHT
+    if MAIN_ONLY==FALSE
+        M_LAYER2_ON P_WIDTH P_HEIGHT
+    end
+end
+
+define M_LAYER_OFF
+    print "   --- Set LAYER off ---"
+    if HDLVMIX1<>0
+        vmix_disable HDLVMIX1
+        vmix_dconnect HDLVMIX1
+    end
+    if HDLVMIX2<>0
+        vmix_disable HDLVMIX2
+        vmix_dconnect HDLVMIX2
+    end
+    if LAYER1_INIT==TRUE
+        LAYER_Term "LAYER1" 1
+        LAYER1_INIT=FALSE
+    end
+    if LAYER2_INIT==TRUE
+        LAYER_Term "LAYER2" 1
+        LAYER2_INIT=FALSE
+    end
+end
+
+;*******************************************************************************
+;Name        : M_MIXER_ON / M_MIXER_OFF
+;Description : Start or terminate MIXER
+;              according to variables API_CHIPID, MAIN_ONLY
+;*******************************************************************************
+define M_MIXER1_ON
+    print "   --- Set MIXER on ---"
+    ; init. params : <DevName><DevType><BaseAddr><VTGName><MaxOpen><MaxLayer><Out1>
+    if API_CHIPID=="7710"
+        if MAIN_HD==TRUE
+            vmix_init "VMIX" "GAMMA_TYPE_7710" , "VTG" 2 5 "VOUT"
+        end
+        else
+            vmix_init "VMIX" "GAMMA_TYPE_7710" , "VTG" 2 5 "VOUT"
+        end
+    end
+    elif (API_CHIPID=="7100")
+        if MAIN_HD==TRUE
+            vmix_init "VMIX" "GAMMA_TYPE_7100" , "VTG" 2 5 "VOUT"
+        end
+        else
+            vmix_init "VMIX" "GAMMA_TYPE_7100" , "VTG" 2 5 "VOUT"
+        end
+    end
+    elif API_CHIPID=="7109"
+        if MAIN_HD==TRUE
+            vmix_init "VMIX" "GAMMA_TYPE_7109" , "VTG" 2 5 "VOUT"
+        end
+        else
+            vmix_init "VMIX" "GAMMA_TYPE_7109" , "VTG" 2 5 "VOUT"
+        end
+    end
+    elif API_CHIPID=="7200"
+        if MAIN_HD==TRUE
+            vmix_init "VMIX" "GAMMA_TYPE_7200" , "VTG" 1 5 "VOUT"
+        end
+        else
+            vmix_init "VMIX" "GAMMA_TYPE_7200" , "VTG" 1 5 "VOUT"
+        end
+    end
+
+    else
+        vmix_init "VMIX" STVMIX_OMEGA1_SD 0 "VTG" 1 5 "VOUT"
+    end
+    HDLVMIX1=vmix_open "VMIX"
+    vmix_disable HDLVMIX1
+if API_CHIPID!="5528"
+    vmix_stime HDLVMIX1  "VTG"
+end
+end
+define M_MIXER2_ON
+    if (API_CHIPID!="5100")&&(API_CHIPID!="5105")&&(API_CHIPID!="5301")
+    print "   --- Set MIXER2 on ---"
+    if API_CHIPID=="7015"
+        vmix_init "VMIX2" STVMIX_GAMMA_TYPE_7015 hA800 "VTG2" 1 5 "VOUT"
+    end
+    elif API_CHIPID=="5528"
+        ; use vtg main
+        if API_OS=="OS21"
+                vmix_init "VMIX2" "GAMMA_TYPE_5528" hB9010D00 "VTG" 1 5 "VOUT_DIG5528"
+        end
+        if API_OS=="OS20"
+                vmix_init "VMIX2" "GAMMA_TYPE_5528" h19010D00 "VTG" 1 5 "VOUT_DIG5528"
+        end
+    end
+    if API_CHIPID=="7020"
+        vmix_init "VMIX2" STVMIX_GENERIC_GAMMA_TYPE_7020 hAD00 "VTG2" 1 5 "VOUT"
+    end
+    if API_CHIPID=="7710"
+        vmix_init "VMIX2" "GAMMA_TYPE_7710" h38215D00 "VTG2" 1 5 "VOUT"
+    end
+    if API_CHIPID=="7100"
+        vmix_init "VMIX2" "GAMMA_TYPE_7100" hB920AD00 "VTG2" 1 5 "VOUT"
+    end
+    elif API_CHIPID=="7109"
+        vmix_init "VMIX2" "GAMMA_TYPE_7109" hB920AD00 "VTG2" 1 5 "VOUT"
+    end
+    if API_CHIPID=="7200"
+        vmix_init "VMIX2" "GAMMA_TYPE_7200" hFDA41D00 "VTG2" 1 5 "VOUT"
+    end
+    HDLVMIX2=vmix_open "VMIX2"
+    vmix_disable HDLVMIX2
+if API_CHIPID!="5528"
+    vmix_stime HDLVMIX2 "VTG2"
+end
+end
+end
+
+define M_MIXER1_OFF
+    if HDLVMIX1<>0
+        print "   --- Set MIXER off ---"
+        vmix_close HDLVMIX1
+        vmix_term "VMIX" 1
+        HDLVMIX1=0
+    end
+end
+
+define M_MIXER2_OFF
+    if HDLVMIX2<>0
+        print "   --- Set MIXER2 off ---"
+        vmix_close HDLVMIX2
+        vmix_term "VMIX2" 0
+        HDLVMIX2=0
+    end
+end
+
+define M_MIXER_ON
+    M_MIXER1_ON
+    if MAIN_ONLY==FALSE
+        M_MIXER2_ON
+    end
+end
+
+define M_MIXER_OFF
+    M_MIXER1_OFF
+    M_MIXER2_OFF
+end
+;*******************************************************************************
+;Name        : M_VID_OFF
+;Description : Terminate VID
+;              according to variables API_CHIPID, MAIN_ONLY
+;*******************************************************************************
+define M_VID_OFF
+    print "   --- Set VID off ---"
+    if HDLVID1<>0
+        vid_stop HDLVID1
+        vid_kill
+        vid_closevp HDLVP1VID1
+        HDLVP1VID1=0
+        vid_close HDLVID1
+        HDLVID1=0
+        ; force terminate if the previous commands failed
+        vid_term "VID1" 1
+    end
+    if HDLVID2<>0
+        vid_stop HDLVID2
+        vid_kill HDLVID2
+        vid_closevp HDLVP1VID2
+        HDLVP1VID2=0
+        vid_close HDLVID2
+        HDLVID2=0
+        ; force terminate if the previous commands failed
+        vid_term "VID2" 1
+
+    end
+end
+;*******************************************************************************
+;Name        : M_ALL_OFF
+;Description : Stop, disconnect, close, terminate all drivers
+;              according to variables API_CHIPID, MAIN_ONLY
+;*******************************************************************************
+define M_ALL_OFF
+    api_error 0
+    ; ------ terminate video drivers
+    M_VID_OFF
+    ; ------ terminate layer drivers
+    M_LAYER_OFF
+    ; ------ terminate other drivers
+    M_BEIO_OFF
+end
+
+;*******************************************************************************
+;Name        : M_VTG_ON / M_VTG_OFF
+;Description : Start or terminate VTG
+;              according to variables API_CHIPID, MAIN_ONLY
+;*******************************************************************************
+define M_VTG1_ON
+    print "   --- Set VTG on ---"
+    if API_CHIPID=="7710"
+        if (CHIP_CUT=="STI7710_CUT2x")
+             vtg_init "VTG" , h20103000 3
+        end
+        else
+             vtg_init "VTG" , h20103c00 3
+        end
+        HDLVTGMAIN=vtg_open "VTG"
+    end
+    elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+        vtg_init "VTG" , , 3
+        HDLVTGMAIN=vtg_open "VTG"
+    end
+    elif (API_CHIPID=="7200")
+        ckg_init
+        vtg_init "VTG" , hFD10C300
+        HDLVTGMAIN=vtg_open "VTG"
+    end
+    else
+        vtg_init "VTG" 0 "DENC" 3
+        HDLVTGMAIN=vtg_open "VTG"
+    end
+    vtg_setmode HDLVTGMAIN DEFAULT_HD_MODE
+end
+
+define M_VTG2_ON
+    print "   --- Set VTG2 on ---"
+    if (API_CHIPID=="7710")
+        vtg_init "VTG2" , h20103034
+        HDLVTGAUX=vtg_open "VTG2"
+    end
+    elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+        vtg_init "VTG2" , hB9005034
+        HDLVTGAUX=vtg_open "VTG2"
+    end
+    elif (API_CHIPID=="7200")
+        vtg_init "VTG2" , hFD10C200
+        HDLVTGAUX=vtg_open "VTG2"
+	vtg_setmode HDLVTGAUX
+    end
+    else
+        vtg_init "VTG2" 0 "DENC"
+        HDLVTGAUX=vtg_open "VTG2"
+    end
+end
+
+define M_VTG_ON
+    M_VTG1_ON
+    if MAIN_ONLY==FALSE
+        M_VTG2_ON
+    end
+end
+
+define M_VTG_OFF
+    print "   --- Set VTG2 off ---"
+    if HDLVTGAUX<>0
+        if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+            vtg_term "VTG2" 1
+            HDLVTGAUX=0
+        end
+        if API_CHIPID=="5528"
+            vtg_term "VTG2" 1
+            HDLVTGAUX=0
+        end
+    end
+    print "   --- Set VTG off ---"
+    if HDLVTGMAIN<>0
+        vtg_term "VTG" 1
+        HDLVTGMAIN=0
+    end
+end
+
+; ----------------------------------------------------------------------------
+;Name        : M_DISP_SET_MODE
+;Description : Set output display mode (VTG mode, VOUT params, VMIX params)
+;              Function similar to old SetEncodingMode, but DENC unchanged
+;              As vtg_setmode do a reset, plans must be disabled first
+;Parameters  : VTG handle, P_HVPGFX, VMIX handle, VTG mode, VOUT handle
+;              with mode="MODE_1080I60000_74250","NTSC","PAL", ...
+;              variables MODE and ASPECT
+; ----------------------------------------------------------------------------
+define M_DISP_SET_MODE P_HVTG P_HVPGFX P_HVMIX P_VTGPARAMS  P_HDLVOUTDIG
+    print "   --- Set display mode to " P_VTGPARAMS " ---"
+    ; T_VMIXASPECT=4:3 by default
+    ; STGXOBJ_ASPECT_RATIO_4TO3 = 1
+    T_VMIXASPECT=1
+    if ASPECT==AR169
+        ;STGXOBJ_ASPECT_RATIO_16TO9 = 0
+        T_VMIXASPECT=0
+    end
+    else
+        if ASPECT==AR2211
+            ;STGXOBJ_ASPECT_RATIO_221TO1 = 2
+            T_VMIXASPECT=2
+        end
+        else
+            if ASPECT==ARSQ
+                ;STGXOBJ_ASPECT_RATIO_SQUARE = 3
+                T_VMIXASPECT=3
+            end
+        end
+    end
+    if API_CHIPID=="5528"
+        if P_HDLVOUTDIG!=0
+            T_MODE=-1
+            if P_VTGPARAMS=="NTSC"
+                T_MODE=NTSC
+            end
+            if P_VTGPARAMS=="PAL"
+                T_MODE=PAL
+            end
+            if T_MODE!=-1
+                vout_setparams HDLVOUTDIG "YCbCr422_8" T_MODE
+            end
+        end
+    end
+
+    vtg_setmode P_HVTG P_VTGPARAMS
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    STRMODE=vtg_getmode P_HVTG
+    M_CHECK_RETCODE ERR_NO_ERROR
+    T_FRAMERATE=api_evalstr STRMODE 2
+    T_SCANTYPE=api_evalstr STRMODE 3
+    T_WIDTH=api_evalstr STRMODE 4
+    T_HEIGHT=api_evalstr STRMODE 5
+    ; --- for 550x/551x/51xx/(5528 main chip) : STRMODE 6 is ActiveAreaXStart;        STRMODE 7 is ActiveAreaYStart
+    ; --- for (5528 aux chip=4629 ) : STRMODE 8 is DigitalActiveAreaXStart; STRMODE 9 is DigitalActiveAreaYStart
+    ; --- for 7015/7020/GX1 : STRMODE 8 is DigitalActiveAreaXStart; STRMODE 9 is DigitalActiveAreaYStart
+    ; --- for 7710 :          STRMODE 8 is DigitalActiveAreaXStart; STRMODE 9 is DigitalActiveAreaYStart
+    T_XStart=0
+    T_YStart=0
+
+    if (API_CHIPID=="7710")||(API_CHIPID=="7015")||(API_CHIPID=="7020")||(API_CHIPID=="GX1")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200") ; 7710 /7100/7109/7200/7015 /7020 /GX1
+        T_XStart = api_evalstr STRMODE 8
+        T_YStart = api_evalstr STRMODE 9
+    end
+    elif (API_CHIPID=="5528")   ;5528
+;        if P_HDLVOUTDIG!=0 ;digital output for 5528 because we target 4629 denc
+;                T_XStart = api_evalstr STRMODE 8
+;                T_YStart = api_evalstr STRMODE 9
+;        end
+;        else
+;                T_XStart = api_evalstr STRMODE 6
+;                T_YStart = api_evalstr STRMODE 7
+;        end
+    ; According to validation team, analog XStart and YStart are the same as for digital on 5528
+    ; (the commented code above should be reused as soon as STVTG_GetMode() has been fixed for 5528 XStart and YStart values)
+        T_XStart = api_evalstr STRMODE 8
+        T_YStart = api_evalstr STRMODE 9
+    end
+    else   ; 55XX /51xx
+        T_XStart = api_evalstr STRMODE 6
+        T_YStart = api_evalstr STRMODE 7
+    end
+
+    print "set mixer " P_HVMIX " to " T_SCANTYPE " " T_VMIXASPECT " " T_FRAMERATE " " T_WIDTH " " T_HEIGHT " " T_XStart " " T_YStart
+    if (API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+        T_odd=T_YStart%2
+        if T_odd==1
+           T_YStart=T_YStart+1
+        end
+    end
+    vmix_sscreen P_HVMIX T_SCANTYPE T_VMIXASPECT T_FRAMERATE T_WIDTH T_HEIGHT T_XStart T_YStart
+
+    vmix_enable P_HVMIX
+
+end
+
+;*******************************************************************************
+;Name        : M_HPD_TEST
+;Description : Defines the Hot Plug Detection (Normal / Reversed)
+;*******************************************************************************
+define M_HPD_TEST
+    choice_enc=""
+    ok=0
+    STVOUT_HPD=0
+    while ok==0
+      print " Is HPD Inverted ?"
+      print " 1 - YES"
+      print " 2 - NO"
+      print " Enter your choice :"
+      choice_enc=getstring
+      if choice_enc=="1"
+        STVOUT_HPD =1
+        ok=1
+      end
+      if choice_enc=="2"
+        STVOUT_HPD =0
+        ok=1
+      end
+    end
+end
+
+;*******************************************************************************
+;Name        : M_VOUT_ON / M_VOUT_OFF
+;Description : Start or terminate VOUT
+;              according to variables API_CHIPID
+;*******************************************************************************
+
+define M_VOUT_ON P_MODE
+    M_HPD_TEST
+    if API_CHIPID=="7710"
+      if P_MODE=="HD"
+          vout_init "VOUT"      VOUT_DEVICE_TYPE_7710   "HDMI_RGB888"   , , , , , , 0 0 , , , STVOUT_HDCP STVOUT_HPD
+      end
+      elif (P_MODE=="SD")||(P_MODE=="ED")
+          vout_init "VOUT" VOUT_DEVICE_TYPE_7710 "HDMI_RGB888" , , , , , , 1 1 , , , STVOUT_HDCP
+      end
+      else
+        vout_init "VOUT" VOUT_DEVICE_TYPE_7710 "HDMI_RGB888"
+      end
+    end
+    elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+      if P_MODE=="HD"
+         vout_init "VOUT" VOUT_DEVICE_TYPE_7100 "HDMI_RGB888" , , , , , , , , , , , STVOUT_HDCP STVOUT_HPD
+      end
+      elif (P_MODE=="SD")||(P_MODE=="ED")
+         vout_init "VOUT" VOUT_DEVICE_TYPE_7100 "HDMI_RGB888" , , , , , , 1 1 , , , STVOUT_HDCP STVOUT_HPD
+      end
+      else
+        vout_init "VOUT" VOUT_DEVICE_TYPE_7100 "HDMI_RGB888"
+      end
+    end
+    else
+       if P_MODE=="HD"
+         vout_init "VOUT" VOUT_DEVICE_TYPE_7200 "HDMI_RGB888" , , , , , , , , , , , STVOUT_HDCP STVOUT_HPD
+      end
+      elif (P_MODE=="SD")||(P_MODE=="ED")
+         vout_init "VOUT" VOUT_DEVICE_TYPE_7200 "HDMI_RGB888" , , , , , , 1 1 , , , STVOUT_HDCP STVOUT_HPD
+      end
+      else
+        vout_init "VOUT" VOUT_DEVICE_TYPE_7200 "HDMI_RGB888"
+      end
+    end
+    hndl_dvi = vout_open "VOUT"
+    ;vout_setparams hndl_dvi "HDMI_RGB888"
+
+    if STVOUT_HDCP
+        vout_sethdcpparams hndl_dvi
+    end
+    vout_getstate hndl_dvi
+    VOUT1_INIT=TRUE_
+end
+
+define M_VOUT_OFF
+   if VOUT1_INIT==TRUE_
+    print "   --- Set VOUT off --"
+    vout_term "VOUT" 1
+    VOUT1_INIT=FALSE_
+   end
+end
+
+;*******************************************************************************
+;Name        : M_BEIO_ON
+;Description : Init. and start Backend drivers
+;              MIX1/DENC1/VTG1/VOUT1 for Main HD or SD TV
+;              MIX2/DENC2/VTG2/VOUT2 for Aux SD TV
+;              according to variables API_CHIPID, MAIN_ONLY, MAIN_HD
+;*******************************************************************************
+define M_BEIO_ON P_MODE
+    M_VTG_ON
+    M_VOUT_ON P_MODE
+    M_MIXER_ON
+end
+;*******************************************************************************
+;Name        : M_BEIO_OFF
+;Description : Stop and terminate Backend drivers
+;              according to variables API_CHIPID, MAIN_ONLY
+;*******************************************************************************
+define M_BEIO_OFF
+    M_MIXER_OFF
+    M_VTG_OFF
+    M_VOUT_OFF
+end
+;*******************************************************************************
+;Name        : M_CHECK_PLATFORM
+;Description : Choice of the platform, set the different capabilities on platform
+;
+;*******************************************************************************
+define M_CHECK_PLATFORM
+
+  if (API_CHIPID=="7710")
+      DEVICETYPE=HDMI_DEVICE_TYPE_7710
+  end
+  elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+     DEVICETYPE=HDMI_DEVICE_TYPE_7100
+  end
+  else
+     DEVICETYPE=HDMI_DEVICE_TYPE_7200
+  end
+     OUTPUTTYPE = "HDMI_RGB888"
+     ; EDID version 3
+     ;EDIDTYPE=HDMI_EDID_TYPE_THREE
+     ;AVI Type version 3
+     AVITYPE=HDMI_AVI_TYPE_TWO
+     ;SPD Type version 1
+     SPDTYPE=HDMI_SPD_TYPE_ONE
+     ;MS Type version 1
+     MSTYPE=HDMI_MS_TYPE_ONE
+     ;Audio Type version 1
+     AUDIOTYPE=HDMI_AUDIO_TYPE_ONE
+     ;VS Type version 1
+     VSTYPE=HDMI_VS_TYPE_ONE
+end
+;*******************************************************************************
+;Name        : M_CHECK_PLATFORM
+;Description : Choice of the platform, set the different capabilities on platform
+;
+;*******************************************************************************
+define M_VIDEO_FIRMWARE
+ if API_BOARD=="mb519"&&LX_LOADED==FALSE
+     print "Loading firmwares..."
+     if API_CHIPID=="7200"
+        ; video firmware (Companion 0) is located at STVID root directory
+        Setup_LX PATH_FIRMWARES_HDMI+"VideoLX_7200A0V1_H264_VC1_MPEG2_MPEG4P2_V1_V2_0x08000000.bin" 1 0
+        ; video firmware (Companion 1) is located at STVID root directory
+        Setup_LX PATH_FIRMWARES_HDMI+"VideoLX_7200A0V2_H264_VC1_MPEG2_MPEG4P2_V1_V2_0x08300000.bin" 2 0
+
+        ; Audio firmware is only used as test dependency, located in tests/src directory
+        ;Setup_LX PATH_TESTS+"AudioLX_0x04300000.bin" 3 0
+        LX_LOADED=TRUE
+    end
+    MME_INIT
+ end
+end
+
+define M_CHECK_BAS_ERR ERRB
+  print ""
+  print "###########################################################"
+  if ERRB==FALSE_
+    print "# Basic Test.                                      Ok     #"
+  end
+  else
+    print "# Basic Test.                                      Failed #"
+  end
+  print "###########################################################"
+  print ""
+end
+
+define M_CHECK_RET_ERR ERR0 ERR1 ERR2 ERR3 ERR4 ERR5 ERR6 ERR7 ERR8 ERR9 ERR10
+  print ""
+  print "##################################################################"
+  if ERR0==FALSE_
+    print "# Expected error : ST_ERROR_ALREADY_INITIALIZED.          Ok     #"
+  end
+  else
+    print "# Expected error : ST_ERROR_ALREADY_INITIALIZED.          Failed #"
+  end
+  if ERR1==FALSE_
+    print "# Expected error : ST_ERROR_BAD_PARAMETER.                Ok     #"
+  end
+  else
+    print "# Expected error : ST_ERROR_BAD_PARAMETER.                Failed #"
+  end
+  if ERR2==FALSE_
+    print "# Expected error : ST_ERROR_NO_MEMORY.                    Ok     #"
+  end
+  else
+    print "# Expected error : ST_ERROR_NO_MEMORY.                    Failed #"
+  end
+  if ERR3==FALSE_
+    print "# Expected error : ST_ERROR_INVALID_HANDLE.               Ok     #"
+  end
+  else
+    print "# Expected error : ST_ERROR_INVALID_HANDLE.               Failed #"
+  end
+  if ERR4==FALSE_
+    print "# Expected error : ST_ERROR_NO_FREE_HANDLES.              Ok     #"
+  end
+  else
+    print "# Expected error : ST_ERROR_NO_FREE_HANDLES.              Failed #"
+  end
+  if ERR5==FALSE_
+    print "# Expected error : ST_ERROR_OPEN_HANDLE.                  Ok     #"
+  end
+  else
+    print "# Expected error : ST_ERROR_OPEN_HANDLE.                  Failed #"
+  end
+   if ERR6==FALSE_
+    print "# Expected error : ST_ERROR_UNKNOWN_DEVICE.               Ok     #"
+  end
+  else
+    print "# Expected error : ST_ERROR_UNKNOWN_DEVICE.               Failed #"
+  end
+   if ERR7==FALSE_
+    print "# Expected error : STHDMI_ERROR_VTG_UNKOWN.               Ok     #"
+  end
+  else
+    print "# Expected error : STHDMI_ERROR_VTG_UNKOWN.               Failed #"
+  end
+ if ERR8==FALSE_
+    print "# Expected error : STHDMI_ERROR_VOUT_UNKOWN.              Ok     #"
+  end
+  else
+    print "# Expected error : STHDMI_ERROR_VOUT_UNKOWN.              Failed #"
+  end
+   if ERR9==FALSE_
+    print "# Expected error : STHDMI_ERROR_INVALID_PACKET_FORMAT.    Ok     #"
+  end
+  else
+    print "# Expected error : STHDMI_ERROR_INVALID_PACKET_FORMAT.    Failed #"
+  end
+  if ERR10==FALSE_
+    print "# Expected error : STHDMI_ERROR_INFOMATION_NOT_AVAILABLE. Ok     #"
+  end
+  else
+    print "# Expected error : STHDMI_ERROR_INFOMATION_NOT_AVAILABLE. Failed #"
+  end
+  print "##################################################################"
+  print ""
+end
+

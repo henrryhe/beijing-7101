@@ -1,0 +1,181 @@
+;*******************************************************************************
+; File   :  DVMTRICK.MAC
+;           Macros to test STDVM/STPRM all trickmodes
+;*******************************************************************************
+;To source this file use the following command
+;source "../../../scripts/dvmtrick.mac"
+
+
+;*******************************************************************************
+;Name        : M_DVM_TRICK
+;Description : Trickmode Test
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;Main Call   :
+;*******************************************************************************
+
+define M_DVM_TRICK
+
+    ERRORCOUNT=0
+
+    print "  "
+    print "**********************************************************************"
+    print "                     <<< M_DVM_TRICK >>>"
+    print "**********************************************************************"
+    print "  "
+
+    print "**********************************************************************"
+    print "TRICK MODE TEST"
+    print "**********************************************************************"
+    print "  "
+
+; Check if the test stream already exist
+    DVM_GetStreamInfo HDLRC1 Trick_StreamName
+    if ERRORCODE!=ERR_NO_ERROR
+        print "Please Wait while the Stream is Being Recorded"
+
+        DVM_RecordStart HDLRC1 TSIN0 Trick_StreamName Trick_ChannelName 3 Trick_V_TYPE Trick_V_PID Trick_A_TYPE Trick_A_PID PCR Trick_P_PID
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+        for i 1 Trick_StreamDuration
+            wait 1000
+            DVM_PrintRecordTime HDLRC1
+        end
+
+        DVM_RecordStop HDLRC1
+        print "Recording Completed Successfully"
+        print "  "
+    end
+
+; Start play
+    DVM_PlayStop HDLPL1
+    DVM_PlayStart HDLPL1 Trick_StreamName SWTS0
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    Speed=0
+    WaitSecs=0
+    SeekTime=0
+
+    for FFDorBWD 1 2
+
+        for case 1 12
+            if case==1
+                Speed=100
+                WaitSecs=600
+            end
+
+; Fast
+            if case==2
+                Speed=200
+                WaitSecs=600
+            end
+
+            if case==3
+                Speed=400
+                WaitSecs=600
+            end
+
+            if case==4
+                Speed=800
+                WaitSecs=300
+            end
+
+            if case==5
+                Speed=1600
+                WaitSecs=120
+            end
+
+            if case==6
+                Speed=3200
+                WaitSecs=60
+            end
+
+            if case==7
+                Speed=6400
+                WaitSecs=30
+            end
+
+            if case==8
+                Speed=12800
+                WaitSecs=10
+            end
+
+            if case==9
+                Speed=20000
+                WaitSecs=10
+            end
+
+; Slow
+            if case==10
+                Speed=50
+                WaitSecs=600
+            end
+
+            if case==11
+                Speed=25
+                WaitSecs=600
+            end
+
+            if case==12
+                Speed=10
+                WaitSecs=600
+            end
+
+; Forward or Backward
+            if FFDorBWD==1
+                Speed=Speed
+                SeekTime=0
+            end
+            if FFDorBWD==2
+                Speed=-Speed
+                SeekTime=Trick_StreamDuration*1000
+            end
+
+; Seek
+            DVM_PlaySeek HDLPL1 ,,, SeekTime
+            wait 1000
+
+; Set speed
+            DVM_PlaySetSpeed HDLPL1 Speed
+
+; Get Start time
+            DVM_PlayGetTime HDLPL1
+            StreamStartTime=CURRENTTIME
+            ActualStartTime=TIME_NOW_MS
+
+; Wait for specified duration
+            for i 1 WaitSecs
+                wait 1000
+                DVM_PrintPlayTime HDLPL1
+            end
+
+            ActualEndTime=TIME_NOW_MS
+            DVM_PlayGetTime HDLPL1
+            StreamEndTime=CURRENTTIME
+
+            ActualDuration=ActualEndTime-ActualStartTime
+            StreamDuration=0
+            if FFDorBWD==1
+                StreamDuration=StreamEndTime-StreamStartTime
+            end
+            if FFDorBWD==2
+                StreamDuration=StreamStartTime-StreamEndTime
+            end
+;            print "Speed:" Speed " WaitSecs:" WaitSecs " ActualStartTime:" ActualStartTime " ActualEndTime:" ActualEndTime " StreamStartTime:" StreamStartTime " StreamEndTime:" StreamEndTime
+            print "Speed:" Speed " ActualDuration:" ActualDuration " StreamDuration:" StreamDuration
+        end
+    end
+
+    DVM_PlayStop HDLPL1
+
+    print "  "
+    print "Trickmode tests Completed Successfully"
+    print "  "
+
+end ;M_DVM_TRICK
+
+M_DVM_TRICK
+
+;EOF

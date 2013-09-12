@@ -1,0 +1,51 @@
+console off
+
+define mymb411
+  ## change here the CKGA reference clock frequency (27 MHz for non-patched mb411, 30 for cocoref or patched board)
+  set $input_freq=27
+  source sh4connect.cmd
+#  source C:\STM\ST40R3.1.1\sh-superh-elf\stdcmd\registers.cmd
+#  source C:\STM\ST40R3.1.1\sh-superh-elf\stdcmd\clocks.cmd
+#  source C:\STM\ST40R3.1.1\sh-superh-elf\stdcmd\mb411.cmd
+  source ..\..\registers.cmd
+  source ..\..\clocks.cmd
+#  source ..\..\7109_cut1_0_hw_mb411.cmd
+  source ..\..\7109_cut3_0_hw_mb411.cmd
+#  source ..\..\Secured_7109_mb411.cmd
+
+  source plugins.cmd
+##connectsh4le $arg0 mb411_setup "resettype=hard linkspeed=9.765KHz linktimeout=5"
+  connectsh4le $arg0 echo $arg1 mb411_setup
+  mb411_setup
+end
+
+define mb411bypass_setup
+  enable_jtag
+  ## Manual control of JTAG (manual TCK)
+  jtag mode=manual
+
+  ## Reset TMC and then bypass to ST40
+  jtag tck=01010 ntrst=00011 tms=00000 tdo=01111
+
+  ## Reset STb7100 leaving ST40 in reset hold
+  jtag nrst=0
+  sleep 0 20000
+  jtag asebrk=0
+  sleep 0 20000
+  jtag asebrk=1
+  sleep 0 20000
+  jtag nrst=1
+
+  ## Normal control of JTAG
+  jtag mode=normal
+end
+
+set pagination 0
+##set remotetimeout 20
+##set debug remote 1
+file vid_test.exe
+
+## The micro connect address has to be updated according to the one used.
+mymb411 10.129.101.222 "msglevel=none linktimeout=5 linkspeed=10MHz jtagreset jtagpinout=st40 -inicommand mb411bypass_setup"
+load
+tbreak main

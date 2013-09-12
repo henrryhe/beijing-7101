@@ -1,0 +1,64 @@
+*board_mb519_lmi0_0xFFp1:
+--defsym _start=0x88C01000 --defsym _stack=0x89bffffc
+
+*board_mb519_lmi0_0x1Fp1:
+--defsym _start=0x88C01000 --defsym _stack=0x89bffffc
+
+*board_mb519_lmi0_0x07p1:
+--defsym _start=0x88C01000 --defsym _stack=0x89bffffc
+
+*board_mb519_lmi0_0x19p1:
+--defsym _start=0x88C01000 --defsym _stack=0x89bffffc
+
+*board_mb519_lmi0_0x0Bp1:
+--defsym _start=0x88C01000 --defsym _stack=0x89bffffc
+
+*board_mb519_lmi0_0x15p1:
+--defsym _start=0x88C01000 --defsym _stack=0x89bffffc
+
+*board_mb519_lmi0_0x03p1:
+--defsym _start=0x88C01000 --defsym _stack=0x89bffffc
+
+*board_mb519_lmi0_0x05p1:
+--defsym _start=0x88C01000 --defsym _stack=0x89bffffc
+
+*board_mb519_lmi0_0x09p1:
+--defsym _start=0x88C01000 --defsym _stack=0x89bffffc
+
+*board_mb519_lmi0_0x11p1:
+--defsym _start=0x88C01000 --defsym _stack=0x89bffffc
+
+*board_mb519_lmi1p1:
+--defsym _start=0x98001000 --defsym _stack=0x987ffffc
+
+*board_mb519_emip1:
+--defsym _start=0x81001000 --defsym _stack=0x810cdffc
+
+*board_link:
+%{mboard=board_mb519_lmi0_0xFFp1:%(board_mb519_lmi0_0xFFp1)}\
+%{mboard=board_mb519_lmi0_0x1Fp1:%(board_mb519_lmi0_0x1Fp1)}\
+%{mboard=board_mb519_lmi0_0x07p1:%(board_mb519_lmi0_0x0Bp1)}\
+%{mboard=board_mb519_lmi0_0x19p1:%(board_mb519_lmi0_0x19p1)}\
+%{mboard=board_mb519_lmi0_0x0Bp1:%(board_mb519_lmi0_0x0Bp1)}\
+%{mboard=board_mb519_lmi0_0x15p1:%(board_mb519_lmi0_0x0Bp1)}\
+%{mboard=board_mb519_lmi0_0x03p1:%(board_mb519_lmi0_0x03p1)}\
+%{mboard=board_mb519_lmi0_0x05p1:%(board_mb519_lmi0_0x0Bp1)}\
+%{mboard=board_mb519_lmi0_0x09p1:%(board_mb519_lmi0_0x09p1)}\
+%{mboard=board_mb519_lmi0_0x11p1:%(board_mb519_lmi0_0x11p1)}\
+%{mboard=board_mb519_lmividp1:%(board_mb519_lmividp1)}\
+%{mboard=board_mb519_emip1:%(board_mb519_emip1)}\
+
+*lib_os21bsp_base:
+%{mboard=board_mb519_lmi0_0xFFp1:mb519}\
+%{mboard=board_mb519_lmi0_0x1Fp1:mb519}\
+%{mboard=board_mb519_lmi0_0x07p1:mb519}\
+%{mboard=board_mb519_lmi0_0x19p1:mb519}\
+%{mboard=board_mb519_lmi0_0x0Bp1:mb519}\
+%{mboard=board_mb519_lmi0_0x15p1:mb519}\
+%{mboard=board_mb519_lmi0_0x03p1:mb519}\
+%{mboard=board_mb519_lmi0_0x05p1:mb519}\
+%{mboard=board_mb519_lmi0_0x09p1:mb519}\
+%{mboard=board_mb519_lmi0_0x11p1:mb519}\
+%{mboard=board_mb519_lmividp1:mb519}\
+%{mboard=board_mb519_emip1:mb519}\
+

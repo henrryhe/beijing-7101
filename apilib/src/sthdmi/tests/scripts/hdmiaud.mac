@@ -1,0 +1,101 @@
+; ****************************************************************************
+; File         : HDMIAUD.MAC
+; Requirements :
+; Author       : Adel Chaouch - July 2005
+; ****************************************************************************
+; Test :
+
+ define M_HDMI_AUDIO ALL_TEST
+  api_checkerr
+  hndl_hdmi=0
+  ;if HDOUT==0
+ ;   print " capabilities not available! "
+ ; end
+ ; else
+
+STVOUT_HDCP = 0
+STVOUT_HPD = 0
+
+    OUTPUTTYPE="HDMI_RGB888"
+    HD_MODE="MODE_1080I60000_74250"
+    print " -----------------------------------------------"
+    print "                 AUDIO TEST                     "
+    print "         TEST HDMI PCM AUDIO OUTPUT     "
+    print " -----------------------------------------------"
+    print " "
+    M_BEIO_ON "HD"
+    ERRORCOUNT=0
+    api_checkerr
+    M_LAYER1_ON 1920 1080
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+    ; for linux
+    if (ST_OS=="LINUX")
+    vid_setup HDLVID1 1 LMI_VID
+    end
+
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 DEFAULT_HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 STVOUT_HDCP
+    print " Please Wait for few minutes ..."
+    vout_start
+    vout_enable
+    if (ST_OS=="LINUX")
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"atsc_05c.m2v"
+    end
+    else
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"MELCO2B.M2V"
+    end
+    vid_inject -1
+    vid_start , 0 1 1
+if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+    AUD_STSETDIGOUT 1
+    aud_stmute 3
+    aud_getfile HDMIAUDIODATA+"PIA48128.M1A"
+    aud_inject 10
+    aud_drstart a_mp1 A_ES 48000
+    aud_kill
+    aud_drstop
+    aud_close
+    aud_term
+end
+if (API_CHIPID=="7710")
+    aud_init
+    aud_open
+    aud_opunmute OBJ_OPMULTI
+    aud_opunmute OBJ_OPSPDIF
+    ;aud_getfile "C:/CELIN_nor.PCM"
+    ;aud_getfile HDMIAUDIODATA+"CELIN_nor.PCM"
+    aud_getfile HDMIAUDIODATA+"billjn.pcm" 1
+    ; aud_getfile HDMIAUDIODATA+"leftsine_Rightsilence.pcm" 1
+    ;aud_getfile HDMIAUDIODATA+"asample.mpg"
+    ;aud_getfile HDMIAUDIODATA+"PIA48128.M1A"
+    ;aud_getfile HDMIAUDIODATA+"PIA48064.M1A"
+    aud_inject 20
+    aud_drstart PCM ES 48000 OBJ_DRCOMP
+    ;aud_drstart mpg1 es 48000
+    aud_opsetdigout 1,OBJ_OPMULTI,COPYRIGHT_FREE,0
+end
+
+    print "   --- Set HDMI on ---"
+    hdmi_init "HDMI"
+    hndl_hdmi=hdmi_open "HDMI"
+    ; send AUDIO info frame
+    ;hdmi_fillaudio hndl_hdmi
+    api_quest " Is Video and Audio displayed on the Screen ?"
+    print "   --- Set HDMI off ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    ;AUD_STOP_PCM0
+    M_ALL_OFF
+    print "--- end -------------------------------"
+    M_CHECK_TEST_ERROR 0
+    ERR_BAS=GLOBERR
+  ; end
+end
+

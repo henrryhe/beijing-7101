@@ -1,0 +1,34 @@
+# Sample ST200 makefile
+
+DVD_MAKE_VERSION := 2
+ifdef IN_OBJECT_DIR
+
+include $(DVD_MAKE)/generic.mak
+
+HEADER_IMPORTS := <components with header files only>
+ST200_IMPORTS := <imported components>
+ST200_EXPORTS := <exported library and header>
+ST200_TARGETS := <exported library>
+
+OBJS := <objects in exported library>
+
+include $(DVD_MAKE)/defrules.mak
+
+<exported library>: $(OBJS)
+	@$(ECHO) Building $@
+	$(BUILD_LIBRARY)
+
+clean:
+	@$(ECHO) Cleaning $(ST200_TARGETS)
+	-$(RM) $(OBJS)
+	-$(RM) $(ST200_TARGETS)
+
+# Local header dependencies
+
+else
+
+include $(DVD_MAKE)/builddir.mak
+
+endif
+
+# End of sample ST200 makefile

@@ -1,0 +1,64 @@
+; ****************************************************************************
+; File         : VOUTBAS.MAC
+; Requirements :
+; Author       : Jacques GAMON - November 2000
+; ****************************************************************************
+; Test to check basic features.
+define M_BASIC
+  print "-----------------------------------------"
+  api_checkerr
+  api_error 0
+  ERRORCOUNT=0
+  if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+    M_DENC_INIT
+    OUTPUTTYPE="CVBS"
+  end
+  else
+    OUTPUTTYPE="YCbCr422_8"
+  end
+  print ""
+  print "######################################################"
+  print "###                Basic Test.                     ###"
+  print ""
+  print "--- start -----------------------------"
+  vout_revision
+  vout_init "VOUT" DEVICETYPE OUTPUTTYPE
+  vout_capa "VOUT"
+  if SELECTEDOUTPUT!=OUTPUTTYPE
+    ERRORCOUNT=ERRORCOUNT+1
+    print "!!! outputs :   " SELECTEDOUTPUT "                 " OUTPUTTYPE
+    print "!!! ^^^^^^^^^ selected ^^^^^^^^ expected "
+  end
+  else
+    print " Selected Output OK !"
+  end
+  hnd=vout_open "VOUT"
+  vout_setparams hnd 1
+
+  ; VOUT_SetOption/GetOption(not supported in first version on stvout)
+  ; if ((DENCVERSION>11)&&(DEVICETYPE!=VOUT_DEVICE_TYPE_4629))
+  ;  vout_setoption hnd GENERAL_AUX_NOT_MAIN 0
+  ;  vout_getoption hnd
+  ; end
+  vout_enable hnd
+  vout_getparams hnd 1
+  vout_disable hnd
+  vout_close hnd
+  vout_term "VOUT"
+  print "--- end -------------------------------"
+  M_CHECK_TEST_ERROR 0
+  ERR_BAS=GLOBERR
+  if DEVICETYPE!=VOUT_DEVICE_TYPE_DIGOUT
+    M_DENC_TERM
+  end
+end
+
+
+
+
+
+
+
+
+
+

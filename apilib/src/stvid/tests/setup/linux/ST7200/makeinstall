@@ -1,0 +1,58 @@
+#!/bin/sh
+
+if [ "$ROOTFS_DIR" = "" ]; then
+    echo "Please source the file $HOME/bin/start_xxx"
+    exit
+fi
+
+DEST=$ROOTFS_DIR
+EXE=vid_test.exe
+SCRIPTS=vid/
+
+chmod -R 755 $DEST/scripts/$SCRIPTS
+
+echo "Install 'exe' file..."
+CMD='/bin/rm -rf '$DEST'/'$EXE
+echo $CMD
+$CMD
+
+CMD='/bin/ln -s exports/bin/'$EXE' '$ROOTFS_DIR'/'$EXE
+echo $CMD
+$CMD
+
+echo "Install macros and firmwares..."
+CMD='/bin/cp ../scripts/* ../../*.bin ./*.bin '$DEST'/scripts/'$SCRIPTS
+echo $CMD
+$CMD
+
+echo "Install 'gam' files..."
+if !(test -d $DEST/scripts/data)
+then
+   mkdir $DEST/scripts/data
+fi
+chmod -R 755 $DEST/scripts/data
+CMD='/bin/cp ../../../dvdgr-prj-stapigat/data/* '$DEST'/scripts/data'
+echo $CMD
+$CMD
+
+if [ "$DVD_FRONTEND" = "7200" ]; then
+    echo "Install loadmods_7200 in /ROOTFS_DIR/ ..."
+    CMD='/bin/cp ../setup/linux/ST7200/loadmods_7200 '$ROOTFS_DIR''
+    echo $CMD
+    $CMD
+
+    echo "Install target_7200.cfg in /ROOTFS_DIR/ ..."
+    CMD='/bin/cp ../setup/linux/ST7200/target_7200.cfg '$ROOTFS_DIR''
+    echo $CMD
+    $CMD
+
+    echo "Install loadimage_7200 in $HOME/bin ..."
+    CMD='/bin/cp ../setup/linux/ST7200/loadimage_7200 '$APPS_DIR'/bin'
+    echo $CMD
+    $CMD
+    
+    echo "Install Make_MME_LxLoader in $HOME/bin ..."
+    CMD='/bin/cp ../setup/linux/ST7200/Make_MME_LxLoader '$APPS_DIR'/bin'
+    echo $CMD
+    $CMD
+fi

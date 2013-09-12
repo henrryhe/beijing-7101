@@ -1,0 +1,185 @@
+;*************************************************************
+;           Testtool Macros for testing STBlit Driver
+
+; Test the STBLIT_CopyRectangle function. This test performs
+; a large number of blits from source to destination and compares
+; them all for pixel accuracy with the expected operation.
+
+; The low level implementations are expected to use optimal inner
+; loops to transfer data - therefore a number of start/end cases
+; will exist. Given that we are already running on a range of
+; implementations, its better not to tailor the selected resolutions
+; too much. Therefore, we cover a good range of x, y and widths.
+
+;*************************************************************
+
+surfwidth = 320
+surfheight = 20
+
+define test width
+    print "Testing Width " width
+    for j 0 7
+        for k 0 7
+            xd = j
+            yd = j/2
+
+            xs = k
+            ys = k/2
+
+            width = width
+            height = 1+j
+
+            ;print "Testing (" xs ", " ys ") " width "x" height " to (" xd ", " yd ") "
+            surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+            surf_stblit_copyrect handle "dst" xd yd "src" xs ys width height
+
+            surf_check_outside "dst" xd yd width height "Black" 
+            surf_check_inside "dst" xd yd width height "Gradient" xd-xs yd-ys
+        end
+    end
+end
+
+define testOverlap width
+    print "Testing Width " width
+    for j 0 7
+        for k 0 7
+            xd = j
+            yd = j/2
+
+            xs = k
+            ys = k/2
+
+            width = width
+            height = 1+j
+
+            ;print "Testing (" xs ", " ys ") " width "x" height " to (" xd ", " yd ") "
+            surf_fill_pattern "dst" 0 0 surfwidth surfheight "Gradient"
+            surf_stblit_copyrect handle "dst" xd yd "dst" xs ys width height
+
+            surf_check_outside "dst" xd yd width height "Gradient" 
+            surf_check_inside "dst" xd yd width height "Gradient" xd-xs yd-ys
+        end
+    end
+end
+
+define testcopyrect depth
+    print "."
+    print "***********************************"
+    print "CopyRect Test " depth
+    print 
+    print "*********************************** "
+
+    surf_create "dst" depth surfwidth surfheight "Black"
+    surf_create "src" depth surfwidth surfheight "Gradient"
+
+    blt_setcontext 1 1 0 0 0 0 3 4294967295 0 0 0 0 0 0 0 1 0 0 1000 1000 0
+
+    ; Test the following widths. All widths would take too long.
+    ; This cutdown version gives us good coverage.
+
+    for testwidth 1 15
+        test testwidth
+    end
+
+    test 21
+    test 47
+    test 54
+
+    for testwidth 251 258
+        test testwidth
+    end
+
+    print "."
+    print "***********************************"
+    print "CopyRect Test Overlap " depth
+    print "*********************************** "
+    testoverlap 2
+    testoverlap 8
+    testoverlap 15
+    testoverlap 80
+    testoverlap 157
+    testoverlap 200
+    testoverlap 275
+
+    surf_delete "dst"
+    surf_delete "src"
+end
+
+define testcopyrectcutdown depth
+    print "."
+    print "***********************************"
+    print "CopyRect Test " depth
+    print 
+    print "*********************************** "
+
+    surf_create "dst" depth surfwidth surfheight "Black"
+    surf_create "src" depth surfwidth surfheight "Gradient"
+
+    blt_setcontext 1 1 0 0 0 0 3 4294967295 0 0 0 0 0 0 0 1 0 0 1000 1000 0
+
+    test 23
+    test 154
+
+    print "."
+    print "***********************************"
+    print "CopyRect Test Overlap " depth
+    print "*********************************** "
+    testoverlap 157
+
+    surf_delete "dst"
+    surf_delete "src"
+end
+
+api_error 0
+
+blt_init "blitter1" 1 1 1 1 1000
+handle=blt_open "blitter1"
+
+; For the first test of a particular colour depth, perform a bit more
+; indepth test than susequent tests
+
+; 32 bpp
+testcopyrect        "ARGB8888"
+
+; 24 bpp
+testcopyrect        "RGB888"
+testcopyrectcutdown "ARGB8565"
+testcopyrectcutdown "S_YCBCR888_444"
+testcopyrectcutdown "U_YCBCR888_444"
+
+; 16 bpp
+testcopyrect        "RGB565"
+testcopyrectcutdown "ARGB1555"
+testcopyrectcutdown "ARGB4444"
+testcopyrectcutdown "ACLUT88"
+
+; 16 bpp compressed
+testcopyrect        "S_YCBCR888_422"
+testcopyrectcutdown "U_YCBCR888_422"
+
+; 8 bpp
+testcopyrect        "CLUT8"
+testcopyrectcutdown "ALPHA8"
+testcopyrectcutdown "BYTE"
+testcopyrectcutdown "ACLUT44"
+
+; These are not yet supported by the testtool.
+;testcopyrect "CLUT4"
+;testcopyrect "ALPHA4"
+;testcopyrect "CLUT2"
+;testcopyrect "CLUT1"
+;testcopyrect "ALPHA1"
+;testcopyrect "S_YCBCR888_420"
+;testcopyrect "U_YCBCR888_420"
+;testcopyrect "U_AYCBCR6888_444"
+
+
+blt_close handle
+blt_term "blitter1"
+
+api_checkerr 0
+
+del test
+del testoverlap
+del testcopyrect
+del testcopyrectcutdown

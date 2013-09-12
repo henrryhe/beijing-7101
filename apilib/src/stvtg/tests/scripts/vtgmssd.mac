@@ -1,0 +1,223 @@
+; ****************************************************************************
+; File         : VTGMSSD.MAC
+; Tests        : VTG timing modes in master mode on SD TV
+; Requirements :
+; Author       : HSM - BS - AC- January 2000
+; ****************************************************************************
+
+; Test to check VTG master mode features on SD TV.
+define M_MSSD_TESTS
+    api_report "MASTER_SD_TESTS"
+    ERRORTESTS=0
+    OLD_VTG_NAME=VTG_NAME
+    HDLVTG=0
+    print ""
+    if (API_CHIPID=="7015")||(API_CHIPID=="7020")
+        VTG_NAME="VTG2"
+        vtg_init VTG_NAME , h8000
+        HDLVTG=vtg_open VTG_NAME
+        M_11_MASTER_SD
+        M_41_MASTER_SD_DECLINATION
+    end
+    elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+        api_report " Testing VTG2 with SD mode "
+        VTG_NAME="VTG2"
+        vtg_init VTG_NAME , hB9005034
+        HDLVTG=vtg_open VTG_NAME
+        if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+                vtg_set HDLVTG
+                M_LAYER_INIT_SD
+        end
+
+        M_11_MASTER_SD
+        M_LAYER_TERM_SD
+        vtg_close HDLVTG
+        vtg_term VTG_NAME
+
+       api_report " Testing VTG1 with SD mode "
+        VTG_NAME="VTG1"
+        vtg_init VTG_NAME
+        HDLVTG=vtg_open VTG_NAME
+        if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+                vtg_set HDLVTG
+                RET_STR = displayvideo 0
+                BUFF_ADD_1 = api_evalstr RET_STR 1
+                M_LAYER_INIT_HD
+        end
+
+        M_11_MASTER_SD
+        M_41_MASTER_SD_DECLINATION
+        M_LAYER_TERM_HD
+
+    end
+    elif (API_CHIPID=="7710")
+        VTG_NAME="VTG2"
+        if (CHIP_CUT=="STI7710_CUT2x")
+           vtg_init VTG_NAME , h20103034
+        end
+       else
+          vtg_init VTG_NAME , h20103C34
+       end
+
+        HDLVTG=vtg_open VTG_NAME
+        M_11_MASTER_SD
+        ;M_DISPLAY_OFF
+        api_report "M_VTG1_SD_HD"
+        ERRORCOUNT=0
+        ;vtg_close HDLVTG
+        ;vtg_term VTG_NAME
+        ;M_DISPLAY_ON
+        VTG_NAME1="VTG1"
+        vtg_init VTG_NAME1
+        HDLVTG1=vtg_open VTG_NAME1
+
+        denc_setmode HDLDENC "PAL" 0 1 0
+        api_report " --> VTG1 : SD Mode "
+        M_DISP_SET_MODE VTG_NAME1 HDLVTG1 "MODE_576I50000_13500"
+        api_quest  "Is picture on Tv displayed correctly ?"
+        M_CHECK_RETCODE 0
+        api_report " --> VTG1 : HD Mode "
+        M_DISP_SET_MODE VTG_NAME1 HDLVTG1 "MODE_1080I60000_74250"
+        api_quest "Mode 1080i(1250) OK on Monitor ?"
+        M_CHECK_RETCODE 0
+        ;M_41_MASTER_SD_DECLINATION
+        api_report "M_VTG1_SD_HD" ERRORCOUNT
+        ERRORTESTS=ERRORTESTS+ERRORCOUNT
+
+        vtg_close HDLVTG1
+        vtg_term VTG_NAME1
+   end
+   elif (API_CHIPID=="7200")
+        VTG_NAME= "VTG2"
+        vtg_init VTG_NAME , hFD10C200
+        HDLVTG=vtg_open VTG_NAME
+        M_11_MASTER_SD
+
+   end
+   else
+        VTG_NAME= "VTG"
+        vtg_init VTG_NAME
+        HDLVTG=vtg_open VTG_NAME
+        M_11_MASTER_SD
+    if (API_CHIPID=="5528")||(API_CHIPID=="5100")||(API_CHIPID=="5301")
+        M_41_MASTER_SD_DECLINATION
+    end
+   end
+    vtg_close HDLVTG
+    vtg_term VTG_NAME
+
+    VTG_NAME=OLD_VTG_NAME
+    api_report "M_MASTER_SD_TESTS" ERRORTESTS
+end
+
+; Test subroutine for master SD
+define M_11_MASTER_SD
+    api_report "MASTER_SD"
+    ERRORCOUNT=0
+
+    api_report " --> NTSC:"
+    if (API_CHIPID=="7015")||(API_CHIPID=="7020")||(API_CHIPID=="5528")||(API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+        denc_setmode HDLDENC "NTSCM" 0 1 0
+    end
+    else
+        denc_setmode HDLDENC "NTSCM"
+    end
+    M_DISP_SET_MODE VTG_NAME HDLVTG "MODE_480I59940_13500"
+    api_quest "Mode NTSC OK ?"
+    M_CHECK_RETCODE 0
+    api_report " --> PAL:"
+    denc_setmode HDLDENC "PAL"
+    M_DISP_SET_MODE VTG_NAME HDLVTG "MODE_576I50000_13500"
+    api_quest "Mode PAL OK ?"
+
+    M_CHECK_RETCODE 0
+    api_report "MASTER_SD" ERRORCOUNT
+    ERRORTESTS=ERRORTESTS+ERRORCOUNT
+end
+
+
+; Test subroutine for master SD tests with 60Hz / square pixel declination
+define M_41_MASTER_SD_DECLINATION
+
+    api_report "MASTER_SD_DECLINATION"
+    ERRORCOUNT=0
+    if (API_CHIPID=="7015")||(API_CHIPID=="7020")
+
+    denc_setmode HDLDENC "NTSCM" 0 1 1
+    M_DISP_SET_MODE "VTG2" HDLVTG "MODE_480I60000_13514"
+    api_quest "Mode NTSC 60Hz OK ?"
+    M_CHECK_RETCODE 0
+
+    denc_setmode HDLDENC "NTSCM" 1 1 1
+    M_DISP_SET_MODE "VTG2" HDLVTG "MODE_480I60000_12285"
+    api_quest "Mode NTSC 60Hz square OK ?"
+    M_CHECK_RETCODE 0
+
+    denc_setmode HDLDENC "NTSCM" 1 1 0
+    M_DISP_SET_MODE "VTG2" HDLVTG "MODE_480I59940_12273"
+    api_quest "Mode NTSC square OK ?"
+    M_CHECK_RETCODE 0
+
+    denc_setmode HDLDENC "PAL" 1
+    M_DISP_SET_MODE "VTG2" HDLVTG "MODE_576I50000_14750"
+    api_quest "Mode PAL square OK ?"
+    M_CHECK_RETCODE 0
+
+    api_report "MASTER_SD_DECLINATION" ERRORCOUNT
+    ERRORTESTS=ERRORTESTS+ERRORCOUNT
+    end
+
+    else
+
+    denc_setmode HDLDENC "NTSCM" 0 1 1
+    M_DISP_SET_MODE VTG_NAME HDLVTG "MODE_480I60000_13514"
+    api_quest "Mode NTSC 60Hz OK ?"
+    M_CHECK_RETCODE 0
+
+    denc_setmode HDLDENC "NTSCM" 1 1 1
+    M_DISP_SET_MODE VTG_NAME HDLVTG "MODE_480I60000_12285"
+    api_quest "Mode NTSC 60Hz square OK ?"
+    M_CHECK_RETCODE 0
+
+    denc_setmode HDLDENC "NTSCM" 1 1 0
+    M_DISP_SET_MODE VTG_NAME HDLVTG "MODE_480I59940_12273"
+    api_quest "Mode NTSC square OK ?"
+    M_CHECK_RETCODE 0
+
+    if (API_CHIPID=="5100")||(API_CHIPID=="5301") ;Update the Xstart of picture
+         Gdma_ChgXDO 1
+    end
+    denc_setmode HDLDENC "PAL" 1 1
+    M_DISP_SET_MODE VTG_NAME HDLVTG "MODE_576I50000_14750"
+    api_quest "Mode PAL square OK ?"
+    M_CHECK_RETCODE 0
+    if (API_CHIPID=="5100")||(API_CHIPID=="5301") ;Reset the Xstart of picture
+         Gdma_ChgXDO 0
+    end
+    api_report "MASTER_SD_DECLINATION" ERRORCOUNT
+    ERRORTESTS=ERRORTESTS+ERRORCOUNT
+    end
+
+end
+
+
+; test to check VTG1 on Sti7710 : VTG1/Mix1 with SD and HD mode.
+define M_11_MASTER_HD
+    api_report "M_11_MASTER_HD"
+    ERRORCOUNT=0
+    denc_setmode HDLDENC "NTSCM" 0 1 0
+    api_report " --> :VTG1 : SD Mode "
+    M_DISP_SET_MODE VTG_NAME HDLVTG "MODE_480I59940_13500"
+    api_quest  "Is picture on Tv displayed correctly ?"
+    M_CHECK_RETCODE 0
+    api_report " --> :VTG1 : HD Mode "
+    M_DISP_SET_MODE "VTG_NAME" HDLVTG "MODE_1080I50000_72000"
+    api_quest "Mode 1080i(1250) OK on Monitor ?"
+    M_CHECK_RETCODE 0
+    api_report "M_11_MASTER_HD" ERRORCOUNT
+    ERRORTESTS=ERRORTESTS+ERRORCOUNT
+end
+
+
+
+

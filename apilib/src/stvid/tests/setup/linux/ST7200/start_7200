@@ -1,0 +1,102 @@
+#!/bin/sh
+
+echo "Setting up the 7200 environment on mb519"
+
+# **********************************************************
+# ********** SET ENVIRONMENT VARIABLES *********************
+# **********************************************************
+
+setenv MY_LINUX_DISTRIB     /opt/STM/linux-sh4_stm23ear                      # Linux distribution directory
+setenv MY_TARGET            $MY_LINUX_DISTRIB/devkit/sh4/<TBD>	             # <TBD> Must the the user name. Specific target for User
+setenv ROOTFS_DIR   		$MY_TARGET/root/<TBD>				             # <TBD> Must be user directory
+setenv KDIR                 <TBD>								             # <TBD> Must be Kernel directory
+
+setenv TREE_ROOT                    /vob
+setenv DVD_PLATFORM                 mb519
+setenv DVD_TRANSPORT                STPTI4
+setenv DVD_SERVICE                  DVB
+setenv DVD_MAKE                     $TREE_ROOT/dvdbr-prj-make
+setenv DVD_ROOT                     $TREE_ROOT
+setenv DVD_EXPORTS                  $ROOTFS_DIR/exports
+setenv ARCHITECTURE                 ST40
+setenv DVD_OS                       LINUX
+setenv DVD_BACKEND                  7200
+setenv DVD_FRONTEND                 7200
+
+# MULTICOM specific
+setenv OS_0                         linux
+setenv OS_1                         os21
+setenv PLATFORM                     $DVD_PLATFORM
+setenv KERNELDIR                    $KDIR
+setenv MULTICOM                     1
+setenv RPC_ROOT                     ~/Linux/multicom-3.1.2
+setenv LSPROOT                      $KDIR
+
+setenv DVD_TOOLSET                  LINUX
+
+#setenv DVD_EXPORTS                 $DEVPATH/dvdgr-prj-stvid/tests/lib
+#setenv DVD_MODULES_EXPORTS         $DEVPATH/dvdgr-prj-stvid/tests/modules
+setenv DVD_LAYERAPI                 TRUE
+
+#setenv DVD_BUILDING_IN_VOB         true
+
+setenv LINUX_ARCHITECTURE           LINUX_FULL_KERNEL_VERSION
+
+#setenv DEBUG 1
+
+#PTI test
+#setenv STCLKRV_CRYSTAL_ERROR        7000
+#setenv STCLKRV_NO_PTI               1
+#setenv STCLKRV_NO_PTI 1 
+#setenv STVID_NO_PTI 1
+#setenv STVID_NO_AVSYNC 1
+#setenv STVID_NO_CLKRV 1
+#setenv STVID_NO_TRICKMODE 1
+#setenv USE_VTGSIM 1
+#setenv STUB_INJECT 1
+
+#No HDD
+setenv STVID_NO_HDD                 1
+
+setenv STVID_DEBUG_GET_STATISTICS   1
+#setenv STVID_ICACHE_DISABLED        1
+#setenv STVID_DCACHE_DISABLED        1
+#setenv STVID_TRACE_BUFFER_UART      1
+
+# DEBUG
+#setenv DEBUG                        1
+#setenv DVD_CFLAGS                   ' -g '
+
+#TN
+#setenv STUB_INJECT                  1
+setenv STVIDTESTHARNESSBUILD        1
+#TN
+
+setenv DVD_STVIN                    MASTER
+
+
+setenv USE_STCOMMON_MODULE          1
+#setenv STVID_ENABLE_AUDIO           1
+#setenv CLKRV_TESTING                1
+
+setenv DVD_CFLAGS		-DSTAVMEM_DEBUG_MEMORY_STATUS
+
+setenv ARCH                     sh
+setenv CROSS_COMPILE            sh4-linux-
+
+set path=($MY_LINUX_DISTRIB/devkit/sh4/bin /opt/STM/st40load/bin)
+set path=($path /usr/X11R6/bin /bin /usr/bin /sw/st/util/local/bin /sw/st/util/common/bin /apa/util/bin /usr/atria/bin /bin /usr/local/sbin /usr/local/bin /sbin)
+set path=($path $HOME/bin /usr/atria/bin /vob/dvdbr-admin/scripts/user $RPC_ROOT/bin/linux/ia32 .)
+
+
+# modif / nicolas
+#set lpath=()
+#setenv STPTI_CONFIG			"-DSTPTI_DVB_SUPPORT -DINDEXING_SUPPORT"
+
+
+rm -f ~/Linux/multicom-3.1.2 ~/Linux/stdcmd
+ln -s ~/Linux/Multicom/multicom-3.1.2_LDDE2.2 	~/Linux/multicom-3.1.2
+ln -s $MY_LINUX_DISTRIB/devkit/sh4/stdcmd       ~/Linux/stdcmd
+
+echo "  --> Shell variables initialized."
+

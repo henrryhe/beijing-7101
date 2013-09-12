@@ -1,0 +1,227 @@
+;*************************************************************
+;           Testtool Macros for testing STBlit Driver
+
+; Test the STBLIT_FillRectangle function. This test performs
+; a large number of fills and compares them all for pixel accuracy
+; with the expected operation.
+
+; The low level implementations are expected to use optimal inner
+; loops to transfer data - therefore a number of start/end cases
+; will exist. Given that we are already running on a range of
+; implementations, its better not to tailor the selected resolutions
+; too much. Therefore, we cover a good range of x, y and widths.
+
+;*************************************************************
+
+
+surfwidth = 200
+surfheight = 40
+
+define test depth
+    print "."
+    print "***********************************"
+    print "Clipping Test " depth
+    print "*********************************** "
+
+    ; Padding bitmap to avoid a current bug in STAVMEM.
+    ; When GNBvd13397 is fixed, it should be removed.
+    surf_create "pad" depth surfwidth 1 "Black"
+
+    surf_create "dst" depth surfwidth surfheight "Black"
+    surf_create "src" depth surfwidth surfheight "Gradient"
+
+    cx = 21
+    cy = 10
+    cw = 100
+    ch = 15
+
+
+    print "FillRectangle"
+
+    blt_setcontext 1 1 0 0 0 0 3 4294967295 0 0 0 0 0 0 0 1 cx cy cw ch 0
+
+    print "Rect completely inside clip"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_fillrect handle "dst" cx+1 cy+1 cw-2 ch-2 "Red"
+    surf_check_outside "dst" cx+1 cy+1 cw-2 ch-2 "Black" 
+    surf_check_inside "dst" cx+1 cy+1 cw-2 ch-2 "Red" 
+
+    print "Rect completely fills clip - clip all edges"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_fillrect handle "dst" cx-1 cy-1 cw+2 ch+2 "Red"
+    surf_check_outside "dst" cx cy cw ch "Black" 
+    surf_check_inside "dst" cx cy cw ch "Red" 
+
+    print "Rectangle left of clip (do nothing!)"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_fillrect handle "dst" cx-2 cy 1 1 "Red"
+    surf_check_inside "dst" 0 0 surfwidth surfheight "Black" 
+
+    print "Rectangle right of clip (do nothing!)"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_fillrect handle "dst" cx+cw cy 1 1 "Red"
+    surf_check_inside "dst" 0 0 surfwidth surfheight "Black" 
+
+    print "Rectangle above of clip (do nothing!)"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_fillrect handle "dst" cx cy-2 1 1 "Red"
+    surf_check_inside "dst" 0 0 surfwidth surfheight "Black" 
+
+    print "Rectangle below of clip (do nothing!)"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_fillrect handle "dst" cx cy+ch 1 1 "Red"
+    surf_check_inside "dst" 0 0 surfwidth surfheight "Black" 
+
+    print "Clip top left"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_fillrect handle "dst" 0 0 40 20 "Red"
+    surf_check_outside "dst" cx cy 40-cx 20-cy "Black" 
+    surf_check_inside "dst" cx cy 40-cx 20-cy "Red" 
+
+    print "Clip bottom right"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_fillrect handle "dst" 60 20 100 10 "Red"
+    surf_check_outside "dst" 60 20 cx+cw-60 cy+ch-20 "Black" 
+    surf_check_inside "dst" 60 20 cx+cw-60 cy+ch-20 "Red" 
+
+    blt_setcontext 1 1 0 0 0 0 3 4294967295 0 0 0 0 0 0 0 1 -100 -100 1000 1000 0
+
+    print "Clip to bitmap top left"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_fillrect handle "dst" -10 -5 40 20 "Red"
+    surf_check_outside "dst" 0 0 30 15 "Black" 
+    surf_check_inside "dst" 0 0 30 15 "Red" 
+
+    print "Clip to bitmap bottom right"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_fillrect handle "dst" 65 21 surfwidth surfheight "Red"
+    surf_check_outside "dst" 65 21 surfwidth-65 surfheight-21 "Black" 
+    surf_check_inside "dst" 65 21 surfwidth-65 surfheight-21 "Red" 
+
+
+    print "CopyRectangle"
+
+    blt_setcontext 1 1 0 0 0 0 3 4294967295 0 0 0 0 0 0 0 1 cx cy cw ch 0
+
+    print "Rect completely inside clip"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_copyrect handle "dst" cx+1 cy+1 "src" 10 10 cw-2 ch-2
+    surf_check_outside "dst" cx+1 cy+1 cw-2 ch-2 "Black" 
+    surf_check_inside "dst" cx+1 cy+1 cw-2 ch-2 "Gradient" cx-9, cy-9
+
+    print "Rect completely fills clip - clip all edges"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_copyrect handle "dst" cx-1 cy-1 "src" 10 10 cw+2 ch+2
+    surf_check_outside "dst" cx cy cw ch "Black" 
+    surf_check_inside "dst" cx cy cw ch "Gradient" cx-11, cy-11
+
+    print "Rectangle left of clip (do nothing!)"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_copyrect handle "dst" cx-2 cy "src" 10 10 1 1
+    surf_check_inside "dst" 0 0 surfwidth surfheight "Black" 
+
+    print "Rectangle right of clip (do nothing!)"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_copyrect handle "dst" cx+cw cy "src" 10 10 1 1
+    surf_check_inside "dst" 0 0 surfwidth surfheight "Black" 
+
+    print "Rectangle above of clip (do nothing!)"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_copyrect handle "dst" cx cy-2 "src" 10 10 1 1
+    surf_check_inside "dst" 0 0 surfwidth surfheight "Black" 
+
+    print "Rectangle below of clip (do nothing!)"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_copyrect handle "dst" cx cy+ch "src" 10 10 1 1
+    surf_check_inside "dst" 0 0 surfwidth surfheight "Black" 
+
+    print "Clip top left"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_copyrect handle "dst" 0 0 "src" 10 10 40 20
+    surf_check_outside "dst" cx cy 40-cx 20-cy "Black" 
+    surf_check_inside "dst" cx cy 40-cx 20-cy "Gradient" -10 -10
+
+    print "Clip bottom right"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_copyrect handle "dst" 50 20 "src" 0 0 100 10
+    surf_check_outside "dst" 50 20 cx+cw-50 cy+ch-20 "Black" 
+    surf_check_inside "dst" 50 20 cx+cw-50 cy+ch-20 "Gradient" 50 20
+
+    blt_setcontext 1 1 0 0 0 0 3 4294967295 0 0 0 0 0 0 0 1 -100 -100 1000 1000 0
+
+    print "Clip dst bitmap top left"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_copyrect handle "dst" -10 -8 "src" 0 0 40 20
+    surf_check_outside "dst" 0 0 30 12 "Black" 
+    surf_check_inside "dst" 0 0 30 12 "Gradient" -10 -8
+
+    print "Clip dst bitmap bottom right"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_copyrect handle "dst" 71 19 "src" 0 0 surfwidth surfheight
+    surf_check_outside "dst" 71 19 surfwidth-71 surfheight-19 "Black" 
+    surf_check_inside "dst" 71 19 surfwidth-71 surfheight-19 "Gradient" 71 19
+
+    print "Clip src bitmap top left"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_copyrect handle "dst" 0 0 "src" -10 -10 40 20
+    surf_check_outside "dst" 10 10 30 10 "Black" 
+    surf_check_inside "dst" 10 10 30 10 "Gradient" 10 10
+
+    print "Clip src bitmap bottom right"
+    surf_fill_pattern "dst" 0 0 surfwidth surfheight "Black"
+    surf_stblit_copyrect handle "dst" 10 5 "src" surfwidth-20 surfheight-10 30 30
+    surf_check_outside "dst" 10 5 20 10 "Black" 
+    surf_check_inside "dst" 10 5 20 10 "Gradient" 30-surfwidth 15-surfheight
+
+    surf_delete "dst"
+    surf_delete "src"
+    surf_delete "pad"
+end
+
+
+api_error 0
+blt_init "blitter1" 1 1 1 1 1000
+handle=blt_open "blitter1"
+
+; 32 bpp
+test "ARGB8888"
+
+
+; 24 bpp
+; These depths dont support this kind of clipping yet.
+;test "RGB888"
+;test "ARGB8565"
+;test "S_YCBCR888_444"
+;test "U_YCBCR888_444"
+
+; 16 bpp
+test "RGB565"
+test "ARGB1555"
+test "ARGB4444"
+test "ACLUT88"
+test "S_YCBCR888_422"
+test "U_YCBCR888_422"
+
+; 8 bpp
+test "CLUT8"
+test "ALPHA8"
+test "BYTE"
+test "ACLUT44"
+
+; These are not yet supported by the testtool.
+;test "CLUT4"
+;test "ALPHA4"
+;test "CLUT2"
+;test "CLUT1"
+;test "ALPHA1"
+;test "S_YCBCR888_420"
+;test "U_YCBCR888_420"
+;test "U_AYCBCR6888_444"
+
+blt_close handle
+blt_term "blitter1"
+
+del test
+
+api_checkerr 0
+

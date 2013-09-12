@@ -1,0 +1,72 @@
+;*****************************************************************************
+; File         : VPS.MAC
+; Requirements :
+; Author       : BS - NOVEMBER 2000
+;*****************************************************************************
+
+; general behavior :
+; driver is assumed to be in a virgin state (no init, no open)
+
+define M_VPS_TESTS
+    if CAPAVBI&VPS
+        ; api_report "6.0 VPS MANUAL TESTS"
+        api_report "6.1 VPS_AUTOMATIC TESTS"
+        M_ENC_INIT "PAL"
+        ; Init/Open/Config VBI for VPS
+        vbi_init , ,DENC_NAME
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_open VBI_DEVICE_NAME VPS
+        M_CHECK_RETCODE ERR_NO_ERROR
+        ; Start Tests
+        M_VPS_REGISTERS
+        vbi_close
+        vbi_term
+        M_ENC_TERM
+    end
+end
+
+;;;;;;;;;;;;;;;;; AUTOMATIC TESTS ;;;;;;;;;;;;;;;;;;
+
+; VPS REGISTERS TEST
+define M_VPS_REGISTERS
+    api_report "6.1.0 VPS_REGISTERS TEST"
+    ERRORCOUNT=0
+    vbi_enable
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_writedata , 6 h00 h00 h00 h00 h00 h00     ; All to zero
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck VPS EXT_CHIP h00 h00 h00 h00 h00 h00
+    M_CHECK_RETCODE 0
+    vbi_writedata , 6 hFF hFF hFF hFF hFF hFF     ; All to one
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck VPS EXT_CHIP hFF hFF hFF hFF hFF hFF
+    M_CHECK_RETCODE 0
+    vbi_writedata , 6 h12 h34 h56 h78 h9A hBC     ; Different values
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck VPS EXT_CHIP h12 h34 h56 h78 h9A hBC
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_report "6.1.0 VPS_REGISTERS" ERRORCOUNT
+end
+
+
+;;;;;;;;;;;;;;;;; MANUEL TESTS ;;;;;;;;;;;;;;;;;;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

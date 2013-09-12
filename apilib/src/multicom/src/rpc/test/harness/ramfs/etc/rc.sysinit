@@ -1,0 +1,11 @@
+#!/bin/busybox sh
+
+# ensure the root filesystem is mounted read/write
+mount -o remount,rw /
+
+# enable the proc filesystem
+mount -t proc none /proc 
+
+#
+# automatically generated from this point onwards
+#

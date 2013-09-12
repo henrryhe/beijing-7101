@@ -1,0 +1,320 @@
+;*****************************************************************************
+; File         : CC.COM
+; Requirements : A closed caption capable NTSC monitor
+; Author       : BS - NOVEMBER 2000
+;*****************************************************************************
+
+; general behavior :
+; driver is assumed to be in a virgin state (no init, no open)
+
+define M_CC_TESTS
+    if CAPAVBI&CC
+        api_report "3.0 CC_MANUAL TESTS"
+        HDLVTGSTV=0
+        ; Init/Open/Config VBI for Closed Caption
+        M_CC_CONFIG "INIT"
+        M_DISPLAY_ON "NTSC"
+        vbi_init , ,DENC_NAME
+        vbi_open VBI_DEVICE_NAME CC
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_setparams , CC , 21 284
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_enable
+        if (API_CHIPID=="7710")
+           if (CHIP_CUT!="STI7710_CUT2x")
+                poke h20103c70 h1
+           end
+        end
+        ; Start Tests
+        M_CC_BASIC
+        M_CC_SCROLL
+        M_CC_ENABLE
+        vbi_close
+        vbi_term
+        M_ENC_TERM
+        api_report "3.1 CC_AUTOMATIC TESTS"
+        M_ENC_INIT "NTSC"
+        M_CC_CONFIG "TERM"
+        vbi_init , , DENC_NAME
+        M_CHECK_RETCODE ERR_NO_ERROR
+        ; Start Tests
+        M_CC_BAD_PARAMETERS
+        M_CC_FIELD_REGISTER
+        M_CC_LINES_REGISTER
+        vbi_term
+        M_DISPLAY_OFF
+
+    end
+end
+
+;;;;;;;;;;;;;;;;; AUTOMATIC TESTS ;;;;;;;;;;;;;;;;;;
+
+; API CC BAD PARAMETERS
+define M_CC_BAD_PARAMETERS
+    ERRORCOUNT=0
+    api_report "3.1.0 CC_BAD_PARAMETERS TEST"
+    vbi_open VBI_DEVICE_NAME CC 8
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_setparams , CC 8 21 284             ; Set default values for CC lines encoding in NTSC
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_setparams , CC 8 0 284              ; Test with zero value for F1
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vbi_setparams , CC 8 21 0               ; Idem for F2
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vbi_setparams , CC 8 6 284              ; Test with min-1 value for F1
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vbi_setparams , CC 8 21 272             ; Idem for F2
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vbi_setparams , CC 8 38 284             ; Test with max+1 value for F1
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vbi_setparams , CC 8 21 285             ; Idem for F2
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vbi_setparams , CC 8 300 284            ; Test with big value for F1
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vbi_setparams , CC 8 21  400            ; Idem for F2
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vbi_close
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_open VBI_DEVICE_NAME CC 2
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_setparams , CC 4 21 284             ; Set params for F2
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vbi_setparams , CC 8 21 284             ; Set params for both
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vbi_close
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_open VBI_DEVICE_NAME CC 4
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_setparams , CC 2 21 284             ; Set params for F1
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vbi_setparams , CC 8 21 284             ; Set params for both
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vbi_close
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_report "3.1.0 CC_BAD_PARAMETERS" ERRORCOUNT
+end
+
+
+; API CC FIELD REGISTER CHECK
+define M_CC_FIELD_REGISTER
+    ERRORCOUNT=0
+    api_report "3.1.1 CC_FIELD_REGISTER TEST"
+    print "*** Check Field1 & Field2 values ***"
+    ; Pass test F1&F2 before to set F1 & F2 values
+    vbi_open VBI_DEVICE_NAME CC 8
+    M_CHECK_RETCODE ERR_NO_ERROR
+    ; for next tests
+    vbi_enable
+    ; Set default values for CC lines encoding in NTSC
+    vbi_setparams , CC 8 21 284
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_writedata , 4 0 0 0 0
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 0 0 0 0 h0F h0F
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    vbi_writedata , 4 25 36 47 58
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 25 36 47 58 h0F h0F
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+
+    ; Inject only on field 1
+    vbi_setparams , CC 2 21 284
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_writedata , 2 0 0
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 0 0 47 58 h0F h0F
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    vbi_writedata , 2 25 34
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 25 34 47 58 h0F h0F
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+
+    ; Inject only on field 2
+    vbi_setparams , CC 4 21 284
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_writedata , 2 0 0
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 25 34 0 0 h0F h0F
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    vbi_writedata , 2 47 58
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 25 34 47 58 h0F h0F
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    vbi_close
+    print ""
+
+    print "*** Check Fields1 values ***"
+    vbi_open VBI_DEVICE_NAME CC 2
+    vbi_enable
+    vbi_writedata , 2 0 0
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 0 0 47 58 h0F h0F
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    vbi_writedata , 2 26 37
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 26 37 47 58 h0F h0F
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    vbi_close
+    print ""
+    print "*** Check Fields2 values ***"
+    vbi_open VBI_DEVICE_NAME CC 4
+    vbi_enable
+    vbi_writedata , 2 0 0
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 26 37 0 0 h0F h0F
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    vbi_writedata , 2 27 38
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 26 37 27 38 h0F h0F
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    vbi_close
+    api_report "3.1.1 CC FIELD REGISTER" ERRORCOUNT
+end
+
+; API CC LINES REGISTER CHECK
+define M_CC_LINES_REGISTER
+    ERRORCOUNT=0
+    api_report "3.1.2 CC_LINES_REGISTER TEST"
+    print "*** Check Tv lines conf for standard NTSC ***"
+    if (CHIPID=="4629")
+        vtg_setmode AUX_VTG_HDL NTSC
+        M_CHECK_RETCODE ERR_NO_ERROR
+        denc_setmode AUX_DENC_HDL "NTSCM"
+        M_CHECK_RETCODE ERR_NO_ERROR
+   end
+   else
+        vtg_setmode HDLVTGMAIN NTSC
+        M_CHECK_RETCODE ERR_NO_ERROR
+        denc_setmode HDLDENC "NTSCM"
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+   end
+    vbi_open VBI_DEVICE_NAME CC 8
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_enable
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_setparams , CC 8 21 284          ; Set default values for CC lines encoding
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_writedata , 4 0 0 0 0
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 0 0 0 0 h0F h0F
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    vbi_setparams , CC 8 10 273          ; Set line min F1=10, F2=273
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 0 0 0 0 h04 h04
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    vbi_setparams , CC 8 37 289          ; Set line max F1=37, F2=289
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 0 0 0 0 h1F h1F
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    print ""
+    print "*** Check Tv lines conf for standard PAL ***"
+
+    if (CHIPID=="4629")
+        vtg_setmode AUX_VTG_HDL PAL
+        M_CHECK_RETCODE ERR_NO_ERROR
+        denc_setmode AUX_DENC_HDL "PAL"
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+    end
+    else
+        vtg_setmode HDLVTGMAIN PAL
+        M_CHECK_RETCODE ERR_NO_ERROR
+        denc_setmode HDLDENC "PAL"
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+   end
+    vbi_setparams , CC 8 21 284          ; Set default values for CC lines encoding
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_writedata , 4 0 0 0 0
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 0 0 0 0 h0F h0F
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    vbi_setparams , CC 8 7 319           ; Set line min F1=7, F2=319
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 0 0 0 0 h01 h01
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    vbi_setparams , CC 8 37 349          ; Set line max F1=37, F2=349
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck CC EXT_CHIP 0 0 0 0 h1F h1F
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    vbi_close
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_report "3.1.2 CC_LINES_REGISTER" ERRORCOUNT
+end
+
+
+;;;;;;;;;;;;;;;;; MANUEL TESTS ;;;;;;;;;;;;;;;;;;
+
+; API CC BASIC STRING TEST
+define M_CC_BASIC
+    api_report "3.0.0 CC_BASIC_STRING TEST"
+    vbi_ccload STAPIGATDATA+"itesting.cc"
+    vbi_ccinject 1000
+    api_quest "Do you see blinking text : 'I AM TESTING CLOSED CAPTIONS' [y/n] ?"
+    api_report "3.0.0 CC_BASIC_STRING" ERRORCODE
+    vbi_cckill
+end
+
+; API CC SCROLLING STRING TEST
+define M_CC_SCROLL
+    api_report "3.0.1 CC_SCROLL_STRING TEST"
+    vbi_ccload STAPIGATDATA+"amamam.cc"
+    vbi_ccinject 1000
+    api_quest "Do you see scrolling text on two lines : 'AMAMAM' [y/n] ?"
+    api_report "3.0.1 CC SCROLL STRING" ERRORCODE
+    vbi_cckill
+end
+
+; API CC SCROLLING STRING TEST
+define M_CC_ENABLE
+    ERRORCOUNT=0
+    api_report "3.0.2 CC_ENABLE/DISABLE TEST"
+    vbi_ccload STAPIGATDATA+"amamam.cc"
+    vbi_ccinject 1000
+    api_quest "Do you see scrolling text on two lines : 'AMAMAM' [y/n] ?"
+    ERRORCOUNT=ERRORCODE+ERRORCOUNT
+    vbi_cckill
+    vbi_disable
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_ccinject 1000
+    api_quest "Does the scrolling text disabled: 'AMAMAM' [y/n] ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vbi_cckill
+    for j 0 10
+        vbi_enable
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_disable
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    vbi_enable
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_ccinject 1000
+    api_quest "Do you see scrolling text on two lines : 'AMAMAM' [y/n] ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    api_report "3.0.2 CC_ENABLE/DISABLE " ERRORCOUNT
+    vbi_cckill
+end
+
+; Configure access to STV0119 on a mb295 board
+define M_CC_CONFIG PARAMS
+    if DENC_ACCESS==1
+        if PARAMS=="INIT"
+            vtg_init "VTG_STV0119" 0 DENC_NAME
+            M_CHECK_RETCODE ERR_NO_ERROR
+            HDLVTGSTV=vtg_open "VTG_STV0119"
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vtg_ssmparams HDLVTGSTV 0 0 1 0 0 0
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vtg_setmode HDLVTGSTV "MODE_SLAVE"
+            M_CHECK_RETCODE ERR_NO_ERROR
+
+        end
+        else
+            vtg_close HDLVTGSTV
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vtg_term "VTG_STV0119"
+        end
+    end
+end
+

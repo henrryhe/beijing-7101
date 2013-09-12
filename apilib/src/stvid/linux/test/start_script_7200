@@ -1,0 +1,25 @@
+console off
+
+printf "Set pagination...\n"
+set pagination 0
+
+printf "Load executable...\n"
+cd objs/st40
+file vid_test.exe
+
+#set args "../../../scripts/default_7200.com"
+
+printf "Load commands...\n"
+dir ../../../../../dvdbr-prj-board/mb519_7200/
+source allcmd-sti7200.cmd
+
+printf "Initialize...\n"
+mymb519 10.129.101.130 "msglevel=none linktimeout=5 jtagreset linkspeed=1.25MHz jtagpinout=st40 -inicommand sti7200_bypass_setup"
+
+printf "Load...\n"
+load 
+
+printf "Set Breakpoints...\n"
+tbreak main
+
+cd ../..

@@ -1,0 +1,212 @@
+/********************************************************************************
+ *   Filename   	: staud_driverconfig.h												*
+ *   Start       		: 01.12.2005                                                   							*
+ *   By          		: Chandandeep Singh Pabla											*
+ *   Contact     	: chandandeep.pabla@st.com										*
+ *   Description  	: The file contains the various configurations for audio driver.  Based on req.	*
+ * 				  user can build his own driver in this file.								*
+ ********************************************************************************
+ */
+#ifndef __STAUD_DRIVERCONFIG__
+#define __STAUD_DRIVERCONFIG__
+
+/* {{{ Includes */
+#include "staudlx.h"
+/* }}} */
+
+/* {{{ Defines */
+
+/* Max Number of units per object-set i.e. one producer and all its consumer */
+#define MAX_PRODUCERS_PER_OBJECTSET	1 /* There can only be one producer per object set*/
+#define MAX_CONSUMERS_PER_OBJECTSET	3 /* There can be many consumers for the producer in object set */ 
+
+#define MAX_UNIT_PER_MODULE	(MAX_PRODUCERS_PER_OBJECTSET + MAX_CONSUMERS_PER_OBJECTSET + 1)/* last one(OBJECTSET_DONE will mark the end of units  for this module */
+
+/* Max Number of Object-Sets per Driver */
+#define MAX_OBJECTSET_PER_DRIVER	(8 + 1)/* last one will mark the end of modules for this driver 
+											i.e. essentially end of driver */
+/* Markers */
+#define DRIVER_DONE		0xFFFF
+#define OBJECTSET_DONE	(DRIVER_DONE - 1)
+
+/* }}} */
+
+/* {{{ Global Variables */
+
+/* Object set cosists of one producer module and all its consumer modules */
+typedef STAUD_Object_t ObjectSet[MAX_UNIT_PER_MODULE];
+
+/* A driver consist of its ObjectSets */
+typedef ObjectSet DriverCofig[MAX_OBJECTSET_PER_DRIVER];
+
+/* 	Audio Driver structure. USer can add neew drivers in this driver array and should pass his/her driver
+	index to STAud_Init()
+*/
+
+DriverCofig AudioDriver[] ={
+							/* One driver configuration */
+#if defined(ST_7100) || defined(ST_7109)
+							{
+								/* Each Object set definations */
+								{ STAUD_OBJECT_INPUT_CD0 , STAUD_OBJECT_DECODER_COMPRESSED0, STAUD_OBJECT_SPDIF_FORMATTER_BYTE_SWAPPER, OBJECTSET_DONE},
+								{ STAUD_OBJECT_DECODER_COMPRESSED0 , STAUD_OBJECT_POST_PROCESSOR0, STAUD_OBJECT_SPDIF_FORMATTER_BYTE_SWAPPER, STAUD_OBJECT_OUTPUT_SPDIF0 ,/*STAUD_OBJECT_SPDIF_FORMATTER_BIT_CONVERTER, */OBJECTSET_DONE},
+								/*{ STAUD_OBJECT_SPDIF_FORMATTER_BIT_CONVERTER, STAUD_OBJECT_OUTPUT_SPDIF0, OBJECTSET_DONE},*/
+								{ STAUD_OBJECT_SPDIF_FORMATTER_BYTE_SWAPPER, STAUD_OBJECT_OUTPUT_SPDIF0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_POST_PROCESSOR0, STAUD_OBJECT_OUTPUT_PCMP0,  OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_PCMP0 , OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_SPDIF0 , OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							},
+#elif defined(ST_8010)
+							{
+								{ STAUD_OBJECT_INPUT_CD0 ,STAUD_OBJECT_DECODER_COMPRESSED0,STAUD_OBJECT_OUTPUT_SPDIF0,OBJECTSET_DONE},
+								{ STAUD_OBJECT_DECODER_COMPRESSED0 ,STAUD_OBJECT_POST_PROCESSOR0,STAUD_OBJECT_OUTPUT_SPDIF0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_POST_PROCESSOR0, STAUD_OBJECT_OUTPUT_PCMP0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_PCMP0 , OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_SPDIF0 , OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							},
+
+#elif defined(ST_5525)		
+
+						{
+								
+								{ STAUD_OBJECT_INPUT_CD0 , STAUD_OBJECT_DECODER_COMPRESSED0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_DECODER_COMPRESSED0,STAUD_OBJECT_POST_PROCESSOR0,OBJECTSET_DONE},
+								{ STAUD_OBJECT_POST_PROCESSOR0, STAUD_OBJECT_OUTPUT_PCMP1, OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_PCMP1 , OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							},
+#else
+							{
+								/* Each Object set definations */
+								{ STAUD_OBJECT_INPUT_CD0 , STAUD_OBJECT_DECODER_COMPRESSED0, STAUD_OBJECT_SPDIF_FORMATTER_BYTE_SWAPPER, OBJECTSET_DONE},
+								{ STAUD_OBJECT_DECODER_COMPRESSED0 , STAUD_OBJECT_POST_PROCESSOR0, STAUD_OBJECT_SPDIF_FORMATTER_BIT_CONVERTER, OBJECTSET_DONE},
+								{ STAUD_OBJECT_SPDIF_FORMATTER_BIT_CONVERTER, STAUD_OBJECT_OUTPUT_SPDIF0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_SPDIF_FORMATTER_BYTE_SWAPPER, STAUD_OBJECT_OUTPUT_SPDIF0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_POST_PROCESSOR0, STAUD_OBJECT_OUTPUT_PCMP0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_PCMP0 , OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_SPDIF0 , OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							},
+#endif
+							
+#if defined(ST_7100) || defined(ST_7109)
+							/* Internal DAC */
+							{
+								/* Each Object set definations */
+								{ STAUD_OBJECT_INPUT_CD0 , STAUD_OBJECT_DECODER_COMPRESSED0, STAUD_OBJECT_SPDIF_FORMATTER_BYTE_SWAPPER, OBJECTSET_DONE},
+								{ STAUD_OBJECT_DECODER_COMPRESSED0 , STAUD_OBJECT_POST_PROCESSOR0,/*STAUD_OBJECT_OUTPUT_SPDIF0,*/ OBJECTSET_DONE},
+								{ STAUD_OBJECT_POST_PROCESSOR0, STAUD_OBJECT_OUTPUT_PCMP0, STAUD_OBJECT_OUTPUT_PCMP1, STAUD_OBJECT_OUTPUT_SPDIF0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_PCMP0 , OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_PCMP1 , OBJECTSET_DONE},
+								{ STAUD_OBJECT_SPDIF_FORMATTER_BYTE_SWAPPER, STAUD_OBJECT_OUTPUT_SPDIF0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_SPDIF0 , OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							},
+#endif						
+
+							/* Add new Driver here */
+							/* 2 Input, 2 Dec,2 Player */
+							{
+								/* Each Object set definations */
+								{ STAUD_OBJECT_INPUT_CD0 , STAUD_OBJECT_DECODER_COMPRESSED0,OBJECTSET_DONE},
+								{ STAUD_OBJECT_INPUT_CD1 , STAUD_OBJECT_DECODER_COMPRESSED1,OBJECTSET_DONE},
+								{ STAUD_OBJECT_DECODER_COMPRESSED0 , STAUD_OBJECT_OUTPUT_PCMP0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_DECODER_COMPRESSED1, STAUD_OBJECT_OUTPUT_PCMP1, OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_PCMP0 , OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_PCMP1, OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							},
+							{
+								/* Each Object set definations */
+								{ STAUD_OBJECT_INPUT_CD0 , STAUD_OBJECT_DECODER_COMPRESSED0,OBJECTSET_DONE},
+								{ STAUD_OBJECT_DECODER_COMPRESSED0 , STAUD_OBJECT_OUTPUT_PCMP0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_PCMP0 , OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							},
+							{
+								/* Each Object set definations */
+								{ STAUD_OBJECT_INPUT_CD1 , STAUD_OBJECT_DECODER_COMPRESSED1,OBJECTSET_DONE},
+								{ STAUD_OBJECT_DECODER_COMPRESSED1 , STAUD_OBJECT_OUTPUT_PCMP1, OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_PCMP1 , OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							},
+
+							/* 2 Input, 2 Dec, 1 Mixer ,1 Player*/
+							{
+								/* Each Object set definations */
+								{ STAUD_OBJECT_INPUT_CD0 , STAUD_OBJECT_DECODER_COMPRESSED0,OBJECTSET_DONE},
+								{ STAUD_OBJECT_INPUT_CD1 , STAUD_OBJECT_DECODER_COMPRESSED1,OBJECTSET_DONE},
+								{ STAUD_OBJECT_DECODER_COMPRESSED0 , STAUD_OBJECT_MIXER0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_DECODER_COMPRESSED1, STAUD_OBJECT_MIXER0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_MIXER0, STAUD_OBJECT_OUTPUT_PCMP0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_PCMP0, OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							},
+							
+							{
+								/* Each Object set definations */
+								{ STAUD_OBJECT_INPUT_CD0 , STAUD_OBJECT_DECODER_COMPRESSED0, STAUD_OBJECT_SPDIF_FORMATTER_BYTE_SWAPPER, OBJECTSET_DONE},
+								{ STAUD_OBJECT_DECODER_COMPRESSED0 , STAUD_OBJECT_OUTPUT_PCMP0, STAUD_OBJECT_SPDIF_FORMATTER_BIT_CONVERTER, OBJECTSET_DONE},
+								{ STAUD_OBJECT_SPDIF_FORMATTER_BIT_CONVERTER, STAUD_OBJECT_OUTPUT_SPDIF0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_SPDIF_FORMATTER_BYTE_SWAPPER, STAUD_OBJECT_OUTPUT_SPDIF0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_PCMP0 , OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_SPDIF0 , OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							},							
+							/* 1 Input, 1 Frame Processor*/
+							{
+								/* Each Object set definations */
+								{ STAUD_OBJECT_INPUT_CD0 , STAUD_OBJECT_FRAME_PROCESSOR,OBJECTSET_DONE},
+								{ STAUD_OBJECT_FRAME_PROCESSOR , OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							},
+							/* 1 CD Input, 1 PCM Input , 1 Dec, 1 Mixer ,1 Player*/
+							{
+								/* Each Object set definations */
+								{ STAUD_OBJECT_INPUT_CD0 , STAUD_OBJECT_DECODER_COMPRESSED0,OBJECTSET_DONE},
+								{ STAUD_OBJECT_DECODER_COMPRESSED0 , STAUD_OBJECT_MIXER0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_INPUT_PCM0, STAUD_OBJECT_MIXER0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_MIXER0, STAUD_OBJECT_OUTPUT_PCMP0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_PCMP0, OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							},
+
+							/* 1 PCM Input , 1 Mixer ,1 Player*/
+							{
+								/* Each Object set definations */
+								{ STAUD_OBJECT_INPUT_PCM0, STAUD_OBJECT_OUTPUT_PCMP0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_PCMP0, OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							},
+							/* SPDIF only chain */
+							{
+								/* Each Object set definations */
+								{ STAUD_OBJECT_INPUT_CD0 , STAUD_OBJECT_DECODER_COMPRESSED0, STAUD_OBJECT_SPDIF_FORMATTER_BYTE_SWAPPER, OBJECTSET_DONE},
+								{ STAUD_OBJECT_DECODER_COMPRESSED0 ,  STAUD_OBJECT_OUTPUT_SPDIF0,/*STAUD_OBJECT_SPDIF_FORMATTER_BIT_CONVERTER, */OBJECTSET_DONE},
+								/*{ STAUD_OBJECT_SPDIF_FORMATTER_BIT_CONVERTER, STAUD_OBJECT_OUTPUT_SPDIF0, OBJECTSET_DONE},*/
+								{ STAUD_OBJECT_SPDIF_FORMATTER_BYTE_SWAPPER, STAUD_OBJECT_OUTPUT_SPDIF0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_SPDIF0 , OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							},
+							{
+								/* Each Object set definations */
+								{ STAUD_OBJECT_INPUT_PCM0, STAUD_OBJECT_ENCODER_COMPRESSED0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_ENCODER_COMPRESSED0, STAUD_OBJECT_SPDIF_FORMATTER_BYTE_SWAPPER, OBJECTSET_DONE},
+								{ STAUD_OBJECT_SPDIF_FORMATTER_BYTE_SWAPPER, STAUD_OBJECT_OUTPUT_SPDIF0, OBJECTSET_DONE},
+								{ STAUD_OBJECT_OUTPUT_SPDIF0 , OBJECTSET_DONE},
+								{ DRIVER_DONE},
+							}
+
+						};
+
+/* }}} */
+
+/* {{{ Function defines */
+
+
+/* }}} */
+
+
+#endif /* __STAUD_DRIVERCONFIG__ */

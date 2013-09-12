@@ -1,0 +1,102 @@
+; *****************************************************************************
+; File         : dvmleak.MAC
+;                Memory Leak test
+; Requirements : config.Mac loaded
+; Author       : JROY - April 2006
+; *****************************************************************************
+;To source this file use the following command
+;source "../../../scripts/dvmleak.mac"
+
+
+;******************************************************************************
+;Name        : M_DVM_LEAK
+;Description : check memory leak
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     : none
+;******************************************************************************
+
+define M_DVM_LEAK
+
+    INTIAL_FREE_MEM = 0
+    FINAL_FREE_MEM = 0
+
+    ;close all the open handle
+    DVM_Close HDLPL1
+    DVM_Close HDLPL2
+    DVM_Close HDLRC1
+    DVM_Close HDLRC2
+
+    ;Term device
+    DVM_Term "DVM"
+
+    ;Get free memory size before doing any operation
+    INTIAL_FREE_MEM = GET_FREE_MEM
+
+    ;Init device
+    DVM_Init "DVM"
+
+    ;open handles
+    HDLPL1 = DVM_Open "DVM" "P" 0
+    HDLPL2 = DVM_Open "DVM" "P" 1
+    HDLRC1 = DVM_Open "DVM" "R" 0
+    HDLRC2 = DVM_Open "DVM" "R" 1
+
+    ;live play
+    DVM_PlayStart HDLPL1 TSIN0 SWTS0 Play_NoOfPID_1 V_TYPE_1 V_PID_1 A_TYPE_1 A_PID_1 PCR P_PID_1
+    print "wait 5 sec play ongoing"
+    wait 5000
+    DVM_PlayStop HDLPL1
+
+    ;start dual record and playback
+    DVM_RecordStart HDLRC1 TSIN0 "dvm_leak_test1" Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_TYPE_1 V_PID_1 A_TYPE_1 A_PID_1 PCR P_PID_1
+    DVM_RecordStart HDLRC2 TSIN1 "dvm_leak_test2" Rec_ChannelName_2 Rec_NumberOfPIDS_2 V_TYPE_2 V_PID_2 A_TYPE_2 A_PID_2 PCR P_PID_2
+    print "wait 5 sec rec ongoing"
+    wait 5000
+    DVM_RecordStop HDLRC1
+    DVM_RecordStop HDLRC2
+
+    ;HDD playback
+    DVM_PlayStart HDLPL1 "dvm_leak_test1" SWTS0 Play_NoOfPID_1 V_TYPE_1 V_PID_1 A_TYPE_1 A_PID_1 PCR P_PID_1
+    print "wait 5 sec play ongoing"
+    wait 5000
+    DVM_PlayStop HDLPL1
+
+    ;Remove the stream after usage
+    DVM_RemoveStream HDLRC1 "dvm_leak_test1"
+    DVM_RemoveStream HDLRC2 "dvm_leak_test2"
+
+    DVM_Close HDLPL1
+    DVM_Close HDLPL2
+    DVM_Close HDLRC1
+    DVM_Close HDLRC2
+
+    DVM_Term "DVM"
+
+    FINAL_FREE_MEM = GET_FREE_MEM
+
+    if INTIAL_FREE_MEM==FINAL_FREE_MEM
+        print "        =================================="
+        print "        == MEMORY LEAK TEST SUCCESSFULL =="
+        print "        =================================="
+    end
+    else
+        print "        ++++++++++++++++++++++++++++++++++"
+        print "        +++++ MEMORY LEAK TEST FAILED ++++"
+        print "        ++++++++++++++++++++++++++++++++++"
+    end
+
+    ; Leave the test with the same status as entered
+    DVM_Init "DVM"
+
+    HDLPL1 = DVM_Open "DVM" "P" 0
+    HDLPL2 = DVM_Open "DVM" "P" 1
+    HDLRC1 = DVM_Open "DVM" "R" 0
+    HDLRC2 = DVM_Open "DVM" "R" 1
+
+end ;M_DVM_LEAK
+
+M_DVM_LEAK
+
+;EOF

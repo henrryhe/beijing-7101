@@ -1,0 +1,339 @@
+;*****************************************************************************
+; File          : DEFAULT.MAC
+; Requirements  :
+; Author        : BS - NOVEMBER 2000
+; Last modified : BS - 17 Jan 2003
+;*****************************************************************************
+; Overall tests are defined here
+; All tests are passed twice, first pass needs user intervention
+; second pass works stand alone
+;;;;;;;;;; HERE ARE USEFULL MACROS USED BY ALL TESTS ;;;;;;;;;;;;;
+
+; ERRORCOUNT is incremented if RETCODE is not equal to EXPECTED
+; ERRORCODE is set by VTG_CMD.C functions after each vtgxxx command call
+
+define M_CHECK_RETCODE EXPECTED
+    if ERRORCODE!=EXPECTED
+        ERRORCOUNT=ERRORCOUNT+1
+        print "!!!!!!!!!!!! TEST FAILED !!!!!!!!!!!!"
+        print "Expected code:" EXPECTED
+    end
+end
+
+define M_CHECK_ERR_VSYNC EXPECTED
+    if ERROR_VSYNC!=EXPECTED
+        print "************************************************"
+        print "!! BE AWARE , THERE IS A VSYNC ERROR WITH THIS VTG !! "
+        print "************************************************"
+    end
+end
+define M_CHECK_ERR_MODE EXPECTED
+    if ERROR_MODE!=EXPECTED
+        print "************************************************"
+        print "!! BE AWARE , THERE IS AN ERROR WITH THIS MODE !! "
+        print "************************************************"
+    end
+end
+
+
+;;;;;; MACROS NEW ARCHI ;;;;;;;
+
+define M_DISP_SET_MODE VTGNAME HDLVTG VTGPARAMS ISHDRQMODE
+    vtg_setmode HDLVTG VTGPARAMS
+if (API_CHIPID=="7200")
+VOUTSim_AWGUpsampler VTGNAME HDLVTG ISHDRQMODE
+end
+if (SD_TEST==1)
+    ;;HDLVPVID1 = layer_openvp HDLVID1 0 1 720 576 BUFF_ADD 0 0 720 576
+    layer_enable HDLVPVID1
+    layer_svpparams HDLVPVID1 ,, 720 576 720/3 200 360*3 288*3 1 720 576 BUFF_ADD
+end
+    M_CHECK_RETCODE ERR_NO_ERROR
+    STRMODE=vtg_getmode HDLVTG
+    M_CHECK_RETCODE ERR_NO_ERROR
+    T_FRAMERATE=api_evalstr STRMODE 2
+    T_SCANTYPE=api_evalstr STRMODE 3
+    ; Check VTG frame rate
+    vtg_event VTGNAME T_SCANTYPE T_FRAMERATE
+    M_CHECK_RETCODE ERR_NO_ERROR
+    M_CHECK_ERR_VSYNC ERR_NO_ERROR
+    M_CHECK_ERR_MODE  ERR_NO_ERROR
+    if (API_CHIPID=="7015")||(API_CHIPID=="7020")||(API_CHIPID=="7710")||(API_CHIPID=="7200")
+           T_XStartHD=api_evalstr STRMODE 8
+           T_YStartHD=api_evalstr STRMODE 9
+           GammaDisplay T_SCANTYPE T_XStartHD T_YStartHD
+   end
+    if (API_CHIPID=="5528")
+        GammaDisplay T_SCANTYPE
+    end
+    if (API_CHIPID=="5100")||(API_CHIPID=="5105")||(API_CHIPID=="5301")||(API_CHIPID=="5188")||(API_CHIPID=="5525")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+	  poke h20402004 h0
+          GDMADisplay T_SCANTYPE
+          GDMACloseEVT
+    end
+
+end
+
+define M_DISPLAY_ON
+    if (API_CHIPID=="7015")||(API_CHIPID=="7020")||(API_CHIPID=="5528")||(API_CHIPID=="7710")||(API_CHIPID=="7200")
+        GammaDisplay
+    end
+     elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+       if (ST_OS=="LINUX")
+        layer_init "LAYVID1" "HDDISPO2_VIDEO2" 720 576
+       end
+       RET_STR = displayvideo 1
+       BUFF_ADD = api_evalstr RET_STR 1
+    end
+    elif (API_CHIPID=="5100")||(API_CHIPID=="5105")||(API_CHIPID=="5301")||(API_CHIPID=="5188")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+	poke h20402004 h0
+        GDMADisplay
+    end
+    elif (API_CHIPID=="5525")
+        GDMADisplay  ,1
+        poke h1980002C hc00000
+    end
+    elif (API_CHIPID=="5517")
+       OSDDisplay
+    end
+    else
+       OSDDisplay
+    end
+    ; DENC Init
+    denc_init
+    HDLDENC=denc_open
+    denc_setmode
+end
+
+define M_DISPLAY_OFF
+    ; DENC Term
+    denc_close HDLDENC
+    denc_term
+end
+
+define M_LAYER_TERM_SD
+SD_TEST=0
+layer_close HDLVID1
+layer_term "LAYVID1" 1
+end
+
+define M_LAYER_TERM_HD
+layer_close HDLVID2
+layer_term "LAYVID2" 1
+end
+
+define M_LAYER_INIT_SD
+;; With MIX2 use LMI_SYS and Init VIDEO2 ;;;;;;;
+SD_TEST=1
+layer_init "LAYVID1" "HDDISPO2_VIDEO2" 720 576
+HDLVID1 = layer_open "LAYVID1"
+HDLVPVID1 = layer_openvp HDLVID1 0 1 720 576 BUFF_ADD 0 0 720 576
+layer_enable HDLVPVID1
+layer_svpparams HDLVPVID1 ,, 720 576 720/3 200 360*3 288*3 1 720 576 BUFF_ADD
+VTG_GamSet
+end
+define M_LAYER_INIT_HD
+;; With MIX1 use LMI_SYS and Init VIDEO1 ;;;;;;;
+if (API_CHIPID=="7100")
+        layer_init "LAYVID2" "HDDISPO2_VIDEO1" 720 576
+end
+elif (API_CHIPID=="7109")
+        layer_init "LAYVID2" "VDP_VIDEO1" 720 576
+end
+HDLVID2 = layer_open "LAYVID2"
+HDLVPVID2 = layer_openvp HDLVID2 0 1 720 576 BUFF_ADD_1 0 0 720 576
+layer_enable HDLVPVID2
+layer_svpparams HDLVPVID2 ,, 720 576 720/3 200 720 576 1 720 576 BUFF_ADD_1
+;;;;;;;
+VTG_GamSet 1
+end
+
+define M_TEST_MENU
+    print ""
+    print "0 - API BASIC TESTS"
+    print "1 - RETURNS TESTS"
+    print "2 - MASTER MODE SD TESTS "
+    if (API_CHIPID=="7015")||(API_CHIPID=="7020")||(API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+        print "3 - MASTER MODE HD TESTS"
+        print "6 - MULTI INSTANCE TESTS (SD and HD output)"
+        print "8 - AUSTRALIAN MODE TESTS"
+    end
+    if (API_CHIPID=="5525")
+        print "6 - MULTI INSTANCE TESTS (2 SD output)"
+    end
+    if (API_CHIPID=="7015")||(API_CHIPID=="7020")||(API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+        print "4 - SLAVE MODE SD TESTS"
+;       print "5 - SLAVE MODE HD TESTS"
+    end
+    if (API_CHIPID=="7015")||(API_CHIPID=="7020")
+        print "7 - EMBEDDED SYNCHRO TESTS"
+    end
+    if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+        print "7 - SYNCHRO CALIBRATION TESTS"
+    end
+    ;print "7 - EXECUTE ALL TESTS" problem with layer on 7015
+    print ""
+    print " Enter your choice :"
+    x=getkey
+
+    if x>=48
+       x=x-48
+    end
+    choice=1
+    if x>9
+       choice=0
+    end
+    if x==9
+        choice=255
+    end
+    else
+        while x!=0
+           choice=choice*2
+           x=x-1
+        end
+    end
+    if choice&1
+        ; API BASIC TESTS
+        source OSPATH+DRV_PATH_VTG+"vtgbasic.mac"
+        M_01_BASICS
+    end
+    if choice&2
+        ; RETURNS TESTS
+        source OSPATH+DRV_PATH_VTG+"returns.mac"
+        M_RETURNS
+    end
+    if choice&hFC  ; Check if one of the other mode
+        M_DISPLAY_ON
+    end
+    if choice&4
+        ; MASTER MODE SD TESTS
+        source OSPATH+DRV_PATH_VTG+"vtgmssd.mac"
+        if (API_CHIPID=="5301")
+           poke h20d00004 h18000 ; write in ctrl-d register
+        end
+        if (API_CHIPID=="5105")||(API_CHIPID=="5188")
+                poke h20402004 h0
+        end
+        M_MSSD_TESTS
+    end
+    if choice&8
+        if (API_CHIPID=="7015")||(API_CHIPID=="7020")||(API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+            ; MASTER MODE HD TESTS
+            source OSPATH+DRV_PATH_VTG+"vtgmshd.mac"
+            if (API_CHIPID=="7100")
+              BUFF_ADD_1 = BUFF_ADD
+              M_LAYER_INIT_HD
+            end
+            if (API_CHIPID=="7109")
+              RET_STR = displayvideo 0
+              BUFF_ADD_1 = api_evalstr RET_STR 1
+              M_LAYER_INIT_HD
+              VTG_EnableHVSync
+            end
+            M_51_MASTER_HD
+
+            if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+               M_LAYER_TERM_HD
+            end
+        end
+    end
+    if choice&h10
+        if (API_CHIPID=="7015")||(API_CHIPID=="7020")||(API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+            ; SLAVE MODE SD TESTS
+            source OSPATH+DRV_PATH_VTG+"vtgslsd.mac"
+            if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+               M_LAYER_INIT_SD
+            end
+            M_71_SLAVE_SD
+            if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+               M_LAYER_TERM_SD
+            end
+        end
+    end
+    if choice&h20
+        if (API_CHIPID=="7015")||(API_CHIPID=="7020")
+            ; SLAVE MODE HD TESTS
+             source OSPATH+DRV_PATH_VTG+"vtgslhd.mac"
+             M_SLHD_TESTS
+        end
+    end
+    if choice&h40
+        source OSPATH+DRV_PATH_VTG+"vtgmult.mac"
+        if (API_CHIPID=="7015")||(API_CHIPID=="7020")||(API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+            ; MULTI INSTANCE TESTS
+            if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+              if (ST_OS=="LINUX")
+                layer_init "LAYVID1" "HDDISPO2_VIDEO2" 720 576
+              end
+                RET_STR = displayvideo 0
+                BUFF_ADD_1 = api_evalstr RET_STR 1
+                M_LAYER_INIT_HD
+                if (API_CHIPID=="7109")
+                  VTG_EnableHVSync
+                end
+            end
+            M_MULT_TESTS
+            if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+                M_LAYER_TERM_HD
+            end
+        end
+        if (API_CHIPID=="5525")||(API_CHIPID=="7200")
+           M_MULT2_TESTS
+        end
+    end
+    if choice&h80
+        if (API_CHIPID=="7015")||(API_CHIPID=="7020")||(API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+            ; SLAVE MODE SD TESTS
+            source OSPATH+DRV_PATH_VTG+"vtgesync.mac"
+            if (API_CHIPID=="7015")||(API_CHIPID=="7020")
+                M_ESYNC_TESTS
+            end
+            else
+                M_CALIBSYNC_TESTS
+            end
+        end
+    end
+    if choice&h100
+       if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+           ; Australian modes tests
+           source OSPATH+DRV_PATH_VTG+"vtgmshd.mac"
+           M_DISPLAY_ON
+           if (API_CHIPID=="7100")
+              BUFF_ADD_1 = BUFF_ADD
+              M_LAYER_INIT_HD
+           end
+           M_AUSTRALIAN_MODE_TESTS
+           if (API_CHIPID=="7100")
+                M_LAYER_TERM_HD
+           end
+           M_DISPLAY_OFF
+       end
+       else
+          print "FEATURE NOT SUPPORTED"
+       end
+    end
+    if choice&hFC
+       ; Check if one of the other mode
+        M_DISPLAY_OFF
+    end
+end
+
+
+;;;;;;;;;; BEGINNING OF THE EXECUTION  ;;;;;;;;;;;;;
+
+; GLOBAL macro which need handle of VTG, DENC
+ERRORCOUNT=0
+HDLDENC=0
+; needed only in case of 7100
+BUFF_ADD_1=0
+BUFF_ADD=0
+HDLVID1=0
+HDLVID2=0
+HDLVPVID1=0
+HDLVPVID2=0
+SD_TEST=0
+; Start tests
+api_error 0
+
+M_TEST_MENU
+

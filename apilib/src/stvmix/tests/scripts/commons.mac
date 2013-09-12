@@ -1,0 +1,1695 @@
+; ****************************************************************************
+; File         : COMMONS.MAC
+; Requirements :
+; Author       : AC - Reviewed December 2003
+; ****************************************************************************
+
+; Common variable
+BUFF_ADD=0
+BUFF_ADD_1=0
+BUFF_ADD_2=0
+
+
+HDLVMIX1=0
+HDLDENC=0
+HDLVOUT=0
+T_HDLVOUTANA=0
+HDLCUR=0
+HDLVPCUR=0
+HDLVTGMAIN=0
+HDLVID1=0
+HDLVPVID1=0
+AUX_VTG_HDL=0
+VOUT_4629_HDL=0
+MAIN_DENC_HDL=0
+AUX_DENC_HDL=0
+MAIN_VOUT_HDL=0
+AUX_VOUT_HDL=0
+MAIN_DENC_NAME=""
+AUX_DENC_NAME=""
+MAIN_VOUT_NAME=""
+AUX_VOUT_NAME=""
+
+; 55XX specific variable
+HDLOSD=0
+HDLVPOSD=0
+HDLSTILL=0
+HDLVPSTILL=0
+
+; 7015/7020/7710 specific variable
+HDLGFX1=0
+HDLGFX2=0
+HDLVPGFX1=0
+HDLVPGFX2=0
+HDLVTGAUX=0
+HDLVMIX2=0
+AVAIL_STV0119=FALSE
+
+; 7020/5528/7710 specific variable
+HDLGDP1=0
+HDLGDP2=0
+HDLGDP3=0
+HDLGDP4=0
+HDLGDP5=0
+HDLALPHA=0
+HDLVPGDP1=0
+HDLVPGDP2=0
+HDLVPGDP3=0
+HDLVPGDP4=0
+HDLVPGDP5=0
+HDLVPALPHA=0
+HDLVTGAUX=0
+HDLVTGSEC=0
+HDLDENC2=0
+HDLVMIX2=0
+HDLVMIX3=0
+HDLVID2=0
+HDLVPVID2=0
+HDLVID3=0
+HDLVPVID3=0
+MIX1_HD=0
+MIX1_SD=1
+
+;55xx-5100-5105-5188-5107-5162-7015/20-GX1
+T_XStart=0
+T_YStart=0
+
+del M_*
+del MC_*
+
+FALSE_=0
+TRUE_=1
+;
+ERRORCOUNT=0
+EXEC_ALL_TEST=0
+TESTVMIX1=TRUE_
+TESTVMIX2=TRUE_
+TESTVMIX3=TRUE_
+TESTVMIX4=TRUE_
+TESTVMIX5=TRUE_
+TESTVMIX6=TRUE_
+TESTVMIX7=TRUE_
+TESTVMIX8=TRUE_
+GLOBERR=FALSE_
+ERR_BAS=FALSE_
+ERR_COM1=FALSE_
+ERR_COM2=FALSE_
+ERR_COM3=FALSE_
+ERR_COM4=FALSE_
+ERR_COM5=FALSE_
+ERR_COM6=FALSE_
+ERR_COM7=FALSE_
+ERR_COM8=FALSE_
+ERR_VMIX1=FALSE_
+ERR_VMIX2=FALSE_
+ERR_VMIX3=FALSE_
+ERR_VMIX4=FALSE_
+ERR_VMIX5=FALSE_
+ERR_VMIX6=FALSE_
+ERR_VMIX7=FALSE_
+ERR_VMIX8=FALSE_
+;*******************************************************************************
+;Name        : MC_CHECK_RETCODE
+;Description : Increments ERRORCOUNT if ERRORCODE is not equal to expected value
+;Parameters  : EXPECTED value to compare to ERRORCODE. ERRORCODE is set by all
+;              commands defined in xxx_cmd.c
+;Assumptions :
+;Limitations :
+;Returns     :
+;*******************************************************************************
+; ERRORCOUNT is incremented if RETCODE is not equal to EXPECTED
+; ERRORCODE is set by DRIVER_CMD.C functions after each DRIVERxxx command call
+define MC_CHECK_RETCODE EXPECTED
+    if ERRORCODE!=EXPECTED
+        ERRORCOUNT=ERRORCOUNT+1
+        print "!!!!!!!!!!!! TEST FAILED !!!!!!!!!!!!"
+        print "Error code:" ERRORCODE ", Expected code:" EXPECTED
+    end
+end  ;MC_CHECK_RETCODE
+
+;*******************************************************************************
+;Name        : MC_CHECK_TYPE
+;Description : Check test harness chip
+;Parameters  : none
+;Assumptions :
+;Limitations :
+;Returns     : TRUE if compiled for Omega1, else FALSE
+;*******************************************************************************
+define MC_CHECK_TYPE
+    ; CHIP TYPE is not API dependant
+    ; Macros can be executed in function of this value
+    ; Bit 1 : 5510,5512,5508,5518,5514,5516,5517 chips
+    ; Bit 2 : 7015 chips
+    ; Bit 3 : GX1 chips
+    ; Bit 4 : 7020 chips
+    ; Bit 5 : 5528 chips
+    ; Bit 6 : 5100,5105,5301,5188,5107,5162 chips
+    ; ... (next bits to be defined)
+    ; For mediaref platform, Bit1 & Bit 3 could be enabled ...?
+    CHIP_TYPE=0
+    if API_CHIPID=="5510"
+        CHIP_TYPE=1
+    end
+    if API_CHIPID=="5512"
+        CHIP_TYPE=1
+    end
+    if API_CHIPID=="5508"
+        CHIP_TYPE=1
+    end
+    if API_CHIPID=="5518"
+        CHIP_TYPE=1
+    end
+    if API_CHIPID=="5514"
+        CHIP_TYPE=1
+    end
+    if API_CHIPID=="5516"
+        CHIP_TYPE=1
+    end
+    if API_CHIPID=="5517"
+        CHIP_TYPE=1
+    end
+    if API_CHIPID=="7015"
+        CHIP_TYPE=2
+    end
+    if API_CHIPID=="GX1"
+        CHIP_TYPE=4
+    end
+    if (API_CHIPID=="7020")||(API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+        CHIP_TYPE=8
+    end
+    if API_CHIPID=="5528"
+        CHIP_TYPE=16
+    end
+    if (API_CHIPID=="5100")||(API_CHIPID=="5105")||(API_CHIPID=="5301")||(API_CHIPID=="5188")||(API_CHIPID=="5525")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+        CHIP_TYPE=32
+    end
+    if CHIP_TYPE==0
+        print "This macro is not suitable for " API_CHIPID
+    end
+end CHIP_TYPE ;MC_CHECK_TYPE
+
+define MC_CHECK_ERROR
+    print ""
+    if ERRORCOUNT>0
+        print "        ++++++++++++++++++++++++++++++++++"
+        print "        + " ERRORCOUNT " function(s) failed the test +"
+        print "        ++++++++++++++++++++++++++++++++++"
+        GLOBERR=TRUE_
+    end
+    else
+        print "        =================================="
+        print "        == TEST COMPLETED SUCCESSFULLY. =="
+        print "        =================================="
+        GLOBERR=FALSE_
+    end
+    print ""
+end
+
+define MC_CHECK_COM_ERR ERR1 ERR2 ERR3 ERR4 ERR5 ERR6 ERR7 ERR8
+  print ""
+  print "#############################"
+  if ERR1==FALSE_
+    print "# M_COM_1.           Ok     #"
+  end
+  else
+    print "# M_COM_1.           Failed #"
+  end
+  if ERR2==FALSE_
+    print "# M_COM_2.           Ok     #"
+  end
+  else
+    print "# M_COM_2.           Failed #"
+  end
+  if ERR3==FALSE_
+    print "# M_COM_3.           Ok     #"
+  end
+  else
+    print "# M_COM_3.           Failed #"
+  end
+  if ERR4==FALSE_
+    print "# M_COM_4.           Ok     #"
+  end
+  else
+    print "# M_COM_4.           Failed #"
+  end
+  if ERR5==FALSE_
+    print "# M_COM_5.           Ok     #"
+  end
+  else
+    print "# M_COM_5.           Failed #"
+  end
+  if ERR6==FALSE_
+    print "# M_COM_6.           Ok     #"
+  end
+  else
+    print "# M_COM_6.           Failed #"
+  end
+  if ERR7==FALSE_
+    print "# M_COM_7.           Ok     #"
+  end
+  else
+    print "# M_COM_7.           Failed #"
+  end
+  if ERR8==FALSE_
+    print "# M_COM_8.           Ok     #"
+  end
+  else
+    print "# M_COM_8.           Failed #"
+  end
+  print "#############################"
+  print ""
+end
+
+define MC_CHECK_VMIX_ERR ERR1 ERR2 ERR3 ERR4 ERR5 ERR6 ERR7 ERR8
+  print ""
+  print "#############################"
+  if TESTVMIX1==FALSE_
+    print "# test VMIX1.        NA     #"
+  end
+  else
+    if ERR1==FALSE_
+      print "# test VMIX1.        Ok     #"
+    end
+    else
+      print "# test VMIX1.        Failed #"
+    end
+  end
+  if TESTVMIX2==FALSE_
+    print "# test VMIX2.        NA     #"
+  end
+  else
+    if ERR2==FALSE_
+      print "# test VMIX2.        Ok     #"
+    end
+    else
+      print "# test VMIX2.        Failed #"
+    end
+  end
+  if TESTVMIX3==FALSE_
+    print "# test VMIX3.        NA     #"
+  end
+  else
+    if ERR3==FALSE_
+      print "# test VMIX3.        Ok     #"
+    end
+    else
+      print "# test VMIX3.        Failed #"
+    end
+  end
+  if TESTVMIX4==FALSE_
+    print "# test VMIX4.        NA     #"
+  end
+  else
+    if ERR4==FALSE_
+      print "# test VMIX4.        Ok     #"
+    end
+    else
+      print "# test VMIX4.        Failed #"
+    end
+  end
+  if TESTVMIX5==FALSE_
+    print "# test VMIX5.        NA     #"
+  end
+  else
+    if ERR5==FALSE_
+      print "# test VMIX5.        Ok     #"
+    end
+    else
+      print "# test VMIX5.        Failed #"
+    end
+  end
+  if TESTVMIX6==FALSE_
+    print "# test VMIX6.        NA     #"
+  end
+  else
+    if ERR6==FALSE_
+      print "# test VMIX6.        Ok     #"
+    end
+    else
+      print "# test VMIX6.        Failed #"
+    end
+  end
+  if TESTVMIX7==FALSE_
+    print "# test VMIX7.        NA     #"
+  end
+  else
+    if ERR7==FALSE_
+      print "# test VMIX7.        Ok     #"
+    end
+    else
+      print "# test VMIX7.        Failed #"
+    end
+  end
+  if TESTVMIX8==FALSE_
+    print "# test VMIX8.        NA     #"
+  end
+  else
+    if ERR8==FALSE_
+      print "# test VMIX8.        Ok     #"
+    end
+    else
+      print "# test VMIX8.        Failed #"
+    end
+  end
+  print "#############################"
+  print ""
+end
+
+define MC_STACK_CALC
+  if API_CHIPID=="5510"
+    layer_init "VID1" OMEGA1_VIDEO
+    layer_init "LOSD" OMEGA1_OSD
+    layer_init "CURS" OMEGA1_CURSOR
+    layer_init "STIL" OMEGA1_STILL
+  end
+  if API_CHIPID=="5512"
+    layer_init "VID1" OMEGA1_VIDEO
+    layer_init "LOSD" OMEGA1_OSD
+    layer_init "CURS" OMEGA1_CURSOR
+    layer_init "STIL" OMEGA1_STILL
+  end
+  if API_CHIPID=="5508"
+    layer_init "VID1" OMEGA1_VIDEO
+    layer_init "LOSD" OMEGA1_OSD
+    layer_init "CURS" OMEGA1_CURSOR
+  end
+  if API_CHIPID=="5518"
+    layer_init "VID1" OMEGA1_VIDEO
+    layer_init "LOSD" OMEGA1_OSD
+    layer_init "CURS" OMEGA1_CURSOR
+  end
+  if API_CHIPID=="7015"
+    layer_init "GFX1" GAMMA_BKL hA000 720 480
+    layer_init "GFX2" GAMMA_BKL hA500 720 480
+    layer_init "CURS" GAMMA_CURSOR hA200 720 480 ,, 1
+    layer_init "VID1" OMEGA2_VIDEO1 720 480 0
+    layer_init "VID2" OMEGA2_VIDEO2 720 480 0
+  end
+  if (API_CHIPID=="5514")||(API_CHIPID=="5516")||(API_CHIPID=="5517")
+    layer_init "VID1" OMEGA1_VIDEO
+    layer_init "LOSD" OMEGA1_OSD
+    layer_init "CURS" OMEGA1_CURSOR
+    layer_init "STIL" OMEGA1_STILL
+  end
+  if (API_CHIPID=="7020")||(API_CHIPID=="5528")
+    layer_init "CURS"  GAMMA_CURSOR G_CURSOR_BA 720 480 ,, 1
+    layer_init "GDP1"  GAMMA_GDP G_GDP1_BA 720 480
+    layer_init "GDP2"  GAMMA_GDP G_GDP2_BA 720 480
+    layer_init "GDP3"  GAMMA_GDP G_GDP3_BA 720 480
+    layer_init "GDP4"  GAMMA_GDP G_GDP4_BA 720 480
+    ;layer_init "GDP4"  GAMMA_FILTER G_GDP4_BA 720 480
+
+    layer_init "ALPHA" GAMMA_ALPHA G_ALPHA_BA 720 480
+    if (API_CHIPID=="7020")
+        layer_init "VID1"  7020_VIDEO1 720 480 0
+        layer_init "VID2"  7020_VIDEO2 720 480 0
+    end
+    else
+        layer_init "VID1"  G_VIDEO1 720 480 0
+        layer_init "VID2"  G_VIDEO2 720 480 0
+    end
+  end
+
+  if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+    layer_init "CURS"  GAMMA_CURSOR G_CURSOR_BA 720 480 ,, 1
+    layer_init "GDP1"  GAMMA_GDP G_GDP1_BA 720 480
+    layer_init "GDP2"  GAMMA_GDP G_GDP2_BA 720 480
+
+if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+
+    layer_init "GDP3"  GAMMA_GDP G_GDP3_BA 720 480
+end
+
+    layer_init "ALPHA" GAMMA_ALPHA G_ALPHA_BA 720 480
+    layer_init "VID1"  G_VIDEO1 720 480 0
+ end
+
+  if (API_CHIPID=="5100")||(API_CHIPID=="5105")||(API_CHIPID=="5301")||(API_CHIPID=="5188")||(API_CHIPID=="5525")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+    layer_init "GFX1"  COMPOSITOR , 720 480
+    layer_init "VID1"  COMPOSITOR , 720 480
+    layer_init "GFX2"  COMPOSITOR , 720 480
+  end
+
+  vmix_stackusage
+  if (API_CHIPID=="5510")||(API_CHIPID=="5512")
+    layer_term "VID1"
+    layer_term "LOSD"
+    layer_term "CURS"
+    layer_term "STIL"
+  end
+  if (API_CHIPID=="5508")||(API_CHIPID=="5518")
+    layer_term "VID1"
+    layer_term "LOSD"
+    layer_term "CURS"
+  end
+  if API_CHIPID=="7015"
+    layer_term "GFX1"
+    layer_term "GFX2"
+    layer_term "CURS"
+    layer_term "VID1"
+    layer_term "VID2"
+  end
+  if (API_CHIPID=="5514")||(API_CHIPID=="5516")||(API_CHIPID=="5517")
+    layer_term "VID1"
+    layer_term "LOSD"
+    layer_term "CURS"
+    layer_term "STIL"
+  end
+  if (API_CHIPID=="7020")||(API_CHIPID=="5528")
+    layer_term "CURS"
+    layer_term "GDP1"
+    layer_term "GDP2"
+    layer_term "GDP3"
+    layer_term "GDP4"
+    layer_term "ALPHA"
+    layer_term "VID1"
+    layer_term "VID2"
+  end
+  if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+    layer_term "CURS"
+    layer_term "GDP1"
+    layer_term "GDP2"
+if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+    layer_term "GDP3"
+end
+    layer_term "ALPHA"
+    layer_term "VID1"
+  end
+  if (API_CHIPID=="5100")||(API_CHIPID=="5105")||(API_CHIPID=="5301")||(API_CHIPID=="5188")||(API_CHIPID=="5525")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+    layer_term "GFX1"
+    layer_term "VID1"
+    layer_term "GFX2"
+  end
+
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Macro for initialising output on board mb376 (outputs on STi5528 and STi4629);;
+;; Parameters :                                                                 ;;
+;;                P_MODE : "ON"/"OFF" initialise drivers/terminate              ;;
+;;                P_USED_VOUT "MAIN"/"AUX"/"BOTH"                               ;;
+;; Remarks    :                                                                 ;;
+;;               - when used with "MAIN" or "AUX", handles to be used are       ;;
+;;               HDLDENC for denc and HDLVOUT for VOUT with default names       ;;
+;;               - when used with "BOTH", handles to be used are                ;;
+;;               MAIN_DENC_HDL for main denc with device_name="MAIN_DENC"       ;;
+;;               AUX_DENC_HDL for aux denc with device_name="AUX_DENC"          ;;
+;;               MAIN_VOUT_HDL for main vout with device_name="MAIN_VOUT"       ;;
+;;               AUX_VOUT_HDL for aux vout with device_name="AUX_VOUT"          ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+define M_MB376_BEIO P_MODE P_USED_VOUTS
+    if (P_USED_VOUTS==0)
+        P_USED_VOUTS="MAIN"
+    end
+    if (P_MODE==0)
+        P_USED_VOUTS="ON"
+    end
+    MAIN_DENC_NAME=""
+    AUX_DENC_NAME=""
+    MAIN_VOUT_NAME=""
+    AUX_VOUT_NAME=""
+    ; Choose right driver names (default used with mixer are DENC, VOUT)
+    if (P_USED_VOUTS=="MAIN")
+        MAIN_DENC_NAME = "DENC"
+        AUX_DENC_NAME  = "AUX_DENC"
+        MAIN_VOUT_NAME = "VOUT"
+        AUX_VOUT_NAME  = "AUX_VOUT"
+    end
+    if (P_USED_VOUTS=="AUX")
+        MAIN_DENC_NAME = "MAIN_DENC"
+        AUX_DENC_NAME  = "DENC"
+        MAIN_VOUT_NAME = "MAIN_VOUT"
+        AUX_VOUT_NAME  = "VOUT"
+    end
+    if (P_USED_VOUTS=="BOTH")
+        MAIN_DENC_NAME = "MAIN_DENC"
+        AUX_DENC_NAME  = "AUX_DENC"
+        MAIN_VOUT_NAME = "MAIN_VOUT"
+        AUX_VOUT_NAME  = "AUX_VOUT"
+    end
+    if P_MODE=="ON"
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;; First initialize all with right instance names ;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ; DENC Inits on STi5528
+        denc_init MAIN_DENC_NAME
+        MAIN_DENC_HDL = denc_open MAIN_DENC_NAME
+        denc_setmode MAIN_DENC_HDL
+
+        ; VTG Inits on STi5528
+        vtg_init
+        HDLVTGMAIN = vtg_open
+        vtg_setmode
+
+        ; VOUT init 1 (CVBS on STi5528)
+        vout_init MAIN_VOUT_NAME , , MAIN_DENC_NAME
+        MAIN_VOUT_HDL = vout_open MAIN_VOUT_NAME
+
+        ; VOUT init 2 (digital output out from STi5528 into STi4629)
+;        vout_init AUX_VOUT_NAME VOUT_DEVICE_TYPE_DIGOUT , ,        ; "CVBS"
+;        AUX_VOUT_HDL = vout_open AUX_VOUT_NAME
+
+        ; Denc Inits on STi4629
+;        denc_init AUX_DENC_NAME , 4
+;        AUX_DENC_HDL = denc_open AUX_DENC_NAME
+;        denc_setmode AUX_DENC_HDL
+
+        ; VTG Inits on STi4629
+;        vtg_init "AUX_VTG" "TYPE_DENC" AUX_DENC_NAME
+;        AUX_VTG_HDL = vtg_open "AUX_VTG"
+;        vtg_setmode AUX_VTG_HDL "MODE_SLAVE"
+
+        ; VOUT Inits
+;        vout_init "VOUT_4629" VOUT_DEVICE_TYPE_4629 , AUX_DENC_NAME , , 4 1
+;        VOUT_4629_HDL = vout_open "VOUT_4629"
+
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;; Second enable the right vouts and set ;;
+        ;; the right handle variables            ;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        if (P_USED_VOUTS=="MAIN")
+            vout_enable MAIN_VOUT_HDL
+            HDLDENC = MAIN_DENC_HDL
+            HDLVOUT = MAIN_VOUT_HDL
+        end
+        if (P_USED_VOUTS=="AUX")
+;            vout_enable VOUT_4629_HDL
+;            HDLDENC = AUX_DENC_HDL
+;            HDLVOUT = AUX_VOUT_HDL
+        end
+        if (P_USED_VOUTS=="BOTH")
+            vout_enable MAIN_VOUT_HDL
+;            vout_enable VOUT_4629_HDL
+        end
+    end
+    if P_MODE=="OFF"
+        ; VOUT Term on STi4629
+;        vout_close VOUT_4629_HDL
+;        vout_term "VOUT_4629"
+
+        ; VTG Term on STi4629
+;        vtg_close AUX_VTG_HDL
+;        vtg_term "AUX_VTG"
+
+        ; DENC Term on STi4629
+;        denc_close AUX_DENC_HDL
+;        denc_term AUX_DENC_NAME
+
+        ; VOUT Term on STi5528
+        vout_close MAIN_VOUT_HDL
+        vout_term MAIN_VOUT_NAME
+
+        ; VOUT Term on STi5528
+;        vout_close AUX_VOUT_HDL
+;        vout_term AUX_VOUT_NAME
+
+        ; VTG Term on STi5528
+        vtg_close HDLVTGMAIN
+        vtg_term
+
+        ; DENC Term on STi5528
+        denc_close MAIN_DENC_HDL
+        denc_term MAIN_DENC_NAME
+    end
+end
+
+; To avoid to many global variable, they are reserved for
+; common macros.
+; Specific macros try to minimise global variable by having
+; parameter in entry and returning
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Common routines for chip ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Common macro should always used global variable
+define M_COMMON_BEIO P_MODE
+    if P_MODE=="ON"
+
+        ; DENC Inits
+        denc_init
+        HDLDENC = denc_open
+        denc_setmode
+
+        ; VTG Inits
+        vtg_init
+        HDLVTGMAIN = vtg_open
+        vtg_setmode
+
+        ; VOUT Inits
+        if (API_CHIPID=="5100")||(API_CHIPID=="5105")||(API_CHIPID=="5301")||(API_CHIPID=="5525")||(API_CHIPID=="5107")||(API_CHIPID=="5162")
+               vout_init , , "CVBS" , , , 1 0
+        end
+        elif (API_CHIPID=="5188")
+               vout_init , , "CVBS" , , , 4 0
+        end
+        else
+              vout_init
+        end
+        HDLVOUT = vout_open
+        vout_enable
+    end
+    if P_MODE=="ON_AUX" ; for 7200
+
+        ; DENC Inits
+        denc_init
+        HDLDENC = denc_open
+        denc_setmode
+
+        ; VTG Inits
+        vtg_init "VTG2" , hFD10C200
+        HDLVTGAUX = vtg_open "VTG2"
+        vtg_setmode
+
+        ; VOUT Inits
+        vout_init
+        HDLVOUT = vout_open
+        vout_enable
+    end
+
+    if P_MODE=="ON_SEC" ; for 7200
+
+        denc_init "DENC2" ,,, hFD10F000
+        HDLDENC2=denc_open "DENC2"
+        denc_setmode HDLDENC2 "PAL"
+
+        vtg_init "VTG3" , hFD10F200
+        HDLVTGSEC=vtg_open "VTG3"
+        vtg_setmode HDLVTGSEC "MODE_576I50000_13500"
+
+        vout_init , , ,  "DENC2" , , ,
+        HDLVOUT=vout_open
+        vout_enable
+    end
+
+
+    if P_MODE=="OFF"
+        ; VOUT Term
+        vout_close HDLVOUT
+        vout_term
+
+        ; VTG Term
+        vtg_close HDLVTGMAIN
+        vtg_term
+
+        ; DENC Term
+        denc_close HDLDENC
+        denc_term
+    end
+
+    if P_MODE=="OFF_AUX"
+        ; VOUT Term
+        vout_close HDLVOUT
+        vout_term
+
+        ; VTG Term
+        vtg_close HDLVTGAUX
+        vtg_term "VTG2"
+
+        ; DENC Term
+        denc_close HDLDENC
+        denc_term
+    end
+
+    if P_MODE=="OFF_SEC"
+        ; VOUT Term
+        vout_close HDLVOUT
+        vout_term
+
+        ; VTG Term
+        vtg_close HDLVTGSEC
+        vtg_term "VTG3"
+
+        ; DENC Term
+        denc_close HDLDENC2
+        denc_term "DENC2" 1
+    end
+
+
+end
+
+; Allowed mode for this macro are "NTSC", "PAL", "SECAM" or
+; any HD mode allowed by VTG
+; If no arguments given, last handles are used
+define M_COMMON_SETMODE P_MODE P_VTGHDL P_MIXHDL P_DENCHDL P_DIGVOUTHDL P_CHIP
+    if P_MODE=="NTSC"
+        if P_VTGHDL==0
+            vtg_set , "NTSC"
+        end
+        else
+            vtg_set P_VTGHDL "NTSC"
+        end
+        if P_DENCHDL==0
+            denc_set , "NTSCM"
+        end
+        else
+            denc_set P_DENCHDL "NTSCM"
+        end
+        if P_DIGVOUTHDL!=0
+            vout_setparams P_DIGVOUTHDL "YCbCr422_8" 1
+        end
+    end
+    elif P_MODE=="PAL"
+        if P_VTGHDL==0
+            vtg_set , "PAL"
+        end
+        else
+            vtg_set P_VTGHDL "PAL"
+        end
+        if P_DENCHDL==0
+            denc_set , P_MODE
+        end
+        else
+            denc_set P_DENCHDL P_MODE
+        end
+        if P_DIGVOUTHDL!=0
+            vout_setparams P_DIGVOUTHDL "YCbCr422_8" 0
+        end
+    end
+    elif P_MODE=="SECAM"
+        if P_VTGHDL==0
+            vtg_set , "PAL"
+        end
+        else
+            vtg_set P_VTGHDL "PAL"
+        end
+        if P_DENCHDL==0
+            denc_set , P_MODE
+        end
+        else
+            denc_set P_DENCHDL P_MODE
+        end
+    end
+    else
+        if P_VTGHDL==0
+            vtg_set , P_MODE
+        end
+        else
+            vtg_set P_VTGHDL P_MODE
+        end
+    end
+
+    ; Get VTG parameters
+    STRMODE = ""
+    if P_VTGHDL==0
+        STRMODE = vtg_getmode
+        MC_CHECK_RETCODE ERR_NO_ERROR
+    end
+    else
+        STRMODE = vtg_getmode P_VTGHDL
+        MC_CHECK_RETCODE ERR_NO_ERROR
+    end
+    T_FRAMERATE = api_evalstr STRMODE 2
+    T_SCANTYPE = api_evalstr STRMODE 3
+    T_WIDTH = api_evalstr STRMODE 4
+    T_HEIGHT = api_evalstr STRMODE 5
+
+
+   RET = MC_CHECK_TYPE
+   if (RET==1)||(RET==32) ; 55XX /5100/5105/5301/5188/5107/5162
+        T_XStart = api_evalstr STRMODE 6
+        T_YStart = api_evalstr STRMODE 7
+   end
+   if (RET==2)||(RET==4)||(RET==8) ; 7015 /GX1 /7020 /7710
+        T_XStart = api_evalstr STRMODE 8
+        T_YStart = api_evalstr STRMODE 9
+   end
+   if RET==16   ;5528
+        if (P_CHIP=="4629")
+                T_XStart = api_evalstr STRMODE 8
+                T_YStart = api_evalstr STRMODE 9
+        end
+        else
+                T_XStart = api_evalstr STRMODE 6
+                T_YStart = api_evalstr STRMODE 7
+        end
+    end
+    ; Set mixer parameters
+
+    if P_MIXHDL==0
+        STRMODE=vmix_gscreen
+        T_OLDASPECTRATIO=api_evalstr STRMODE 2
+        vmix_sscreen , T_SCANTYPE T_OLDASPECTRATIO T_FRAMERATE T_WIDTH T_HEIGHT T_XStart T_YStart
+    end
+    else
+        STRMODE=vmix_gscreen P_MIXHDL
+        T_OLDASPECTRATIO=api_evalstr STRMODE 2
+        vmix_sscreen P_MIXHDL T_SCANTYPE T_OLDASPECTRATIO T_FRAMERATE T_WIDTH T_HEIGHT T_XStart T_YStart
+    end
+
+end
+
+define M_COMMON_LAYER_FIT P_LAYHDL P_LAYVPHDL
+    T_STRMODE=""
+    if P_LAYVPHDL==0
+        T_STRMODE = layer_gvpiorect
+    end
+    else
+        T_STRMODE = layer_gvpiorect P_LAYVPHDL
+    end
+    T_WIDTH = api_evalstr T_STRMODE 3
+    T_HEIGH = api_evalstr T_STRMODE 4
+    T_X0 = api_evalstr T_STRMODE 5
+    T_Y0 = api_evalstr T_STRMODE 6
+    if P_LAYHDL==0
+        layer_sparams ,,, T_WIDTH+T_X0 T_HEIGH+T_Y0
+    end
+    else
+        layer_sparams P_LAYHDL ,, T_WIDTH+T_X0 T_HEIGH+T_Y0
+    end
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Specific routines for 55XX ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+define M_55XX_LAYER P_MODE P_NUM
+    if P_MODE=="START"
+        if P_NUM&1
+            ; Layer Cursor
+            if (API_CHIPID=="5508")||(API_CHIPID=="5518")
+                layer_init "CURSOR" OMEGA1_CURSOR h0400 ,, 0
+            end
+            else
+                layer_init "CURSOR" OMEGA1_CURSOR h1000 ,, 0
+            end
+            HDLCUR=layer_open "CURSOR"
+            HDLVPCUR=layer_openvp HDLCUR 1 222 158
+            layer_enable HDLVPCUR
+        end
+
+        if P_NUM&2
+           ; Layer OSD
+            layer_init "OSD" OMEGA1_OSD ,,, 0 ,4
+            HDLOSD=layer_open "OSD"
+            HDLVPOSD=layer_openvp HDLOSD 2 100 100
+            layer_enable HDLVPOSD
+        end
+        if P_NUM&4
+            ; Layer STILL
+            if (API_CHIPID!="5508")&&(API_CHIPID!="5518")
+                layer_init "STILL" OMEGA1_STILL
+                HDLSTILL=layer_open "STILL"
+                HDLVPSTILL=layer_openvp HDLSTILL 3 210 100
+                layer_enable HDLVPSTILL
+            end
+        end
+        if P_NUM&8
+            ; Layer Video
+            layer_init "LVIDEO" OMEGA1_VIDEO
+            HDLVID1 = layer_open "LVIDEO"
+            HDLVPVID1 = layer_openvp , 0 0 720 576 BUFF_ADD 0 0 720 576
+            layer_enable
+            layer_avpparams , ,, 720 576 ,, 720/2 576/2 0 720 576 BUFF_ADD
+            layer_svpparams , ,, 720 576 ,, 720/2 576/2 0 720 576 BUFF_ADD
+        end
+        if P_NUM&hF0
+            print ""
+            print "LAYER NOT AVAILABLE !!!!!"
+            print ""
+        end
+    end
+    if P_MODE=="STOP"
+        if P_NUM&1
+            ; Layer Cursor
+            layer_closevp HDLVPCUR
+            layer_close HDLCUR
+            layer_term "CURSOR" 1
+        end
+        if P_NUM&2
+            ; Layer OSD
+            layer_closevp HDLVPOSD
+            layer_close HDLOSD
+            layer_term "OSD" 1
+        end
+        if P_NUM&4
+            ; Layer STILL
+            if (API_CHIPID!="5508")&&(API_CHIPID!="5518")
+                layer_closevp HDLVPSTILL
+                layer_close HDLSTILL
+                layer_term "STILL" 1
+            end
+        end
+        if P_NUM&8
+            ; Layer Video
+            layer_closevp HDLVPVID1
+            layer_close HDLVID1
+            layer_term "LVIDEO" 1
+        end
+        if P_NUM&hF0
+            print ""
+            print "LAYER NOT AVAILABLE !!!!!"
+            print ""
+        end
+    end
+    if P_MODE=="CONNECT_ALL_NOT_VIDEO"
+        if (API_CHIPID=="5508")||(API_CHIPID=="5518")
+            vmix_con , "OSD" "CURSOR"
+        end
+        if (API_CHIPID=="5512")||(API_CHIPID=="5514")||(API_CHIPID=="5516")||(API_CHIPID=="5517")
+            vmix_con , "STILL" "OSD" "CURSOR"
+        end
+    end
+    if P_MODE=="CONNECT_ALL"
+        if (API_CHIPID=="5508")||(API_CHIPID=="5518")
+            vmix_con , "LVIDEO" "OSD" "CURSOR"
+        end
+        if (API_CHIPID=="5512")||(API_CHIPID=="5514")||(API_CHIPID=="5516")||(API_CHIPID=="5517")
+            vmix_con , "STILL" "LVIDEO" "OSD" "CURSOR"
+        end
+    end
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Specific routines for 5100/5105/5301/5188/5107/5162 ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+define M_5100_LAYER P_MODE P_NUM
+    if P_MODE=="START"
+        if P_NUM&1
+            ; Layer OSD
+            layer_init "OSD" COMPOSITOR
+            HDLOSD=layer_open "OSD"
+
+            if (API_CHIPID=="5188")||((API_CHIPID=="5105")&&(DEVICE_SELECTED_5118==1))
+                HDLVPOSD=layer_openvp HDLOSD 5 STAPIGATDATA+"merouCLUT8.gam" 100 100
+            end
+            else
+                HDLVPOSD=layer_openvp HDLOSD 2 100 100
+            end
+            layer_enable HDLVPOSD
+        end
+	if P_NUM&2
+            ; Layer LVIDEO
+            layer_init "LVIDEO" COMPOSITOR
+            HDLVID1=layer_open "LVIDEO"
+            HDLVPVID1=layer_openvp HDLVID1 3 150 150
+            layer_enable HDLVPVID1
+        end
+        if P_NUM&4
+            ; Layer STILL
+            layer_init "STILL" COMPOSITOR
+            HDLSTILL=layer_open "STILL"
+            if (API_CHIPID=="5188")||((API_CHIPID=="5105")&&(DEVICE_SELECTED_5118==1))
+                HDLVPSTILL=layer_openvp HDLSTILL 5 STAPIGATDATA+"boytoyCLUT8.gam" 0 0
+            end
+            else
+                HDLVPSTILL=layer_openvp HDLSTILL 5 STAPIGATDATA+"boytoy422R.gam" 0 0
+            end
+            layer_enable HDLVPSTILL
+        end
+	if P_NUM&8
+            ; Layer LVIDEO2
+            layer_init "LVIDEO2" COMPOSITOR
+            HDLVID2=layer_open "LVIDEO2"
+            HDLVPVID2=layer_openvp HDLVID2 3 50 50
+            layer_enable HDLVPVID2
+        end
+    end
+    if P_MODE=="STOP"
+        if P_NUM&1
+            ; Layer OSD
+	    layer_disable HDLVPOSD
+            layer_closevp HDLVPOSD
+            layer_close HDLOSD
+            layer_term "OSD" 1
+        end
+        if P_NUM&4
+            ; Layer STILL
+	    layer_disable HDLVPSTILL
+            layer_closevp HDLVPSTILL
+            layer_close HDLSTILL
+            layer_term "STILL" 1
+        end
+        if P_NUM&2
+            ; Layer Video
+	    layer_disable HDLVPVID1
+            layer_closevp HDLVPVID1
+            layer_close HDLVID1
+            layer_term "LVIDEO" 1
+        end
+	if P_NUM&8
+            ; Layer Video2
+	    layer_disable HDLVPVID2
+            layer_closevp HDLVPVID2
+            layer_close HDLVID2
+            layer_term "LVIDEO2" 1
+        end
+    end
+    if P_MODE=="CONNECT_ALL_NOT_VIDEO"
+	vmix_con , "STILL" "OSD"
+    end
+    if P_MODE=="CONNECT_ALL"
+        vmix_con , "STILL" "LVIDEO" "OSD"
+    end
+    if P_MODE=="SVPARAMS"
+        if P_NUM&1
+            layer_avpparams HDLOSD ,, 720 576 P_WIDTH/3 P_HEIGHT/3 360*T_FACTOR 288*T_FACTOR  720 576 ;BUFF_ADD
+            layer_svpparams HDLVPOSD ,, 720 576 P_WIDTH/3 P_HEIGHT/3 360*T_FACTOR 288*T_FACTOR 720 576 ;BUFF_ADD
+        end
+        if P_NUM&2
+            layer_avpparams HDLVID1 ,, 720 576 P_WIDTH/3 P_HEIGHT/3 360*T_FACTOR 288*T_FACTOR  720 576 ;BUFF_ADD
+            layer_svpparams HDLVPVID1 ,, 720 576 P_WIDTH/3 P_HEIGHT/3 360*T_FACTOR 288*T_FACTOR 720 576 ;BUFF_ADD
+        end
+	if P_NUM&4
+            layer_avpparams HDLSTILL ,, 720 576 P_WIDTH/2 P_HEIGHT/2 360*T_FACTOR 288*T_FACTOR 1 720 576 BUFF_ADD
+            layer_svpparams HDLVPSTILL ,, 720 576 P_WIDTH/2 P_HEIGHT/2 360*T_FACTOR 288*T_FACTOR 1 720 576 BUFF_ADD
+        end
+    end
+
+
+end
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Specific routines for 7015/7020 ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+define M_7015_STV0119 P_MODE
+    if P_MODE=="ON"
+        ; Init DENC
+        denc_init "DENC119" , 0 1
+        HDLDENC119 = denc_open "DENC119"
+        denc_setmode , "NTSCM"
+
+        ; Init VOUT
+        vout_init "VOUT119" 1 "CVBS" "DENC119"
+        HDLVOUT119 = vout_open "VOUT119"
+        vout_enable HDLVOUT119
+
+        ; Init VOUT RGB
+        vout_init "VOUTRGB119" 0 "RGB" "DENC119"
+        HDLVOUTRGB119 = vout_open "VOUTRGB119"
+        vout_enable HDLVOUTRGB119
+
+        ; Init VTG
+        vtg_init "VTG119" 0 "DENC119"
+        HDLVTG119=vtg_open "VTG119"
+        vtg_ssmparam HDLVTG119 0 0 1 0 0 0
+        vtg_setmode HDLVTG119 "MODE_SLAVE"
+    end
+    if P_MODE=="OFF"
+        ; Term VTG
+        vtg_close HDLVTG119
+        vtg_term "VTG119"
+
+        ; Term VOUT RGB
+        vout_close HDLVOUTRGB119
+        vout_term "VOUTRGB119"
+
+        ; Term VOUT
+        vout_close HDLVOUT119
+        vout_term "VOUT119"
+
+        ; Term DENC
+        denc_close HDLDENC119
+        denc_term "DENC119"
+    end
+end
+
+define M_7015_BEIO P_MODE
+    if P_MODE=="ON"
+        ; Init VOUT DIG
+      if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")&&(API_CHIPID!="7200")
+        vout_init "HDDIG" , "YCbCr422_8"
+        HDLDIGVOUT = vout_open "HDDIG"
+        vout_enable
+      end
+        ; Init HD ANA
+        vout_init "HDANA" , "HD_RGB"
+        HDLANAVOUT = vout_open "HDANA"
+        vout_enable
+
+        ; Init VTG2
+        if (API_CHIPID=="7710")
+                if (CHIP_CUT=="STI7710_CUT2x")
+                        vtg_init "VTG2" , h20103034
+                end
+                else
+                        vtg_init "VTG2" , h20103C34
+                end
+       end
+       elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+                vtg_init "VTG2" , hB9005034
+       end
+       else
+                vtg_init "VTG2" , h8000
+       end
+        HDLVTGAUX = vtg_open "VTG2"
+        ; Set mode slave of VTG1
+        vtg_setmode HDLVTGAUX MODE_SLAVE
+    end
+    if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")
+        if AVAIL_STV0119==TRUE
+                M_7015_STV0119 P_MODE
+        end
+    end
+
+    if P_MODE=="OFF"
+        ; Term VTG2
+        vtg_close HDLVTGAUX
+        vtg_term "VTG2"
+
+        ; Term HD ANA
+        vout_close HDLANAVOUT
+        vout_term "HDANA"
+
+        ; Term VOUT DIG
+  if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")
+        vout_close HDLDIGVOUT
+        vout_term "HDDIG"
+  end
+    end
+end
+
+; To start all layer, P_NUM=h1F
+define M_7015_LAYER P_ACTION P_NUM P_WIDTH P_HEIGHT
+    if P_WIDTH==0
+        P_WIDTH=1920
+    end
+    if P_HEIGHT==0
+        P_HEIGHT=1080
+    end
+
+    if P_ACTION=="START"
+        if P_NUM&1
+            ; Layer Video 1
+            layer_init "LAYVID1" OMEGA2_VIDEO1 P_WIDTH P_HEIGHT
+        end
+        if P_NUM&2
+            ; Layer Video 2
+            layer_init "LAYVID2" OMEGA2_VIDEO2 P_WIDTH P_HEIGHT
+        end
+        if P_NUM&4
+            ; Layer GFX1 (merou3.gam)
+            layer_init "GFX1" , hA000 P_WIDTH P_HEIGHT
+            HDLGFX1=layer_open "GFX1"
+            HDLVPGFX1=layer_openvp HDLGFX1 , (P_WIDTH/2)-100 20
+            layer_enable HDLVPGFX1
+        end
+        if P_NUM&8
+            ; Layer GFX2 (suzie.gam)
+            layer_init LAYER_NAME ,, P_WIDTH P_HEIGHT
+            HDLGFX2=layer_open
+            HDLVPGFX2=layer_openvp HDLGFX2 3 150 0
+            layer_enable HDLVPGFX2
+        end
+        if P_NUM&h10
+            ; Due to hardware pb the cursor is not available on 7015
+            ; Cursor
+            ; layer_init "CUR" GAMMA_CURSOR hA200 ,,,, 1
+            ; HDLCUR=layer_open "CUR"
+            ; HDLVPCUR=layer_openvp HDLCUR 1 280 340
+            ; layer_enable HDLVPCUR
+        end
+        if P_NUM&hE0
+            print ""
+            print "LAYER NOT AVAILABLE !!!!!"
+            print ""
+       end
+    end
+    if P_ACTION=="STOP"
+        if P_NUM&h1
+             ; Layer Video 1
+            layer_term "LAYVID1" 1
+        end
+        if P_NUM&h2
+            layer_term "LAYVID2" 1
+        end
+        if P_NUM&h4
+            layer_closevp HDLVPGFX1
+            layer_close HDLGFX1
+            layer_term "GFX1"
+        end
+        if P_NUM&h8
+            layer_closevp HDLVPGFX2
+            layer_close HDLGFX2
+            layer_term LAYER_NAME
+        end
+        if P_NUM&h10
+            ; Due to hardware pb the cursor is not available on 7015
+            ; layer_closevp HDLVPCUR
+            ; layer_close HDLCUR
+            ; layer_term "CUR"
+        end
+        if P_NUM&hE0
+            print ""
+            print "LAYER NOT AVAILABLE !!!!!"
+            print ""
+        end
+    end
+end
+
+; To start all layer, P_NUM=hFF
+define M_GAMMA_LAYER P_ACTION P_NUM P_WIDTH P_HEIGHT
+    ; T_FACTOR variable output a bigger layer on high definition format
+    T_FACTOR=1
+    if P_WIDTH==0
+        if (API_CHIPID=="7020")||(API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+            P_WIDTH=1920
+            T_FACTOR=3
+        end
+        if API_CHIPID=="5528"
+            P_WIDTH=720
+        end
+    end
+    if P_HEIGHT==0
+        if (API_CHIPID=="7020")||(API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+            P_HEIGHT=1080
+        end
+        if API_CHIPID=="5528"
+            P_HEIGHT= 480
+        end
+    end
+    GDP1_IMAGE=0
+    GDP2_IMAGE=0
+    ; 2=merou, 3=susie
+    if (API_CHIPID=="7020")||(API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+        GDP1_IMAGE=2
+        GDP2_IMAGE=3
+    end
+    if API_CHIPID=="5528"
+        GDP1_IMAGE=3
+        GDP2_IMAGE=2
+        GDP3_IMAGE=5
+        GDP4_IMAGE=5
+    end
+    if API_CHIPID=="7200"
+        GDP1_IMAGE=3
+    end
+
+
+
+    if P_ACTION=="START"
+        if P_NUM&1
+            ; Layer Video 1
+            print "Layer Video 1"
+            if (API_CHIPID=="7020")
+                layer_init "LAYVID1" 7020_VIDEO1 720 576
+            end
+            if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+                layer_init "LAYVID1" G_VIDEO1 P_WIDTH P_HEIGHT
+                HDLVID1 = layer_open "LAYVID1"
+                print "BUFF_ADD=" BUFF_ADD
+                if (((ST_OS=="LINUX")||(API_CHIPID=="7109")||(API_CHIPID=="7200"))&&(BUFF_ADD==0))
+                   RET_STR = displayvideo 0
+                   BUFF_ADD = api_evalstr RET_STR 1
+                end
+
+                HDLVPVID1 = layer_openvp HDLVID1 0 0 720 576 BUFF_ADD 0 0 720 576
+                layer_enable HDLVPVID1
+                layer_avpparams HDLVID1 ,, 720 576 P_WIDTH/3 100 360*T_FACTOR 288*T_FACTOR 1 720 576 BUFF_ADD
+                layer_svpparams HDLVPVID1 ,, 720 576 P_WIDTH/3 100 360*T_FACTOR 288*T_FACTOR 1 720 576 BUFF_ADD
+                layer_svpsrc HDLVPVID1 1 0 720 576 BUFF_ADD
+            end
+            else
+                layer_init "LAYVID1" G_VIDEO1 720 576
+                HDLVID1 = layer_open "LAYVID1"
+                HDLVPVID1 = layer_openvp HDLVID1 0 0 720 576 BUFF_ADD 0 0 720 576
+                layer_enable HDLVPVID1
+                layer_avpparams HDLVID1 ,, 720 576 , 100 360*T_FACTOR 288*T_FACTOR 1 720 576 BUFF_ADD
+                layer_svpparams HDLVPVID1 ,, 720 576 , 100 360*T_FACTOR 288*T_FACTOR 1 720 576 BUFF_ADD
+                layer_svpsrc HDLVPVID1 1 0 720 576 BUFF_ADD
+            end
+        end
+        if P_NUM&2
+            ; Layer Video 2
+            print "Layer Video 2"
+            if (API_CHIPID=="7020")
+                layer_init "LAYVID2" 7020_VIDEO2 P_WIDTH P_HEIGHT
+            end
+            else
+                layer_init "LAYVID2" G_VIDEO2 P_WIDTH P_HEIGHT
+            end
+            HDLVID2 = layer_open "LAYVID2"
+            if ((ST_OS=="LINUX")||(API_CHIPID=="7109")||(API_CHIPID=="7200"))&&(BUFF_ADD_1==0)
+                RET_STR = displayvideo 1
+                BUFF_ADD_1 = api_evalstr RET_STR 1
+            end
+            HDLVPVID2 = layer_openvp HDLVID2 0 1 720 576 BUFF_ADD_1 0 0 720 576
+
+            layer_enable HDLVPVID2
+
+            layer_avpparams HDLVID2 ,, 720 576 P_WIDTH/3 150 360*T_FACTOR 288*T_FACTOR 1 720 576 BUFF_ADD_1
+            layer_svpparams HDLVPVID2 ,, 720 576 P_WIDTH/3 150 360*T_FACTOR 288*T_FACTOR 1 720 576 BUFF_ADD_1
+            layer_svpsrc HDLVPVID2 1 0 720 576 BUFF_ADD
+        end
+        if P_NUM&4
+            ; Layer GDP1
+            print "Layer GDP1"
+            layer_init "GDP1" GAMMA_GDP G_GDP1_BA P_WIDTH P_HEIGHT
+            HDLGDP1=layer_open "GDP1"
+            if (ST_OS!="LINUX")
+              HDLVPGDP1=layer_openvp HDLGDP1 5 STAPIGATDATA+"merou3.gam"  200 100
+            end
+            if (ST_OS=="LINUX")
+              ;HDLVPGDP1=layer_openvp HDLGDP1 5 "./files/sidibou.gam"  0 0
+              HDLVPGDP1=layer_openvp HDLGDP1 5 "./files/merou3.gam"  0 0
+            end
+            ;HDLVPGDP1=layer_openvp HDLGDP1 , (P_WIDTH/2)-100 20
+            layer_enable HDLVPGDP1
+        end
+        if P_NUM&8
+            ; Layer GDP2
+            print "Layer GDP2"
+            layer_init "GDP2" GAMMA_GDP G_GDP2_BA P_WIDTH P_HEIGHT
+            HDLGDP2=layer_open "GDP2"
+            HDLVPGDP2=layer_openvp HDLGDP2 GDP2_IMAGE 150 10
+            layer_enable HDLVPGDP2
+        end
+        if P_NUM&h10
+
+            if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+
+                       if (((API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2"))||(API_CHIPID=="7200"))
+                       print "Layer GDP3"
+                       layer_init "GDP3" GAMMA_GDP G_GDP3_BA P_WIDTH P_HEIGHT
+                       HDLGDP3=layer_open "GDP3"
+
+                       if (ST_OS!="LINUX")
+                         HDLVPGDP3=layer_openvp HDLGDP3 5 STAPIGATDATA+"boytoy422r.gam" 20 20
+                       end
+                       if (ST_OS=="LINUX")
+                         HDLVPGDP3=layer_openvp HDLGDP3 5 "./files/corbeau.gam" 20 20
+                       end
+
+                       layer_svpiorect  HDLVPGDP3 0 0 352 240 0 0 352 240
+                       layer_enable HDLVPGDP3
+                       end
+            end
+            else
+                ; Layer GDP3
+                layer_init "GDP3" GAMMA_GDP G_GDP3_BA P_WIDTH P_HEIGHT
+                HDLGDP3=layer_open "GDP3"
+                HDLVPGDP3=layer_openvp HDLGDP3 GDP1_IMAGE (P_WIDTH/2)-100 20
+                layer_enable HDLVPGDP3
+            end
+        end
+        if P_NUM&h20
+            ; Cursor
+            layer_init "CURS" GAMMA_CURSOR G_CURSOR_BA P_WIDTH P_HEIGHT ,, 1
+            HDLCUR=layer_open "CURS"
+            HDLVPCUR=layer_openvp HDLCUR 1 280 340
+            layer_enable HDLVPCUR
+        end
+        if P_NUM&h40
+            ; Layer Alpha
+            layer_init "ALPHA" GAMMA_ALPHA G_ALPHA_BA P_WIDTH P_HEIGHT
+            HDLALPHA=layer_open "ALPHA"
+            if (ST_OS!="LINUX")
+              HDLVPALPHA=layer_openvp HDLALPHA 5 STAPIGATDATA+"mask1.gam" (P_WIDTH/2)-100 20
+            end
+            if (ST_OS=="LINUX")
+                HDLVPALPHA=layer_openvp HDLALPHA 5 "./files/mask1.gam" (P_WIDTH/2)-100 20
+            end
+            layer_enable HDLVPALPHA
+            layer_svpalpha HDLVPALPHA 10 120
+        end
+        if P_NUM&h80
+            if (API_CHIPID=="7020")||(API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+                print ""
+                print "LAYER GDP4 NOT AVAILABLE !!!!!"
+                print ""
+            end
+            if ((API_CHIPID=="5528")||(API_CHIPID=="7200"))
+                ; Layer GDP4
+                layer_init "GDP4" GAMMA_GDP G_GDP4_BA P_WIDTH P_HEIGHT
+                ;layer_init "GDP4" GAMMA_FILTER G_GDP4_BA P_WIDTH P_HEIGHT
+                HDLGDP4=layer_open "GDP4"
+                if (ST_OS=="LINUX")
+                HDLVPGDP4=layer_openvp HDLGDP4 5 "./files/corbeau.gam" 100 0 ;720 480
+                end
+                if (ST_OS!="LINUX")
+                HDLVPGDP4=layer_openvp HDLGDP4 5 STAPIGATDATA+"corbeau.gam" 100 0 ;720 480
+                end
+                layer_enable HDLVPGDP4
+            end
+       end
+       if P_NUM&h100
+         ; Layer Video 3
+         print "Layer Video 3"
+         if (API_CHIPID=="7200")
+            layer_init "LAYVID3" G_VIDEO3 P_WIDTH P_HEIGHT
+            HDLVID3 = layer_open "LAYVID3"
+            if (BUFF_ADD_2==0)
+                RET_STR = displayvideo 2
+                BUFF_ADD_2 = api_evalstr RET_STR 1
+            end
+            HDLVPVID3 = layer_openvp HDLVID3 0 1 720 576 BUFF_ADD_1 0 0 720 576
+
+            layer_enable HDLVPVID3
+
+            layer_avpparams HDLVID3 ,, 720 576 P_WIDTH/3 150 360*T_FACTOR 288*T_FACTOR 1 720 576 BUFF_ADD_1
+            layer_svpparams HDLVPVID3 ,, 720 576 P_WIDTH/3 150 360*T_FACTOR 288*T_FACTOR 1 720 576 BUFF_ADD_1
+            layer_svpsrc HDLVPVID3 1 0 720 576 BUFF_ADD
+         end
+         else
+             print ""
+             print "LAYER VIDEO3 NOT AVAILABLE !!!!!"
+             print ""
+         end
+       end
+       if P_NUM&h200
+             ; Layer GDP5
+             print "Layer GDP5"
+             if (API_CHIPID=="7200")
+                layer_init "GDP5" GAMMA_GDP G_GDP5_BA P_WIDTH P_HEIGHT
+                HDLGDP5=layer_open "GDP5"
+                if (ST_OS=="LINUX")
+                HDLVPGDP5=layer_openvp HDLGDP5 5 "./files/corbeau.gam" 100 0 ;720 480
+                end
+                if (ST_OS!="LINUX")
+                HDLVPGDP5=layer_openvp HDLGDP5 5 STAPIGATDATA+"corbeau.gam" 100 0 ;720 480
+                end
+                layer_enable HDLVPGDP5
+             end
+             else
+                print ""
+                print "LAYER GDP5 NOT AVAILABLE !!!!!"
+                print ""
+
+             end
+       end
+
+    end
+    if P_ACTION=="STOP"
+        if P_NUM&h1
+            layer_closevp HDLVPVID1
+            layer_close HDLVID1
+            layer_term "LAYVID1" 1
+        end
+        if P_NUM&h2
+            layer_closevp HDLVPVID2
+            layer_close HDLVID2
+            layer_term "LAYVID2" 1
+        end
+        if P_NUM&h4
+            layer_closevp HDLVPGDP1
+            layer_close HDLGDP1
+            layer_term "GDP1"
+        end
+        if P_NUM&h8
+            layer_closevp HDLVPGDP2
+            layer_close HDLGDP2
+            layer_term "GDP2"
+        end
+        if P_NUM&h10
+            if (API_CHIPID=="7710")||(API_CHIPID=="7100")
+
+                  print ""
+
+
+            end
+            else
+                if (((API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2"))||(API_CHIPID=="7200"))
+                layer_closevp HDLVPGDP3
+                layer_close HDLGDP3
+                layer_term "GDP3"
+                end
+            end
+        end
+        if P_NUM&h20
+            layer_closevp HDLVPCUR
+            layer_close HDLCUR
+            layer_term "CURS"
+        end
+        if P_NUM&h40
+            layer_closevp HDLVPALPHA
+            layer_close HDLALPHA
+            layer_term "ALPHA"
+        end
+        if P_NUM&h80
+            if (API_CHIPID=="7020")||(API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+                print ""
+                print "LAYER GDP4 NOT AVAILABLE !!!!!"
+                print ""
+            end
+            if API_CHIPID=="5528"
+                layer_closevp HDLVPGDP4
+                layer_close HDLGDP4
+                layer_term "GDP4"
+            end
+        end
+        if P_NUM&h100
+          if (API_CHIPID=="7200")
+            layer_closevp HDLVPVID3
+            layer_close HDLVID3
+            layer_term "LAYVID3" 1
+          end
+          else
+            print ""
+            print "LAYER VIDEO3 NOT AVAILABLE !!!!!"
+            print ""
+          end
+        end
+        if P_NUM&h200
+          if (API_CHIPID=="7200")
+            layer_closevp HDLVPGDP5
+            layer_close HDLGDP5
+            layer_term "GDP5"
+          end
+          else
+            print ""
+            print "LAYER GDP5 NOT AVAILABLE !!!!!"
+            print ""
+          end
+        end
+    end
+    if P_ACTION=="WA_SVPARAMS"
+        if P_NUM&1
+            if (API_CHIPID=="7020")
+;                layer_init "LAYVID1" 7020_VIDEO1 P_WIDTH P_HEIGHT      ;720 576
+            end
+            else
+                layer_init "LAYVID1" G_VIDEO1 P_WIDTH P_HEIGHT      ;720 576;
+                HDLVID1 = layer_open "LAYVID1"
+                HDLVPVID1 = layer_openvp HDLVID1 0 0 720 576
+                layer_enable HDLVPVID1
+            end
+            layer_avpparams HDLVID1 ,, 720 576 P_WIDTH/3 P_HEIGHT/3 360*T_FACTOR 288*T_FACTOR  720 576 BUFF_ADD
+            layer_svpparams HDLVPVID1 ,, 720 576 P_WIDTH/3 P_HEIGHT/3 360*T_FACTOR 288*T_FACTOR 720 576 BUFF_ADD
+        end
+        if P_NUM&2
+            if (API_CHIPID=="7020")
+;                layer_init "LAYVID2" 7020_VIDEO2 P_WIDTH P_HEIGHT
+            end
+            else
+               layer_init "LAYVID2" G_VIDEO2 P_WIDTH P_HEIGHT
+               HDLVID2 = layer_open "LAYVID2"
+               if ((ST_OS=="LINUX")||(API_CHIPID=="7109")||(API_CHIPID=="7200"))&&(BUFF_ADD==0)
+                   RET_STR = displayvideo 1
+                   BUFF_ADD = api_evalstr RET_STR 1
+               end
+               HDLVPVID2 = layer_openvp HDLVID2 0 1 720 576 BUFF_ADD 0 0 720 576
+               layer_enable HDLVPVID2
+            end
+
+            layer_avpparams HDLVID2 ,, 720 576 P_WIDTH/2 P_HEIGHT/2 360*T_FACTOR 288*T_FACTOR 1 720 576 BUFF_ADD
+            layer_svpparams HDLVPVID2 ,, 720 576 P_WIDTH/2 P_HEIGHT/2 360*T_FACTOR 288*T_FACTOR 1 720 576 BUFF_ADD
+        end
+    end
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Commons routines for GX1 ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; The following macro should have LAYVPHDL declared
+;  (LAYVPHDL = 0) before beahing called
+define M_GX1_GDP_ON P_NAME P_ADD P_FILE P_X P_Y
+    layer_init P_NAME , P_ADD
+    LAYHDL=layer_open P_NAME
+    if P_FILE==5
+        if (ST_OS!="LINUX")
+        LAYVPHDL=layer_openvp , P_FILE STAPIGATDATA+"corbeau.gam" P_X P_Y
+        end
+        if (ST_OS=="LINUX")
+        LAYVPHDL=layer_openvp , P_FILE "./files/corbeau.gam" P_X P_Y
+        end
+    end
+    else
+        LAYVPHDL=layer_openvp , P_FILE P_X P_Y
+    end
+    layer_enable
+end LAYHDL
+
+define M_GX1_GDP_OFF P_NAME P_HDL P_VPHDL
+    layer_disable P_VPHDL
+    layer_closevp P_VPHDL
+    layer_close P_HDL
+    layer_term P_NAME
+end
+
+define M_GX1_CUR_ON P_X P_Y
+    ; CURSOR Init (face_128x128)
+    layer_init "CUR" GAMMA_CURSOR h0 ,,,, 1
+    LAYHDL=layer_open "CUR"
+    LAYVPHDL=layer_openvp LAYHDL 1 P_X P_Y
+    layer_enable LAYVPHDL
+end LAYHDL
+
+define M_GX1_CUR_OFF P_HDL P_VPHDL
+    layer_closevp P_VPHDL
+    layer_close P_HDL
+    layer_term "CUR"
+end
+
+
+
+define M_7020_DEBUG
+    M_COMMON_BEIO "ON"
+    M_7015_BEIO "ON"
+    vmix_init ,,,,,, "HDANA"
+    vmix_open
+    vmix_enable
+    m_common_setmode 22 HDLVTGMAIN
+    M_GAMMA_LAYER "START" h3 720 576
+    vmix_con ,  "LAYVID1"
+    layer_svpparams HDLVPVID1 0 0 720 576 0 0 720 576 0 720 576 BUFF_ADD
+
+    vmix_con ,  "LAYVID1" "LAYVID2"
+    layer_svpparams HDLVPVID2 0 0 720 576 100 100 720 576 1 720 576 BUFF_ADD
+end
+
+
+define M_55XX_DEBUG
+    M_COMMON_BEIO "ON"
+    M_55XX_LAYER "START" h8
+    vmix_init
+    vmix_open
+    vmix_enable
+    m_common_setmode "PAL"
+    vmix_con ,  "LVIDEO"
+    layer_avpparams HDLVID1 0 0 720 576 0 0 720 576 0 720 576 BUFF_ADD
+    layer_svpparams HDLVPVID1 0 0 720 576 0 0 720 576 0 720 576 BUFF_ADD
+end
+
+
+;*******************************************************************************
+;Name        : M_TERM_LINUX_5528
+;Description : Temporary Macro for Linux test on STi5528 : disable and term layer
+;              and Vmix Init, Open and OpenViewport
+;*******************************************************************************
+define M_TERM_LINUX_5528
+        vmix_dconnect HDLVMIX1
+        layer_disable HDLVPGDP1
+        layer_disable HDLVPGDP2
+        layer_disable HDLVPCUR
+        vmix_disable
+        vmix_close
+        vmix_term
+        layer_closevp HDLVPGDP1
+        layer_closevp HDLVPGDP2
+        layer_closevp HDLVPCUR
+        layer_close HDLGDP1
+        layer_close HDLGDP2
+        layer_close HDLCUR
+        layer_term "CURS"
+        layer_term "GDP1"
+        layer_term "GDP2"
+        vout_disable
+        vout_close
+        vout_term
+        vout_close AUX_VOUT_HDL
+        vout_term AUX_VOUT_NAME
+        vtg_close
+        vtg_term
+        denc_close
+        denc_term
+end

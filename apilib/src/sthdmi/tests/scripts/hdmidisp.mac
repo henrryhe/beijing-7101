@@ -1,0 +1,444 @@
+; ****************************************************************************
+; File         : HDMIDISPLAY.MAC
+; Requirements :
+; Author       : Adel Chaouch - May 2005
+; ****************************************************************************
+; Test :
+;HD 1080I
+;HD 720p
+;HD 480p
+
+define M_HDMI_DISP ALL_TEST
+; This macro is used for STi7710, STb7100 and STi7200.
+
+STVOUT_HDCP = 0
+STVOUT_HPD = 0
+
+  loop=0
+  hdmichoice=""
+  while loop==0
+    if ALL_TEST==1
+      hdmichoice="all"
+    end
+    else
+      print "-------------------------------------------"
+      print "HDMI Display tests with SD and HD streams  "
+      print "-------------------------------------------"
+      print " 1  - HD 720p                              "
+      print " 2  - HD 1080i                             "
+      print " 3  - ED 480p                              "
+      print " 4  - ED 576p                              "
+      print " 5  - SD 480i                              "
+      print " 6  - SD 576i                              "
+      print " all- All tests                            "
+      print " 7  - To exit                              "
+      print " Enter your choice :"
+      hdmichoice=getstring
+    end
+    if hdmichoice=="7"
+          loop=1
+    end
+    if hdmichoice==""
+          loop=1
+    end
+   ; else
+   ;       M_BEIO_ON
+   ; end
+    if hdmichoice=="1"
+       HDOUT=1
+       M_BEIO_ON "HD"
+       M_TEST_HDMI_HD_720P
+    end
+    if hdmichoice=="2"
+        HDOUT=1
+        M_BEIO_ON "HD"
+        M_TEST_HDMI_HD_1080I
+    end
+    if hdmichoice=="3"
+       HDOUT=1
+       M_BEIO_ON "ED"
+       M_TEST_HDMI_ED_480P
+    end
+    if hdmichoice=="4"
+       HDOUT=1
+       M_BEIO_ON "ED"
+       M_TEST_HDMI_ED_576P
+    end
+    if hdmichoice=="5"
+       HDOUT=1
+       M_BEIO_ON "SD"
+       M_TEST_HDMI_SD_480I
+    end
+    if hdmichoice=="6"
+       HDOUT=1
+       M_BEIO_ON "SD"
+       M_TEST_HDMI_SD_576I
+    end
+
+    if hdmichoice=="all"
+        ERR_T200=FALSE_
+        ERR_T201=FALSE_
+        ERR_T202=FALSE_
+        ERR_T203=FALSE_
+        M_TEST_HDMI_HD_720P
+        M_TEST_HDMI_HD_1080I
+        M_TEST_HDMI_ED_480P
+        M_TEST_HDMI_ED_576P
+        M_TEST_HDMI_SD_480I
+        M_TEST_HDMI_SD_576I
+        if ALL_TEST!=1
+           M_CHECK_TEST2_ERR ERR_T200 ERR_T201 ERR_T202
+        end
+        loop=1
+    end
+    if hdmichoice!=""
+        M_BEIO_OFF
+    end
+  end
+end
+
+define M_TEST_HDMI_HD_720P
+api_checkerr
+  hndl_hdmi=0
+  if HDOUT==0
+    print " capabilities not available! "
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    HD_MODE="MODE_720P60000_74250"
+
+    print " -----------------------------------------------"
+    print "                HD 720P TEST                    "
+    print "  test HDMI OUTPUT RGB888 24 bits Components    "
+    print " -----------------------------------------------"
+    print " "
+    ERRORCOUNT=0
+    api_checkerr
+    M_LAYER1_ON 1280 720
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+    ; for linux
+    if (ST_OS=="LINUX")
+    vid_setup HDLVID1 1 LMI_VID
+    end
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    ;vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_setmemprof HDLVID1 1920 1088 , 1 1
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 STVOUT_HDCP
+    print " Please Wait For few minutes..."
+    vout_start
+    vout_enable
+    vid_load HDMIDATA+DRV_PATH_HDMI_720P+"MARCH.M2V"
+    vid_inject -1
+    vid_start , 0 1 1
+    vid_seto
+    vid_setio HDLVP1VID1 0 0  1280 720 0 0 1280 720
+
+    print "   --- Set HDMI on ---"
+
+    hdmi_init "HDMI"
+    hnd=hdmi_open "HDMI"
+
+    api_quest "Mode 720p OK on HDMI TV ?"
+    M_CHECK_RETCODE 0
+    print "   --- Set HDMI off ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    M_ALL_OFF
+  end
+end
+
+define M_TEST_HDMI_HD_1080I
+api_checkerr
+  hndl_hdmi=0
+  if HDOUT==0
+    print " capabilities not available! "
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    HD_MODE="MODE_1080I60000_74250"
+    ;HD_MODE="MODE_1080I50000_72000"
+    print " -----------------------------------------------"
+    print "                HD 1080I TEST                    "
+    print "  test HDMI OUTPUT RGB888 24 bits Components    "
+    print " -----------------------------------------------"
+    print " "
+    ERRORCOUNT=0
+    api_checkerr
+    M_LAYER1_ON 1920 1080
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+    ; for linux
+    if (ST_OS=="LINUX")
+    vid_setup HDLVID1 1 LMI_VID
+    end
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 STVOUT_HDCP
+    print " Please Wait For few minutes..."
+    vout_start
+    vout_enable
+    if (API_CHIPID=="7200")
+        poke hfd10c380 h02330233
+        poke hfd10c388 h04270417
+        poke hfd10C384 h02320232
+        poke hfd10c38C h08730863
+        ;poke hfd10c37c h7f004f
+        poke hfd10c37c h4f001f
+    end
+
+    if (ST_OS=="LINUX")
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"atsc_05c.m2v"
+    end
+    else
+    vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"MELCO2B.M2V"
+    end
+    vid_inject -1
+    vid_start , 0 1 1
+    vid_seto
+    vid_setio HDLVP1VID1 0 0  1920 1080 0 0 1920 1080
+    print "   --- Set HDMI on ---"
+    hdmi_init "HDMI"
+    hnd=hdmi_open "HDMI"
+    hdmi_srccapa "HDMI"
+
+    api_quest "Mode 1080I OK on HDMI TV ?"
+    M_CHECK_RETCODE 0
+    print "   --- Set HDMI off ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    M_ALL_OFF
+
+  end
+end
+
+define M_TEST_HDMI_ED_480P
+api_checkerr
+  hndl_hdmi=0
+  if HDOUT==0
+    print " capabilities not available! "
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    HD_MODE="MODE_480P60000_27027"
+    print " -----------------------------------------------"
+    print "                ED 480P TEST                    "
+    print "  test HDMI OUTPUT RGB888 24 bits Components    "
+    print " -----------------------------------------------"
+    print " "
+    ERRORCOUNT=0
+    api_checkerr
+    M_LAYER1_ON 720 480
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+    ; for linux
+    if (ST_OS=="LINUX")
+    vid_setup HDLVID1 1 LMI_VID
+    end
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 STVOUT_HDCP
+    print " Please Wait For few minutes..."
+    vout_start
+    vout_enable
+   ;vid_load "Z:\bistrim\video\es\0480p\30_00fps\ST480p_ar169.m2v"
+    vid_load HDMIDATA+DRV_PATH_HDMI_480P+"ST480p_ar169.m2v"
+    vid_inject -1
+    vid_start , 0 1 1
+    vid_seto
+    vid_setio HDLVP1VID1 0 0  720 480 0 0 720 480
+    print "   --- Set HDMI on ---"
+    hdmi_init "HDMI"
+    hnd=hdmi_open "HDMI"
+    hdmi_srccapa "HDMI"
+    api_quest "Mode 480P OK on HDMI TV ?"
+    M_CHECK_RETCODE 0
+    print "   --- Set HDMI off ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    M_ALL_OFF
+  end
+end
+
+define M_TEST_HDMI_ED_576P
+api_checkerr
+  hndl_hdmi=0
+  if HDOUT==0
+    print " capabilities not available! "
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    HD_MODE="MODE_576P50000_27000"
+    print " -----------------------------------------------"
+    print "                ED 576P TEST                    "
+    print "  test HDMI OUTPUT RGB888 24 bits Components    "
+    print " -----------------------------------------------"
+    print " "
+    ERRORCOUNT=0
+    api_checkerr
+    M_LAYER1_ON 720 576
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 STVOUT_HDCP
+    print " Please Wait For few minutes..."
+    vout_start
+    vout_enable
+    ;vid_load "Z:\bistrim\video\es\0576p\25_00fps\st720p.m2v"
+    vid_load HDMIDATA+DRV_PATH_HDMI_576P+"st720p.m2v"
+    vid_inject -1
+    vid_start , 0 1 1
+    vid_seto
+    vid_setio HDLVP1VID1 0 0  720 576 0 0 720 576
+    print "   --- Set HDMI on ---"
+    hdmi_init "HDMI"
+    hnd=hdmi_open "HDMI"
+    hdmi_srccapa "HDMI"
+    api_quest "Mode 576P OK on HDMI TV ?"
+    M_CHECK_RETCODE 0
+    print "   --- Set HDMI off ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    M_ALL_OFF
+  end
+end
+
+
+define M_TEST_HDMI_SD_480I
+api_checkerr
+  hndl_hdmi=0
+  if HDOUT==0
+    print " capabilities not available! "
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    HD_MODE="MODE_480I59940_13500"
+    print " -----------------------------------------------"
+    print "                SD 480I TEST                    "
+    print "  test HDMI OUTPUT RGB888 24 bits Components    "
+    print " -----------------------------------------------"
+    print " "
+    ERRORCOUNT=0
+    api_checkerr
+    denc_init
+    str=denc_capa
+    DENCVERSION=api_evalstr str 5
+    HDLDENC=denc_open
+    denc_setmode HDLDENC "NTSCM"
+    M_LAYER1_ON 720 480
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+    ; for linux
+    if (ST_OS=="LINUX")
+    vid_setup HDLVID1 1 LMI_VID
+    end
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 STVOUT_HDCP
+    print " Please Wait For few minutes..."
+    vout_start
+    vout_enable
+   ;vid_load "Z:\bistrim\video\es\0480i\30_00fps\ballet1.m2v"
+    vid_load HDMIDATA+DRV_PATH_HDMI_480I+"BALLET1.M2V"
+    vid_inject -1
+    vid_start , 0 1 1
+    vid_seto
+    vid_setio HDLVP1VID1 0 0  720 480 0 0 720 480
+    print "   --- Set HDMI on ---"
+    hdmi_init "HDMI"
+    hnd=hdmi_open "HDMI"
+    hdmi_srccapa "HDMI"
+    api_quest "Mode 480I OK on HDMI TV ?"
+    M_CHECK_RETCODE 0
+    print "   --- Set HDMI off ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    M_ALL_OFF
+    denc_close HDLDENC
+    denc_term
+  end
+end
+
+define M_TEST_HDMI_SD_576I
+api_checkerr
+  hndl_hdmi=0
+  if HDOUT==0
+    print " capabilities not available! "
+  end
+  else
+    OUTPUTTYPE="HDMI_RGB888"
+    HD_MODE="MODE_576I50000_13500"
+    print " -----------------------------------------------"
+    print "                SD 576I TEST                    "
+    print "  test HDMI OUTPUT RGB888 24 bits Components    "
+    print " -----------------------------------------------"
+    print " "
+    ERRORCOUNT=0
+    api_checkerr
+    denc_init
+    str=denc_capa
+    DENCVERSION=api_evalstr str 5
+    HDLDENC=denc_open
+    denc_setmode HDLDENC "PAL"
+    M_LAYER1_ON 720 576
+    vmix_connect HDLVMIX1 "LAYER1"
+    print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+    vid_init "VID1" VID1_CODEC
+    HDLVID1=vid_open "VID1"
+    HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+    vid_setmemprof HDLVID1 1920 1088 , 1 0
+    vid_seterr HDLVID1 4
+    M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 HD_MODE
+    vid_disp HDLVP1VID1
+    vout_setparams , OUTPUTTYPE 0 STVOUT_HDCP
+    print " Please Wait For few minutes..."
+    vout_start
+    vout_enable
+    ;vid_load "Z:\bistrim\video\es\0576i\25_00fps\ZOO.m2v"
+    vid_load HDMIDATA+DRV_PATH_HDMI_576I+"ZOO.M2V"
+
+    vid_inject -1
+    vid_start , 0 1 1
+    vid_seto
+    vid_setio HDLVP1VID1 0 0  720 576 0 0 720 576
+    print "   --- Set HDMI on ---"
+    hdmi_init "HDMI"
+    hnd=hdmi_open "HDMI"
+    hdmi_srccapa "HDMI"
+    api_quest "Mode 576I OK on HDMI TV ?"
+    M_CHECK_RETCODE 0
+    print "   --- Set HDMI off ---"
+    hdmi_close hnd
+    hdmi_term "HDMI"
+    M_ALL_OFF
+    denc_close HDLDENC
+    denc_term
+  end
+end
+

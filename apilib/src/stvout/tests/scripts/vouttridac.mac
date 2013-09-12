@@ -1,0 +1,1386 @@
+; ****************************************************************************
+; File         : VOUTTRIDAC.MAC
+; Requirements :
+; Author       : Adel Chaouch - December 2003
+; ****************************************************************************
+; Tests for STi55xx , STi5528 & STi4629, STi5100, STi7710 and STi7100:
+; M_TEST_RGB_DAC123
+; M_TEST_RGB_DAC456
+; M_TEST_YUV_DAC123_MAIN
+; M_TEST_YUV_DAC456_AUX
+; M_TEST_YC_DAC12
+; M_TEST_YC_DAC45
+; M_TEST_CVBS_DAC1_MAIN
+; M_TEST_CVBS_DAC5_MAIN
+; M_TEST_CVBS_DAC2_AUX
+; M_TEST_CVBS_DAC4_AUX
+; M_TEST_CVBS_DAC3
+; M_TEST_CVBS_DAC6
+; M_TEST1_CVBS_DAC1 only for STi7710
+
+define M_TEST_DENC_RGB_DAC123
+  if DENCVERSION<6
+    print " 'rgb adjust' capabilities not available "
+    TESTRGB=FALSE_
+  end
+  else
+   print " ----------------------------------"
+   print " test DAC1,2 and 3 for RGB output  "
+   print " test DAC RGB value,"
+   print " Set/Get function and read register"
+   print " ----------------------------------"
+   print " init/open/set default parameters/enable driver,"
+   ERRORCOUNT=0
+
+   SOURCE=0
+    if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+       print "Test on MAIN or AUX Source ? "
+       choice1=""
+       ok=0
+       while ok==0
+         print " 1 - MAIN"
+         print " 2 - AUX"
+         print " Enter your choice :"
+         choice1=getstring
+         if choice1=="1"
+           SOURCE =0
+           ok=1
+         end
+         if choice1=="2"
+           SOURCE =1
+           ok=1
+         end
+       end
+    end
+
+
+   if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)||(DEVICETYPE==VOUT_DEVICE_TYPE_5525)
+
+      vout_init "VoutCVBS" DEVICETYPE "CVBS" , , , 32 1
+      hndl_cvbs=vout_open "VoutCVBS"
+      vout_setparams hndl_cvbs "CVBS"
+      vout_enable hndl_cvbs
+
+      vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 7 SOURCE
+      hndl_rgb=vout_open "Voutput0"
+      vout_setparams hndl_rgb OUTPUTTYPE
+      vout_enable hndl_rgb
+      if SOURCE==1
+      voutsetdenc hndl_rgb
+      end
+      print "--- start -----------------------------"
+      for I -8 7
+        if PRNT==1
+          print "  (testing value : R G B = " I ")"
+        end
+        vout_setdac hndl_rgb OUTPUTTYPE I I I
+        vout_getparams hndl_rgb OUTPUTTYPE PRNT
+        M_CHECK_EXPECTED_PARAM P1 I
+        M_CHECK_EXPECTED_PARAM P2 I
+        M_CHECK_EXPECTED_PARAM P3 I
+        voutrddac EXTERNAL_DENC PRNT
+        if (API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+          M_CHECK_EXPECTED_PARAM DAC1 I+8
+          M_CHECK_EXPECTED_PARAM DAC2 I+8
+          M_CHECK_EXPECTED_PARAM DAC3 I+8
+        end
+        VOUT_DotsOutIfOk 1
+      end
+      print " "
+      print "--- end -------------------------------"
+      ;
+      M_CHECK_TEST_ERROR 0
+      ERR_T100=GLOBERR
+      VOUT_DotsOutIfOk 0
+      print " disable/close/term the driver."
+
+      vout_disable hndl_cvbs
+      vout_close hndl_cvbs
+      vout_term "VoutCVBS"
+
+      vout_disable hndl_rgb
+      vout_close hndl_rgb
+      vout_term "Voutput0"
+   end
+   else
+    vout_init "VoutCVBS" VOUT_DEVICE_TYPE_5528 "CVBS" , , , 32 1
+    hndl_cvbs=vout_open "VoutCVBS"
+    vout_setparams hndl_cvbs "CVBS"
+    vout_enable hndl_cvbs
+
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 7 SOURCE
+    hndl_rgb=vout_open "Voutput0"
+    vout_setparams hndl_rgb OUTPUTTYPE
+    vout_enable hndl_rgb
+    if SOURCE==1
+    voutsetdenc hndl_rgb
+    end
+    print "--- start -----------------------------"
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : R G B = " I ")"
+      end
+      vout_setdac hndl_rgb OUTPUTTYPE I I I
+      vout_getparams hndl_rgb OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I
+      M_CHECK_EXPECTED_PARAM P3 I
+      voutrddac EXTERNAL_DENC PRNT
+      ;if  (API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+      ;  M_CHECK_EXPECTED_PARAM DAC1 I+8
+      ;  M_CHECK_EXPECTED_PARAM DAC2 I+8
+      ;  M_CHECK_EXPECTED_PARAM DAC3 I+8
+      ;end
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T100=GLOBERR
+    VOUT_DotsOutIfOk 0
+    print " disable/close/term the driver."
+
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "VoutCVBS"
+
+    vout_disable hndl_rgb
+    vout_close hndl_rgb
+    vout_term "Voutput0"
+  end
+  end
+end
+
+define M_TEST_RGB_DAC123
+  api_checkerr
+  OUTPUTTYPE="RGB"
+  M_TEST_DENC_RGB_DAC123
+end
+
+define M_TEST_DENC_RGB_DAC456
+  if DENCVERSION<6
+    print " 'rgb adjust' capabilities not available "
+    TESTRGB=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test DAC 4,5 and 6 for RGB output "
+    print " test DAC RGB value,"
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)
+     print "Test on MAIN or AUX Source ? "
+     choice1=""
+     ok=0
+     SOURCE=0
+     while ok==0
+       print " 1 - MAIN"
+       print " 2 - AUX"
+       print " Enter your choice :"
+       choice1=getstring
+       if choice1=="1"
+         SOURCE =0
+         ok=1
+       end
+       if choice1=="2"
+         SOURCE =1
+         ok=1
+       end
+     end
+
+     vout_init "VoutCVBS" DEVICETYPE "CVBS" , , , 1 0
+     hndl_cvbs=vout_open "VoutCVBS"
+     vout_setparams hndl_cvbs "CVBS"
+     vout_enable hndl_cvbs
+
+     vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 56 SOURCE
+     hndl_rgb=vout_open "Voutput0"
+     vout_setparams hndl_rgb OUTPUTTYPE
+     vout_enable hndl_rgb
+     if SOURCE==1
+     voutsetdenc hndl_rgb
+     end
+     print "--- start -----------------------------"
+     for I -8 7
+      if PRNT==1
+        print "  (testing value : R G B = " I ")"
+      end
+      vout_setdac hndl_rgb OUTPUTTYPE I I I
+      vout_getparams hndl_rgb OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I
+      M_CHECK_EXPECTED_PARAM P3 I
+      voutrddac EXTERNAL_DENC PRNT
+      if  (API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+        M_CHECK_EXPECTED_PARAM DAC4 I+8
+        M_CHECK_EXPECTED_PARAM DAC5 I+8
+        M_CHECK_EXPECTED_PARAM DAC6 I+8
+      end
+      VOUT_DotsOutIfOk 1
+     end
+     print " "
+     print "--- end -------------------------------"
+    ;
+     M_CHECK_TEST_ERROR 0
+     ERR_T100=GLOBERR
+     VOUT_DotsOutIfOk 0
+     print " disable/close/term the driver."
+
+     vout_disable hndl_cvbs
+     vout_close hndl_cvbs
+     vout_term "VoutCVBS"
+
+     vout_disable hndl_rgb
+     vout_close hndl_rgb
+     vout_term "Voutput0"
+   end
+   if (DEVICETYPE==VOUT_DEVICE_TYPE_DENC_ENHANCED)
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE  , , 56
+    hndl_rgb=vout_open "Voutput0"
+    vout_setparams hndl_rgb OUTPUTTYPE
+    vout_enable hndl_rgb
+
+    print "--- start -----------------------------"
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : R G B = " I ")"
+      end
+      vout_setdac hndl_rgb OUTPUTTYPE I I I
+      vout_getparams hndl_rgb OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I
+      M_CHECK_EXPECTED_PARAM P3 I
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T100=GLOBERR
+    VOUT_DotsOutIfOk 0
+    print " disable/close/term the driver."
+    vout_disable hndl_rgb
+    vout_close hndl_rgb
+    vout_term "Voutput0"
+    end
+   end
+   if (DEVICETYPE==VOUT_DEVICE_TYPE_7100)
+    ;vout_init "VoutCVBS" DEVICETYPE "CVBS"
+    vout_init "VoutCVBS" DEVICETYPE "CVBS" , , , 4 , 1
+    hndl_cvbs=vout_open "VoutCVBS"
+    vout_setparams hndl_cvbs "CVBS"
+    vout_enable hndl_cvbs
+    if (HDDACS==1)
+     vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 56 , 1
+    end
+    else
+     vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 56
+    end
+    hndl_rgb=vout_open "Voutput0"
+    vout_setparams hndl_rgb OUTPUTTYPE
+    vout_enable hndl_rgb
+    VOUTSetDenc
+    print "--- start -----------------------------"
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : R G B = " I ")"
+      end
+      vout_setdac hndl_rgb OUTPUTTYPE I I I
+      vout_getparams hndl_rgb OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I
+      M_CHECK_EXPECTED_PARAM P3 I
+      voutrddac EXTERNAL_DENC PRNT
+      if  (API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+        M_CHECK_EXPECTED_PARAM DAC4 I+8
+        M_CHECK_EXPECTED_PARAM DAC5 I+8
+        M_CHECK_EXPECTED_PARAM DAC6 I+8
+      end
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T100=GLOBERR
+    VOUT_DotsOutIfOk 0
+    print " disable/close/term the driver."
+
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "VoutCVBS"
+
+    vout_disable hndl_rgb
+    vout_close hndl_rgb
+    vout_term "Voutput0"
+  end
+ end
+
+define M_TEST_RGB_DAC456
+  api_checkerr
+  OUTPUTTYPE="RGB"
+  M_TEST_DENC_RGB_DAC456
+end
+
+
+define M_TEST_DENC_YUV_DAC123
+  if DENCVERSION<6
+    print " 'yuv adjust' capabilities not available "
+    TESTYUV=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test dac 1,2 and 3 for YUV output "
+    print " test DAC YUV value,"
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    choice1=""
+    ok=0
+    SOURCE=0
+   if (DEVICETYPE==VOUT_DEVICE_TYPE_4629)
+    print "Test on MAIN or AUX Source ? "
+    while ok==0
+      print " 1 - MAIN"
+      print " 2 - AUX"
+      print " Enter your choice :"
+      choice1=getstring
+      if choice1=="1"
+        SOURCE =0
+        ok=1
+      end
+      if choice1=="2"
+        SOURCE =1
+        ok=1
+      end
+    end
+   end
+   if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)||(DEVICETYPE==VOUT_DEVICE_TYPE_5525)
+    vout_init "VoutCVBS" DEVICETYPE "CVBS" , , , 32 0
+    hndl_cvbs=vout_open "VoutCVBS"
+    vout_setparams hndl_cvbs "CVBS"
+    vout_enable hndl_cvbs
+
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 7 SOURCE
+    hndl_yuv=vout_open "Voutput0"
+    vout_setparams hndl_yuv OUTPUTTYPE
+    vout_enable hndl_yuv
+    if SOURCE==1
+     voutsetdenc hndl_yuv
+    end
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : Y U V = " I ")"
+      end
+      vout_setdac hndl_yuv OUTPUTTYPE I I I
+      vout_getparams hndl_yuv OUTPUTTYPE PRNT
+
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I
+      M_CHECK_EXPECTED_PARAM P3 I
+      voutrddac EXTERNAL_DENC PRNT
+      if (API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+        M_CHECK_EXPECTED_PARAM DAC1 I+8
+        M_CHECK_EXPECTED_PARAM DAC2 I+8
+        M_CHECK_EXPECTED_PARAM DAC3 I+8
+      end
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T101=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "VoutCVBS"
+
+    vout_disable hndl_yuv
+    vout_close hndl_yuv
+    vout_term "Voutput0"
+   end
+   else
+    vout_init "VoutCVBS" VOUT_DEVICE_TYPE_5528 "CVBS" , , , 32 1
+    hndl_cvbs=vout_open "VoutCVBS"
+    vout_setparams hndl_cvbs "CVBS"
+    vout_enable hndl_cvbs
+
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 7 SOURCE
+    hndl_yuv=vout_open "Voutput0"
+    vout_setparams hndl_yuv OUTPUTTYPE
+    vout_enable hndl_yuv
+    if SOURCE==1
+    voutsetdenc hndl_yuv
+    end
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : Y U V = " I ")"
+      end
+      vout_setdac hndl_yuv OUTPUTTYPE I I I
+      vout_getparams hndl_yuv OUTPUTTYPE PRNT
+
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I
+      M_CHECK_EXPECTED_PARAM P3 I
+      voutrddac EXTERNAL_DENC PRNT
+     ; if (API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+     ; M_CHECK_EXPECTED_PARAM DAC1 I+8
+     ; M_CHECK_EXPECTED_PARAM DAC2 I+8
+     ; M_CHECK_EXPECTED_PARAM DAC3 I+8
+     ; end
+      VOUT_DotsOutIfOk 1
+   end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T101=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "VoutCVBS"
+
+    vout_disable hndl_yuv
+    vout_close hndl_yuv
+    vout_term "Voutput0"
+  end
+  end
+end
+
+
+
+define M_TEST_YUV_DAC123
+  api_checkerr
+  OUTPUTTYPE="YUV"
+  M_TEST_DENC_YUV_DAC123
+end
+
+define M_TEST_DENC_YUV_DAC456
+  if DENCVERSION<6
+    print " 'yuv adjust' capabilities not available "
+    TESTYUV=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test dac 4, 5 and 6 for YUV output"
+    print " test DAC YUV value,"
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+  if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)
+    vout_init "VoutCVBS" DEVICETYPE "CVBS" , , , 1 0
+    hndl_cvbs=vout_open "VoutCVBS"
+    vout_setparams hndl_cvbs "CVBS"
+    vout_enable hndl_cvbs
+
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 56 1
+    hndl_yuv=vout_open "Voutput0"
+    vout_setparams hndl_yuv OUTPUTTYPE
+    vout_enable hndl_yuv
+    voutsetdenc hndl_yuv
+    ;
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : Y U V = " I ")"
+      end
+      vout_setdac hndl_yuv OUTPUTTYPE I I I
+      vout_getparams hndl_yuv OUTPUTTYPE PRNT
+
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I
+      M_CHECK_EXPECTED_PARAM P3 I
+      voutrddac EXTERNAL_DENC PRNT
+     if (API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+      M_CHECK_EXPECTED_PARAM DAC4 I+8
+      M_CHECK_EXPECTED_PARAM DAC5 I+8
+      M_CHECK_EXPECTED_PARAM DAC6 I+8
+     end
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T101=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "VoutCVBS"
+
+    vout_disable hndl_yuv
+    vout_close hndl_yuv
+    vout_term "Voutput0"
+  end
+  if (DEVICETYPE==VOUT_DEVICE_TYPE_DENC_ENHANCED)
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE
+    hndl_yuv=vout_open "Voutput0"
+    vout_setparams hndl_yuv OUTPUTTYPE
+    vout_enable hndl_yuv
+    ;
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : Y U V = " I ")"
+      end
+      vout_setdac hndl_yuv OUTPUTTYPE I I I
+      vout_getparams hndl_yuv OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I
+      M_CHECK_EXPECTED_PARAM P3 I
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T101=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_yuv
+    vout_close hndl_yuv
+    vout_term "Voutput0"
+  end
+  if (DEVICETYPE==VOUT_DEVICE_TYPE_7100)
+    if HDDACS==1
+      vout_init "VoutYuvHd" DEVICETYPE OUTPUTTYPE , , , , ,1
+    end
+    else
+      vout_init "VoutYuvHd" DEVICETYPE OUTPUTTYPE
+    end
+    hndl_yuvhd=vout_open "VoutYuvHd"
+    vout_setparams hndl_yuvhd OUTPUTTYPE
+    vout_enable hndl_yuvhd
+    if HDDACS==1
+       vtg_so , 0 1
+       vout_setemb hndl_yuvhd "HD_YUV" 1 0 4
+    end
+    vout_disable hndl_yuvhd
+    vout_close hndl_yuvhd
+    vout_term "VoutYuvHd"
+  end
+ end
+end
+
+define M_TEST_YUV_DAC456
+  api_checkerr
+  OUTPUTTYPE="YUV"
+  M_TEST_DENC_YUV_DAC456
+end
+
+define M_TEST_DENC_YC_DAC12
+  if DENCVERSION<6
+    print " 'yc adjust' capabilities not available "
+    TESTYC=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test DAC 1 and 2 for YC output    "
+    print " test DAC YC value,"
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    ERRORCOUNT=0
+    print " init/open/set default parameters/enable driver,"
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_4629)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)||(DEVICETYPE==VOUT_DEVICE_TYPE_5525)
+    SOURCE=0
+    if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+       print " Test on MAIN or AUX Source ? "
+       choice1=""
+       ok=0
+       while ok==0
+         print " 1 - MAIN"
+         print " 2 - AUX"
+         print " Enter your choice :"
+         choice1=getstring
+         if choice1=="1"
+           Source =0
+           ok=1
+         end
+         if choice1=="2"
+           Source =1
+           ok=1
+         end
+       end
+    end
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 3 SOURCE
+    hndl_yc=vout_open "Voutput0"
+    vout_setparams hndl_yc OUTPUTTYPE
+    vout_enable hndl_yc
+    if (SOURCE==1)&&((DEVICETYPE==VOUT_DEVICE_TYPE_5528))
+    voutsetdenc hndl_yc
+    end
+
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : Y C =" I ", Ratio =" I+8 ")"
+      end
+      vout_setdac hndl_yc OUTPUTTYPE I I I+8
+      vout_getparams hndl_yc OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      if DENCVERSION>6
+        M_CHECK_EXPECTED_PARAM P2 I
+      end
+      M_CHECK_EXPECTED_PARAM P3 I+8
+     voutrddac EXTERNAL_DENC PRNT
+     if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)||(DEVICETYPE==VOUT_DEVICE_TYPE_5525)
+        M_CHECK_EXPECTED_PARAM DAC1 I+8
+        if DENCVERSION>6
+          M_CHECK_EXPECTED_PARAM DAC2 I+8
+        end
+        M_CHECK_EXPECTED_PARAM DACC I+8
+     end
+     VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T102=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_yc
+    vout_close hndl_yc
+    vout_term "Voutput0"
+   end
+   if ((DEVICETYPE==VOUT_DEVICE_TYPE_DENC_ENHANCED)||(DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100))
+        if (DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100)
+              vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , , , 1
+        end
+        else
+              vout_init "Voutput0" DEVICETYPE OUTPUTTYPE
+        end
+    hndl_yc=vout_open "Voutput0"
+    vout_setparams hndl_yc OUTPUTTYPE
+    vout_enable hndl_yc
+    print "--- start -----------------------------"
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : Y C =" I ", Ratio =" I+8 ")"
+      end
+      vout_setdac hndl_yc OUTPUTTYPE I I I+8
+      vout_getparams hndl_yc OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      if DENCVERSION>6
+        M_CHECK_EXPECTED_PARAM P2 I
+      end
+      M_CHECK_EXPECTED_PARAM P3 I+8
+      voutrddac EXTERNAL_DENC PRNT
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100)
+        M_CHECK_EXPECTED_PARAM DAC1 I+8
+        if DENCVERSION>6
+          M_CHECK_EXPECTED_PARAM DAC2 I+8
+        end
+      end
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T102=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_yc
+    vout_close hndl_yc
+    vout_term "Voutput0"
+  end
+  end
+end
+
+define M_TEST_YC_DAC12
+  api_checkerr
+  OUTPUTTYPE="YC"
+  M_TEST_DENC_YC_DAC12
+end
+
+define M_TEST_DENC_YC_DAC45
+  if DENCVERSION<6
+    print " 'yc adjust' capabilities not available "
+    TESTYC=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test DAC 4 and 5 for YC output    "
+    print " test DAC YC value,"
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    ERRORCOUNT=0
+    print " init/open/set default parameters/enable driver,"
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)
+    print " Test on MAIN or AUX Source ? "
+    choice1=""
+    ok=0
+    SOURCE=0
+    while ok==0
+      print " 1 - MAIN"
+      print " 2 - AUX"
+      print " Enter your choice :"
+      choice1=getstring
+      if choice1=="1"
+        SOURCE =0
+        ok=1
+      end
+      if choice1=="2"
+        SOURCE =1
+        ok=1
+      end
+    end
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 24 SOURCE
+    hndl_yc=vout_open "Voutput0"
+    vout_setparams hndl_yc OUTPUTTYPE
+    vout_enable hndl_yc
+    if SOURCE==1
+    voutsetdenc hndl_yc
+    end
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : Y C =" I ", Ratio =" I+8 ")"
+      end
+      vout_setdac hndl_yc OUTPUTTYPE I I I+8
+      vout_getparams hndl_yc OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      if DENCVERSION>6
+        M_CHECK_EXPECTED_PARAM P2 I
+      end
+      M_CHECK_EXPECTED_PARAM P3 I+8
+      voutrddac EXTERNAL_DENC PRNT
+     if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)
+        M_CHECK_EXPECTED_PARAM DAC4 I+8
+        if DENCVERSION>6
+          M_CHECK_EXPECTED_PARAM DAC5 I+8
+        end
+     end
+     M_CHECK_EXPECTED_PARAM DACC I+8
+     VOUT_DotsOutIfOk 1
+     end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T102=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+
+    vout_disable hndl_yc
+    vout_close hndl_yc
+    vout_term "Voutput0"
+    end
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_DENC_ENHANCED)
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , 24
+    hndl_yc=vout_open "Voutput0"
+    vout_setparams hndl_yc OUTPUTTYPE
+    vout_enable hndl_yc
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : Y C =" I ", Ratio =" I+8 ")"
+      end
+      vout_setdac hndl_yc OUTPUTTYPE I I I+8
+      vout_getparams hndl_yc OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      if DENCVERSION>6
+        M_CHECK_EXPECTED_PARAM P2 I
+      end
+      M_CHECK_EXPECTED_PARAM P3 I+8
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T102=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_yc
+    vout_close hndl_yc
+    vout_term "Voutput0"
+    end
+  end
+end
+
+define M_TEST_YC_DAC45
+  api_checkerr
+  OUTPUTTYPE="YC"
+  M_TEST_DENC_YC_DAC45
+end
+
+
+define M_TEST_DENC_CVBS_DAC1_MAIN
+  if DENCVERSION<6
+    print " 'cvbs adjust' capabilities not available "
+    TESTCVBS=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test DAC 1 for CVBS output        "
+    print " test DAC CBVS value,"
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 1 0
+    hndl_cvbs=vout_open "Voutput0"
+    vout_setparams hndl_cvbs OUTPUTTYPE
+    vout_enable hndl_cvbs
+    ;
+    print "--- start -----------------------------"
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : CVBS =" I ", Ratio =" I+8 ")"
+      end
+      vout_setdac hndl_cvbs OUTPUTTYPE I I+8
+      vout_getparams hndl_cvbs OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I+8
+      voutrddac EXTERNAL_DENC PRNT
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)
+        M_CHECK_EXPECTED_PARAM DAC1 I+8
+      end
+      M_CHECK_EXPECTED_PARAM DACC I+8
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T103=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput0"
+  end
+end
+
+define M_TEST_CVBS_DAC1_MAIN
+  api_checkerr
+  OUTPUTTYPE="CVBS"
+  M_TEST_DENC_CVBS_DAC1_MAIN
+end
+
+define M_TEST_DENC_CVBS_DAC5_MAIN
+  if DENCVERSION<6
+    print " 'cvbs adjust' capabilities not available "
+    TESTCVBS=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test DAC 5 for CVBS output        "
+    print " test DAC CBVS value,"
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 16 0
+    hndl_cvbs=vout_open "Voutput0"
+    vout_setparams hndl_cvbs OUTPUTTYPE
+    vout_enable hndl_cvbs
+    ;
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : CVBS =" I ", Ratio =" I+8 ")"
+      end
+      vout_setdac hndl_cvbs OUTPUTTYPE I I+8
+      vout_getparams hndl_cvbs OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I+8
+      voutrddac EXTERNAL_DENC PRNT
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)
+        M_CHECK_EXPECTED_PARAM DAC5 I+8
+      end
+      M_CHECK_EXPECTED_PARAM DACC I+8
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T103=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput0"
+  end
+end
+
+define M_TEST_CVBS_DAC5_MAIN
+  api_checkerr
+  OUTPUTTYPE="CVBS"
+  M_TEST_DENC_CVBS_DAC5_MAIN
+end
+
+define M_TEST_DENC_CVBS_DAC2_AUX
+  if DENCVERSION<6
+    print " 'cvbs adjust' capabilities not available "
+    TESTCVBS=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test DAC 2 for CVBS output        "
+    print " test DAC CBVS value,"
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 2 1
+    hndl_cvbs=vout_open "Voutput0"
+    vout_setparams hndl_cvbs OUTPUTTYPE
+    vout_enable hndl_cvbs
+    voutsetdenc hndl_cvbs
+    ;
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+         print "  (testing value : CVBS =" I ", Ratio =" I+8 ")"
+      end
+      vout_setdac hndl_cvbs OUTPUTTYPE I I+8
+      vout_getparams hndl_cvbs OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I+8
+      voutrddac EXTERNAL_DENC PRNT
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)
+        M_CHECK_EXPECTED_PARAM DAC2 I+8
+      end
+      M_CHECK_EXPECTED_PARAM DACC I+8
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T103=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput0"
+  end
+end
+
+define M_TEST_CVBS_DAC2_AUX
+  api_checkerr
+  OUTPUTTYPE="CVBS"
+  M_TEST_DENC_CVBS_DAC2_AUX
+end
+
+define M_TEST_DENC_CVBS_DAC4_AUX
+  if DENCVERSION<6
+    print " 'cvbs adjust' capabilities not available "
+    TESTCVBS=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test DAC 4 for CVBS output        "
+    print " test DAC CBVS value,"
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 8 1
+    hndl_cvbs=vout_open "Voutput0"
+    vout_setparams hndl_cvbs OUTPUTTYPE
+    vout_enable hndl_cvbs
+    ;
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : CVBS =" I ", Ratio =" I+8 ")"
+      end
+      vout_setdac hndl_cvbs OUTPUTTYPE I I+8
+      vout_getparams hndl_cvbs OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I+8
+      voutrddac EXTERNAL_DENC PRNT
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)
+         M_CHECK_EXPECTED_PARAM DAC4 I+8
+      end
+      M_CHECK_EXPECTED_PARAM DACC I+8
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T103=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput0"
+  end
+end
+
+define M_TEST_CVBS_DAC4_AUX
+  api_checkerr
+  OUTPUTTYPE="CVBS"
+  M_TEST_DENC_CVBS_DAC4_AUX
+end
+
+define M_TEST_DENC_CVBS_DAC3
+  if DENCVERSION<6
+    print " 'cvbs adjust' capabilities not available "
+    TESTCVBS=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test DAC 3 for CVBS output        "
+    print " test DAC CBVS value,"
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_4629)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)
+    SOURCE=0
+    if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+        print " Test on MAIN or AUX Source ? "
+        choice1=""
+        ok=0
+        while ok==0
+          print " 1 - MAIN"
+          print " 2 - AUX"
+          print " Enter your choice :"
+          choice1=getstring
+          if choice1=="1"
+            SOURCE =0
+            ok=1
+          end
+          if choice1=="2"
+            SOURCE =1
+            ok=1
+          end
+        end
+    end
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 4 SOURCE
+    hndl_cvbs=vout_open "Voutput0"
+    vout_setparams hndl_cvbs OUTPUTTYPE
+    vout_enable hndl_cvbs
+    if (SOURCE==1)&&((DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13))
+    voutsetdenc hndl_cvbs
+    end
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : CVBS =" I ", Ratio =" I+8 ")"
+      end
+      vout_setdac hndl_cvbs OUTPUTTYPE I I+8
+      vout_getparams hndl_cvbs OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I+8
+      voutrddac EXTERNAL_DENC PRNT
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)
+        M_CHECK_EXPECTED_PARAM DAC3 I+8
+        M_CHECK_EXPECTED_PARAM DACC I+8
+
+      end
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T103=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput0"
+   end
+   if ((DEVICETYPE==VOUT_DEVICE_TYPE_DENC_ENHANCED)||(DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100))
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_DENC_ENHANCED)
+         vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 4
+      end
+      else
+        vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 4 , 1
+      end
+    hndl_cvbs=vout_open "Voutput0"
+    vout_setparams hndl_cvbs OUTPUTTYPE
+    vout_enable hndl_cvbs
+    VOUTSetDenc
+    ;
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : CVBS =" I ", Ratio =" I+8 ")"
+      end
+      vout_setdac hndl_cvbs OUTPUTTYPE I I+8
+      vout_getparams hndl_cvbs OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I+8
+      voutrddac EXTERNAL_DENC PRNT
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100)
+        M_CHECK_EXPECTED_PARAM DAC3 I+8
+      end
+      M_CHECK_EXPECTED_PARAM DACC I+8
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T103=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput0"
+    end
+  end
+end
+
+define M_TEST_CVBS_DAC3
+  api_checkerr
+  OUTPUTTYPE="CVBS"
+  M_TEST_DENC_CVBS_DAC3
+end
+
+define M_TEST_DENC_CVBS_DAC6
+  if DENCVERSION<6
+    print " 'cvbs adjust' capabilities not available "
+    TESTCVBS=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test DAC 6 for CVBS output        "
+    print " test DAC CBVS value,"
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)
+    print " Test on MAIN or AUX Source ? "
+    choice1=""
+    ok=0
+    SOURCE=0
+    while ok==0
+      print " 1 - MAIN"
+      print " 2 - AUX"
+      print " Enter your choice :"
+      choice1=getstring
+      if choice1=="1"
+        SOURCE =0
+        ok=1
+      end
+      if choice1=="2"
+        SOURCE =1
+        ok=1
+      end
+    end
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 32 SOURCE
+    hndl_cvbs=vout_open "Voutput0"
+    vout_setparams hndl_cvbs OUTPUTTYPE
+    vout_enable hndl_cvbs
+    if SOURCE==1
+    voutsetdenc hndl_cvbs
+    end
+    print "--- start -----------------------------"
+
+   for I -8 7
+      if PRNT==1
+        print "  (testing value : CVBS =" I ", Ratio =" I+8 ")"
+      end
+      vout_setdac hndl_cvbs OUTPUTTYPE I I+8
+      vout_getparams hndl_cvbs OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I+8
+      voutrddac EXTERNAL_DENC PRNT
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_5528)||(DEVICETYPE==VOUT_DEVICE_TYPE_V13)
+        M_CHECK_EXPECTED_PARAM DAC6 I+8
+      end
+      M_CHECK_EXPECTED_PARAM DACC I+8
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T103=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput0"
+    end
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_DENC_ENHANCED)
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , 32
+    hndl_cvbs=vout_open "Voutput0"
+    vout_setparams hndl_cvbs OUTPUTTYPE
+    vout_enable hndl_cvbs
+    ;
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : CVBS =" I ", Ratio =" I+8 ")"
+      end
+      vout_setdac hndl_cvbs OUTPUTTYPE I I+8
+      vout_getparams hndl_cvbs OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I+8
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T103=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput0"
+    end
+   end
+end
+
+define M_TEST_CVBS_DAC6
+  api_checkerr
+  OUTPUTTYPE="CVBS"
+  M_TEST_DENC_CVBS_DAC6
+end
+
+define M_TEST1_DENC_CVBS_DAC1
+  if DENCVERSION<6
+    print " 'cvbs adjust' capabilities not available "
+    TESTCVBS=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test DAC 1 for CVBS output        "
+    print " test DAC CBVS value,"
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100)
+         vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 1 , 1
+      end
+      else
+        vout_init "Voutput0" DEVICETYPE OUTPUTTYPE , , , 1
+      end
+    hndl_cvbs=vout_open "Voutput0"
+    vout_setparams hndl_cvbs OUTPUTTYPE
+    vout_enable hndl_cvbs
+    VOUTSetDenc
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+         print "  (testing value : CVBS =" I ", Ratio =" I+8 ")"
+      end
+      vout_setdac hndl_cvbs OUTPUTTYPE I I+8
+      vout_getparams hndl_cvbs OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I+8
+      voutrddac EXTERNAL_DENC PRNT
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100)
+        M_CHECK_EXPECTED_PARAM DAC1 I+8
+      end
+      M_CHECK_EXPECTED_PARAM DACC I+8
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T103=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput0"
+  end
+end
+
+define M_TEST1_CVBS_DAC1
+  api_checkerr
+  OUTPUTTYPE="CVBS"
+  M_TEST1_DENC_CVBS_DAC1
+end
+
+define M_TEST_DENC_CVBS_AUX
+;PRNT=1
+if DENCVERSION<6
+    print " 'cvbs adjust' capabilities not available "
+    TESTCVBS=FALSE_
+  end
+  else
+    print " ----------------------------------"
+    print " test DAC 4 for CVBS AUX output        "
+    print " test DAC CBVS value,"
+    print " Set/Get function and read register"
+    print " ----------------------------------"
+    print " init/open/set default parameters/enable driver,"
+    ERRORCOUNT=0
+    vout_init "Voutput0" DEVICETYPE OUTPUTTYPE "DENC2" h19B00700  , 8 1
+    hndl_cvbs=vout_open "Voutput0"
+    vout_setparams hndl_cvbs OUTPUTTYPE
+    vout_enable hndl_cvbs
+    ;
+    print "--- start -----------------------------"
+
+    for I -8 7
+      if PRNT==1
+        print "  (testing value : CVBS =" I ", Ratio =" I+8 ")"
+      end
+      vout_setdac hndl_cvbs OUTPUTTYPE I I+8
+      vout_getparams hndl_cvbs OUTPUTTYPE PRNT
+      M_CHECK_EXPECTED_PARAM P1 I
+      M_CHECK_EXPECTED_PARAM P2 I+8
+      voutrddac EXTERNAL_DENC PRNT  1
+      if (DEVICETYPE==VOUT_DEVICE_TYPE_5525)
+        M_CHECK_EXPECTED_PARAM DAC4 I+8
+      end
+      M_CHECK_EXPECTED_PARAM DACC I+8
+       ;peek h19b00104
+      VOUT_DotsOutIfOk 1
+    end
+    print " "
+    print "--- end -------------------------------"
+    ;
+    M_CHECK_TEST_ERROR 0
+    ERR_T103=GLOBERR
+    print " disable/close/term the driver."
+    VOUT_DotsOutIfOk 0
+    vout_disable hndl_cvbs
+    vout_close hndl_cvbs
+    vout_term "Voutput0"
+  end
+end
+define M_TEST_CVBS_AUX
+  api_checkerr
+  HDLVTGAUX=0
+  OUTPUTTYPE="CVBS"
+  M_DENC_AUX_INIT
+  M_TEST_DENC_CVBS_AUX
+  M_DENC_AUX_TERM
+end
+
+

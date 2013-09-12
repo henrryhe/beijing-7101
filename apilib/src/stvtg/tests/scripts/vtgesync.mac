@@ -1,0 +1,217 @@
+; ****************************************************************************
+; File         : VTGESYNC.MAC
+; Tests        : VTG embedded synchro test
+; Requirements :
+; Author       : BS - May 2001
+; ****************************************************************************
+
+; Test to check embedded on VTG.
+define M_ESYNC_TESTS
+    api_report "EMBEDDED_SYNC_TESTS"
+    ERRORCOUNT=0
+
+    vtg_init "VTG1"
+    HDLVTG1=vtg_open "VTG1"
+
+    vtg_setmode HDLVTG1 "NTSC"
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ; Enable embedded synchro
+    vtg_soptional HDLVTG1 "EMBEDDED_SYNCHRO" 1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ; Check new value
+    SYNCVAL=vtg_goptional HDLVTG1 "EMBEDDED_SYNCHRO"
+    if SYNCVAL!="1"
+        M_CHECK_RETCODE 0
+    end
+
+    api_quest "Does the monitor receive HSync/VSync signals ?"
+    M_CHECK_RETCODE 0
+
+    ; Remove H&V synchro signals
+    vtg_soptional HDLVTG1 "NO_OUTPUT_SIGNAL" 1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+   ; Check new value
+    SYNCVAL=vtg_goptional HDLVTG1 "NO_OUTPUT_SIGNAL"
+    if SYNCVAL!="1"
+        M_CHECK_RETCODE 0
+    end
+
+    api_quest "Does the monitor receive HSync/VSync signals ?" 0
+    M_CHECK_RETCODE 0
+
+    ; Try the same with VTG2
+    vtg_init "VTG2" , h8000
+    M_CHECK_RETCODE ERR_NO_ERROR
+    HDLVTG2=vtg_open "VTG2"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_setmode HDLVTG2
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    api_quest "Does the monitor receive HSync/VSync signals ?"
+    M_CHECK_RETCODE 0
+
+     ; Remove H&V synchro signals
+    vtg_soptional HDLVTG2 "NO_OUTPUT_SIGNAL" 1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    api_quest "Does the monitor receive HSync/VSync signals ?" 0
+    M_CHECK_RETCODE 0
+
+    ; Term VTG2
+    vtg_close HDLVTG2
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_term "VTG2"
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ; Execute tests
+    if API_CHIPID=="7015"
+        M_31_ESYNC_SD ;not supported by 7020cut2 on ATV2 because no external DENC on board
+        M_ESYNC_HD ;not yet tested on 7020cut2 because VOUT configuration not yet available (STVOUT dependency removed)
+    end
+
+    ; Back to normal synchros
+    ; Add H&V synchro signals
+    vtg_soptional HDLVTG1 "NO_OUTPUT_SIGNAL" 0
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ; Check new value
+    SYNCVAL=vtg_goptional HDLVTG1 "NO_OUTPUT_SIGNAL"
+    if SYNCVAL!="0"
+        M_CHECK_RETCODE 0
+    end
+
+    vtg_close HDLVTG1
+    vtg_term "VTG1"
+
+    api_report "EMBEDDED_SYNC" ERRORCOUNT
+end
+
+
+; Test to check embedded on VTG on SD mode
+define M_31_ESYNC_SD
+    ERRORCOUNT=0
+    api_report "EMBEDDED_SYNC_SD_TEST"
+
+    ; Config DENC STV0119
+    DENC_TYPE=0
+    DENC_ACCESS=1
+    DENC_NAME="DENC_STV0119"
+
+    ; Init DENC STV0119
+    denc_init DENC_NAME 5 DENC_TYPE DENC_ACCESS
+    M_CHECK_RETCODE ERR_NO_ERROR
+    HDLSTVDENC=denc_open DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_setmode HDLSTVDENC "NTSCM"
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ; Init VTG STV0119
+    vtg_init "VTG_STV0119" 0 DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+    HDLVTGSTV=vtg_open "VTG_STV0119"
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ; VTG on STV0119  HorSync & VertSync in NTSC mode
+    vtg_ssmparams HDLVTGSTV 0 0 2 0 0 3
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_setmode HDLVTGSTV "MODE_SLAVE"
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ; Change VSync and HSync polarity
+    vtg_soptional HDLVTGSTV "VSYNC_POLARITY" TRUE
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_soptional HDLVTGSTV "HSYNC_POLARITY" TRUE
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ; Init VOUT STV0119: TO BE DONE : make pokes to simulate STVOUT.
+    ; voutinit "VOUT_STV0119" 1 , DENC_NAME
+    ; HDLVOUTSTV=voutopen "VOUT_STV0119"
+    ; voutenable
+    ; voutsetparams HDLHDDIGVOUT 1
+
+    api_quest "Is image correct on Tv in NTSC on STV0119 ?"
+    M_CHECK_RETCODE 0
+
+    ; VTG on STV0119  VertSync only in PAL mode
+    vtg_ssmparams HDLVTGSTV 0 1 2 0 0 3
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_setmode HDLVTGSTV "MODE_SLAVE"
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    vtg_setmode HDLVTG1 "PAL"
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    denc_setmode HDLSTVDENC "PAL"
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    api_quest "Is image correct on Tv in PAL on STV0119  ?"
+    M_CHECK_RETCODE 0
+
+    ; Put back STV0119 in slave mode from Vsync
+    vtg_ssmparams HDLVTGSTV 0 1 1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_setmode HDLVTGSTV "MODE_SLAVE"
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ; Close drivers
+    ; Term VTG STV0119
+    vtg_close HDLVTGSTV
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_term "VTG_STV0119"
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ; Term DENC STV0119
+    denc_close HDLSTVDENC
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_term DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    api_report "EMBEDDED_SYNC_SD" ERRORCOUNT
+
+end
+
+; Test to check embedded on VTG on HD mode
+define M_ESYNC_HD
+    ERRORCOUNT=0
+    api_report "EMBEDDED_SYNC_HD_TEST"
+
+    M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I60000_74250"
+
+    ; voutsetparams HDLHDANAVOUT 0 1 : TO BE DONE : make pokes to simulate STVOUT.
+
+    api_quest "Is image correct on monitor ?"
+    M_CHECK_RETCODE 0
+
+    api_report "EMBEDDED_SYNC_HD" ERRORCOUNT
+
+end
+define M_CALIBSYNC_TESTS
+    ERRORCOUNT=0
+    api_report "Sync Calibration tests"
+    api_report "adjust synchronization Level for 1080I Mode"
+    vtg_init "VTG1"
+    HDLVTG1=vtg_open "VTG1"
+    M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I60000_74250"
+    vtg_so HDLVTG1 0 1
+    VTG_DumpDHDO
+    VTG_Calib1080I  HDLVTG1
+    api_quest "Did DHDO regiter values changed?"
+    M_CHECK_RETCODE 0
+    api_report "adjust synchronization Level for 720P Mode"
+    VTG_DumpDHDO
+    VTG_Calib , "MODE_720P60000_74250"  ha2 h15c h1a2 h72 hc hf1 hdb h19c h86
+    api_quest "Did DHDO regiter values changed?"
+    M_CHECK_RETCODE 1
+    M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_720P60000_74250"
+    vtg_so HDLVTG1 0 1
+    VTG_GetS
+    api_quest "Did DHDO values changed?"
+    vtg_close HDLVTG1
+    vtg_term  "VTG1" 1
+
+    api_report "M_CALIBSYNC_TESTS" ERRORCOUNT
+
+end

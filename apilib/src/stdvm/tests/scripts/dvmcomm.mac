@@ -1,0 +1,597 @@
+;******************************************************************************
+; File   :  DVMCOMM.MAC
+;           Macros set to test STDVM/STPRM common functions
+;           See STDVM Product test specification document for use
+; Author :  JROY - MARCH 2006
+;******************************************************************************
+;To source this file use the following command
+;source "../../../scripts/dvmcomm.mac"
+
+
+;******************************************************************************
+;Name        : M_DVM_COM_1
+;Description : check normal Init/Open/Close/Term operations
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     : none
+;******************************************************************************
+define M_DVM_COM_1
+    print "#########################################################"
+    print ">>> DVM_API_1 start >>>"
+    print ">>> Normal Init/Open/Close/Term operations >>>"
+    ERRORCOUNT=0
+    ;Normal Init
+    DVM_Init "DVM"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if ERRORCOUNT==0
+        ;Success, try normal termination
+        DVM_Term "DVM"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        if ERRORCOUNT==0
+            ;Reinit to try open and close
+            DVM_Init "DVM"
+            M_CHECK_RETCODE ERR_NO_ERROR
+            if ERRORCOUNT==0
+                HDLPL1 = 0
+                HDLPL1 = DVM_Open "DVM" "P" 0
+                M_CHECK_RETCODE ERR_NO_ERROR
+                if ERRORCOUNT==0
+                    DVM_Close HDLPL1
+                    M_CHECK_RETCODE ERR_NO_ERROR
+                    if ERRORCOUNT==0
+                        ;Try terminate with open handle
+                        HDLRC1 = 0
+                        HDLRC1 = dvm_open "DVM" "R" 0
+                        DVM_Term "DVM"
+                        M_CHECK_RETCODE ERR_OPEN_HANDLE
+                        if ERRORCOUNT==0
+                            ;Force termination
+                            ;DVM_Term "DVM" 1
+                            ;M_CHECK_RETCODE ERR_NO_ERROR
+                            ;if ERRORCOUNT==0
+                                ;Check handle invalidation
+                                ;DVM_Close HDLRC1
+                                ;M_CHECK_RETCODE ERR_INVALID_HANDLE
+                            ;end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    ;Close and terminate before exiting the test case
+    DVM_Close HDLPL1
+    DVM_Term "DVM"
+
+    M_CHECK_ERROR
+    ERR_COM1=GLOBERR
+end ;M_DVM_COM_1
+
+
+;******************************************************************************
+;Name        : M_DVM_COM_2
+;Description : Check errant use of Init, Open ,Close and Term functions
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;******************************************************************************
+define M_DVM_COM_2
+    print "#########################################################"
+    print ">>> M_DVM_COM_2 start >>>"
+    print ">>> Errant use of Init/Open/Close/Term operations >>>"
+
+    ERRORCOUNT=0
+    ;Open before init
+    HDLPL1 = DVM_Open "DVM" "P" 0
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    ;Term before init
+    DVM_Term "DVM"
+    ;M_CHECK_RETCODE ERR_BAD_PARAMETER
+    DVM_Init "DVM"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    ;Success, try another initialization
+    DVM_Init "DVM"
+    M_CHECK_RETCODE ERR_ALREADY_INITIALIZED
+    DVM_Term "DVM"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    ;Try to open after term
+    HDLPL1 = DVM_Open "DVM" "P" 0
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    ;Try another termination,with same device
+    DVM_Term "DVM"
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    ;Init to open multiple handle
+    DVM_Init "DVM"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    ;Success try to open multiple handle
+    HDLPL1 = DVM_Open "DVM" "P" 0
+    HDLPL2 = DVM_Open "DVM" "P" 0
+    M_CHECK_RETCODE ERR_NO_ERROR
+    ;Close same handle 2 times
+    DVM_Close HDLPL1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    DVM_Close HDLPL1
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    DVM_Close HDLPL2
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ;Terminate before exiting the test case
+    DVM_Term "DVM"
+
+    M_CHECK_ERROR
+    ERR_COM2=GLOBERR
+end ;M_DVM_COM_2
+
+
+define M_SUB_REC_COM_3   HNDL
+    DVM_Close            HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_RecordStart      HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_RecordPause      HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_RecordResume     HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_RecordChangePids HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_RecordInsertPkt  HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_RecordGetStatus  HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_RecordGetTime    HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_RecordGetParams  HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_GetStreamInfo    HNDL "dvm_com_test3_inv1"
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_CopyStream       HNDL "dvm_com_test3_inv1" "dvm_com_test3_inv2"
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_RecordStop       HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_PlayPauseRecord  HNDL HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+end ;M_SUB_REC_COM_3
+
+
+define M_SUB_PLAY_COM_3  HNDL
+    DVM_PlayStart        HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_PlayStop         HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_PlayPause        HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_PlayResume       HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_PlaySeek         HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_PlaySetSpeed     HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_PlayGetSpeed     HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_PlayStep         HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_PlayChangePids   HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_PlayGetStatus    HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_PlayGetTime      HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_PlayGetParams    HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+    DVM_PlayPauseRecord  HNDL HNDL
+    M_CHECK_RETCODE     ERR_INVALID_HANDLE
+end ;M_SUB_PLAY_COM_3
+
+
+;******************************************************************************
+;Name        : M_DVM_COM_3
+;Description : Check all api functions with invalid handle
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;******************************************************************************
+define M_DVM_COM_3
+    print "#########################################################"
+    print ">>> M_DVM_COM_3 start >>>"
+    print ">>> Api functions with invalid handle >>>"
+
+    ERRORCOUNT=0
+    ;Init before starting the test
+    DVM_Init "DVM"
+    ;Call with invalide handle 0x84200000
+    INVALID_HANDLE=0
+    M_SUB_REC_COM_3 INVALID_HANDLE
+    M_SUB_PLAY_COM_3 INVALID_HANDLE
+    ;Call with valid but dropped handle (Closed by driver forced termination)
+    HDLPL1=0
+    HDLRC1=0
+    ;HDLRC1 = DVM_Open "DVM" "R" 0
+    ;M_CHECK_RETCODE ERR_NO_ERROR
+
+    ;Force terminate
+    ;DVM_Term "DVM" 1
+    ;M_CHECK_RETCODE ERR_NO_ERROR
+    ;if ERRORCOUNT==0
+        ;print "Init + Open + forced termination successfull => HDLRC1 used to be valid"
+        ;M_SUB_REC_COM_3 HDLRC1
+    ;end
+    ;HDLPL1 = DVM_Open "DVM" "P" 0
+    ;M_CHECK_RETCODE ERR_NO_ERROR
+    ;force terminate
+    ;DVM_Term "DVM" 1
+    ;M_CHECK_RETCODE ERR_NO_ERROR
+    ;if ERRORCOUNT==0
+        ;print "Init + Open + forced termination successfull => HDLPL1 used to be valid"
+        ;M_SUB_PLAY_COM_3 HDLPL1
+    ;end
+
+    ;Terminate before exiting the test case
+    DVM_Term "DVM"
+
+    M_CHECK_ERROR
+    ERR_COM3=GLOBERR
+end ;M_DVM_COM_3
+
+
+;******************************************************************************
+;Name        : M_DVM_COM_4
+;Description : Errant use : Call all functions to bad parameters returns
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;******************************************************************************
+define M_DVM_COM_4
+    print "#########################################################"
+    print ">>> M_DVM_COM_4 start >>>"
+    print ">>> API functions with bad parameter >>>"
+    ERRORCOUNT=0
+
+    ;Open all the handle
+    HDLPL1=0
+    HDLRC1=0
+    HDLPL2=0
+    HDLRC2=0
+
+    ;Init before starting the test
+    DVM_Init "DVM"
+
+    HDLPL1=DVM_Open DeviceName "P" 0
+    HDLRC1=DVM_Open DeviceName "R" 0
+    HDLPL2=DVM_Open DeviceName "P" 1
+    HDLRC2=DVM_Open DeviceName "R" 1
+
+    ;Bad parameter test on record
+    ;Start record without any pid
+    DVM_RecordStart HDLRC1
+    M_CHECK_RETCODE ERR_RECORD_NO_PID
+    DVM_RecordStart HDLRC1 TSIN0 "dvm_com_test4" Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ;Start record with same handle
+    DVM_RecordStart HDLRC1 TSIN0 "dvm_com_test4_inv" Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_BAD_PARAMETER                                   ; TODO: return ERR_RECORD_ALREADY_STARTED
+
+    ;RecordChangePids without supplying any pid
+    DVM_RecordChangePids HDLRC1
+    M_CHECK_RETCODE ERR_RECORD_NO_PID
+
+    ;Stop record 2 times
+    DVM_RecordStop HDLRC1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    DVM_RecordStop HDLRC1
+    M_CHECK_RETCODE ERR_RECORD_ALREADY_STOPPED
+
+    ;Start record with same name as already existing one
+    DVM_RecordStart HDLRC1 TSIN0 "dvm_com_test4" Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_STREAM_ALREADY_EXISTS
+
+    ;Remove stream before exiting
+    DVM_RemoveStream HDLRC1 "dvm_com_test4"
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ;Bad parametertart test on play
+    ;Start play without any pid
+    DVM_PlayStart HDLPL1
+    M_CHECK_RETCODE ERR_PLAY_NO_PID
+
+    ;Start play without video and audio pid
+    DVM_PlayStart HDLPL1 TSIN0 SWTS0 1 PCR P_PID
+    M_CHECK_RETCODE ERR_PLAY_NO_PID
+
+    ;Start live play
+    DVM_PlayStart HDLPL1 TSIN0 SWTS0 Play_NoOfPID_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    wait 5000
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ;Try to seek on live play
+    DVM_PlaySeek HDLPL1 0 0 0
+    M_CHECK_RETCODE ERR_PLAY_SEEK_FAILED
+
+    ;Set speed on live play
+    DVM_PlaySetSpeed HDLPL1 200
+    M_CHECK_RETCODE ERR_PLAY_SPEED_FAILED
+
+    ;Using PlayGetTime on live play
+    DVM_PlayGetTime HDLPL1
+    M_CHECK_RETCODE ERR_PLAY_TIME_FAILED
+
+    ;Stop play
+    DVM_PlayStop HDLPL1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ;Start record
+    DVM_RecordStart HDLRC1 TSIN0 "dvm_com_test4" Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    print "wait 30 sec record ongoing"
+    wait 30000
+    ;Stop record
+    DVM_RecordStop  HDLRC1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    ;Start playing back same stream
+    DVM_PlayStart HDLPL1 "dvm_com_test4" SWTS0 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    wait 5000
+    ;Try to set speed 0 on playback
+    DVM_PlaySetSpeed HDLPL1 0
+    M_CHECK_RETCODE ERR_PLAY_SPEED_FAILED
+
+    ;Start play 2nd times with same handle
+    DVM_PlayStart HDLPL1 "dvm_com_test4" SWTS0 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_PLAY_ALREADY_STARTED
+
+    ;Start PlayPauseRecord on playback, not live play, go out
+    DVM_PlayPauseRecord HDLPL1 HDLRC1 TSIN0 "dvm_com_test4" Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_BAD_PARAMETER                                   ; TODO: return ERR_PRM_BAD_PARAMETER
+
+    ;Stop play
+    DVM_PlayStop HDLPL1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ;Remove stream since usage is finsished
+    DVM_RemoveStream HDLRC1 "dvm_com_test4"
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ;Start PlayPauseRecord without starting live play
+    DVM_PlayPauseRecord HDLPL1 HDLRC1 TSIN0 "dvm_com_test4" Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_PLAY_NOT_STARTED
+
+    ;Start record and then start PlayPauseRecord with same handle
+    DVM_RecordStart HDLRC1 TSIN0 "dvm_com_test4" Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    ;Start live play
+    DVM_PlayStart HDLPL1 TSIN0 SWTS0 Play_NoOfPID_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    wait 2000
+    ;Start PlayPauseRecord
+    DVM_PlayPauseRecord HDLPL1 HDLRC1 TSIN0 "dvm_com_test4_inv" Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_BAD_PARAMETER                                   ; TODO: return ERR_RECORD_ALREADY_STARTED
+
+    ; Usage finished
+    DVM_RecordStop HDLRC1
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ;Remove stream since usage is finsished
+    DVM_RemoveStream HDLRC1 "dvm_com_test4"
+
+    ;Start PlayPauseRecord with diff set of pid than set of pid used for live play
+    DVM_PlayPauseRecord HDLPL1 HDLRC1 TSIN0 "dvm_com_test4" Rec_ChannelName_1 4 MP1V V_PID_1 MP2V 514 A_TYPE_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_RECORD_NO_PID
+    ;Start PlayPauseRecord
+    DVM_PlayPauseRecord HDLPL1 HDLRC1 TSIN0 "dvm_com_test4" Rec_ChannelName_2 3 V_TYPE_1 620 A_TYPE_1 722 PCR 130
+    M_CHECK_RETCODE ERR_RECORD_NO_PID
+
+    ;Start PlayChangePid without supplying any pid
+    DVM_PlayChangePids HDLPL1
+    M_CHECK_RETCODE ERR_PLAY_NO_PID
+
+    ;Start PlayChangePid without supplying audio and video pid
+    DVM_PlayChangePids HDLPL1 1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_PLAY_NO_PID
+
+    ;Stop play 2 times
+    DVM_PlayStop HDLPL1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    DVM_PlayStop HDLPL1
+    M_CHECK_RETCODE ERR_PLAY_ALREADY_STOPPED
+
+    ;Close all the open handle
+    DVM_Close HDLPL1
+    DVM_Close HDLPL2
+    DVM_Close HDLRC1
+    DVM_Close HDLRC2
+
+    ;Term stdvm
+    DVM_Term "DVM"
+
+    M_CHECK_ERROR
+    ERR_COM4=GLOBERR
+
+end ;M_DVM_COM_4
+
+
+;******************************************************************************
+;Name        : M_DVM_COM_5
+;Description : Errant use : Call all functions for pre valid parameter
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;******************************************************************************
+define M_DVM_COM_5
+    print "#########################################################"
+    print ">>> M_DVM_COM_5 start >>>"
+    print ">>> Api functions Pre valid parameter >>>"
+    ERRORCOUNT=0
+
+    ;Init before starting the test
+    DVM_Init "DVM"
+
+    HDLPL1=DVM_Open DeviceName "P" 0
+    HDLRC1=DVM_Open DeviceName "R" 0
+    HDLPL2=DVM_Open DeviceName "P" 1
+    HDLRC2=DVM_Open DeviceName "R" 1
+
+    ;Exercise other play API before play start
+    DVM_PlayPause HDLPL1
+    M_CHECK_RETCODE ERR_PLAY_NOT_STARTED
+    DVM_PlayResume HDLPL1
+    M_CHECK_RETCODE ERR_PLAY_NOT_STARTED
+    DVM_PlayGetSpeed HDLPL1
+    M_CHECK_RETCODE ERR_PLAY_NOT_STARTED
+    DVM_PlaySetSpeed HDLPL1 200
+    M_CHECK_RETCODE ERR_PLAY_NOT_STARTED
+    DVM_PlayChangePids HDLPL1 3 V_TYPE V_PID A_TYPE A_PID PCR P_PID
+    M_CHECK_RETCODE ERR_PLAY_NOT_STARTED
+    DVM_PlayGetStatus HDLPL1
+    M_CHECK_RETCODE ERR_PLAY_NOT_STARTED
+    DVM_PlayGetTime HDLPL1
+    M_CHECK_RETCODE ERR_PLAY_NOT_STARTED
+    DVM_PlayStep HDLPL1
+    M_CHECK_RETCODE ERR_PLAY_NOT_PAUSED
+
+    ;Exercise other record API before record started
+    DVM_RecordPause HDLRC1
+    M_CHECK_RETCODE ERR_RECORD_NOT_STARTED
+    DVM_RecordResume HDLRC1
+    M_CHECK_RETCODE ERR_RECORD_NOT_STARTED
+    DVM_RecordChangePids HDLRC1 3 V_TYPE V_PID A_TYPE A_PID PCR P_PID
+    M_CHECK_RETCODE ERR_RECORD_NOT_STARTED
+    DVM_RecordInsertPkt HDLRC1
+    M_CHECK_RETCODE ERR_RECORD_NOT_STARTED
+    DVM_RecordGetStatus HDLRC1
+    M_CHECK_RETCODE ERR_RECORD_NOT_STARTED
+    DVM_RecordGetTime HDLRC1
+    M_CHECK_RETCODE ERR_RECORD_NOT_STARTED
+    DVM_PlayPauseRecord HDLPL1  HDLRC1 TSIN0 "dvm_com_test5" Rec_ChannelName_1 Rec_NumberOfPIDS_1 V_Type_1 V_PID_1 A_Type_1 A_PID_1 PCR P_PID_1
+    M_CHECK_RETCODE ERR_PLAY_NOT_STARTED
+
+    ;Close all the open handle
+    DVM_Close HDLPL1
+    DVM_Close HDLPL2
+    DVM_Close HDLRC1
+    DVM_Close HDLRC2
+
+    ;Terminate before exiting the test case
+    DVM_Term "DVM"
+
+    M_CHECK_ERROR
+    ERR_COM5=GLOBERR
+
+end ;M_DVM_COM_5
+
+
+;******************************************************************************
+;Name        : M_CHECK_ERROR
+;Description : Print status(succesul or failed) of errant test
+;
+;Assumptions :
+;Limitations :
+;Returns     :
+;******************************************************************************
+define M_CHECK_ERROR
+    print ""
+    if ERRORCOUNT>0
+        print "        ++++++++++++++++++++++++++++++++++"
+        print "        + " ERRORCOUNT " function(s) failed the test "
+        print "        ++++++++++++++++++++++++++++++++++"
+        GLOBERR=TRUE_
+    end
+    else
+        print "        =================================="
+        print "        == TEST COMPLETED SUCCESSFULLY. =="
+        print "        =================================="
+        GLOBERR=FALSE_
+    end
+    print ""
+end
+
+
+define MC_CHECK_COM_ERR ERR1 ERR2 ERR3 ERR4 ERR5 ERR6 ERR7 ERR8
+    print ""
+    print "#################################"
+    if ERR1==FALSE_
+        print "# M_DVM_COM_1            Ok     #"
+    end
+    else
+        print "# M_DVM_COM_1            Failed #"
+    end
+    if ERR2==FALSE_
+        print "# M_DVM_COM_2            Ok     #"
+    end
+    else
+        print "# M_DVM_COM_2            Failed #"
+    end
+    if ERR3==FALSE_
+        print "# M_DVM_COM_3            Ok     #"
+    end
+    else
+        print "# M_DVM_COM_3            Failed #"
+    end
+    if ERR4==FALSE_
+        print "# M_DVM_COM_4            Ok     #"
+    end
+    else
+        print "# M_DVM_COM_4            Failed #"
+    end
+    if ERR5==FALSE_
+        print "# M_DVM_COM_5            Ok     #"
+    end
+    else
+        print "# M_DVM_COM_5            Failed #"
+    end
+    print "#################################"
+    print ""
+end
+
+
+define M_DVM_ERRANT
+    print "---------------------------------------"
+    print "Test STDVM API robustness on bad inputs"
+
+    ;close and term dvm before doing any operation
+    DVM_Close HDLPL1
+    DVM_Close HDLPL2
+    DVM_Close HDLRC1
+    DVM_Close HDLRC2
+
+    DVM_Term "DVM"
+
+    ;intialise variables used
+    FALSE_=0
+    TRUE_=1
+    ERRORCOUNT=0
+
+    GLOBERR=FALSE_
+    ERR_COM1=FALSE_
+    ERR_COM2=FALSE_
+    ERR_COM3=FALSE_
+    ERR_COM4=FALSE_
+    ERR_COM5=FALSE_
+
+
+    M_DVM_COM_1
+    M_DVM_COM_2
+    M_DVM_COM_3
+    M_DVM_COM_4
+    M_DVM_COM_5
+
+    MC_CHECK_COM_ERR ERR_COM1 ERR_COM2 ERR_COM3 ERR_COM4 ERR_COM5
+
+    ; Leave the test with the same status as entered
+    DVM_Init "DVM"
+
+    HDLPL1 = DVM_Open "DVM" "P" 0
+    HDLPL2 = DVM_Open "DVM" "P" 1
+    HDLRC1 = DVM_Open "DVM" "R" 0
+    HDLRC2 = DVM_Open "DVM" "R" 1
+
+end ;M_DVM_ERRANT
+
+M_DVM_ERRANT
+
+;EOF

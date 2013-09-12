@@ -1,0 +1,186 @@
+; ****************************************************************************
+; File         : VTGMULT.MAC
+; Tests        : VTG multi instances
+; Requirements :
+; Author       : BS - March 2000
+; Update       : WA - November 2004 : Display HD and SD mode simultaniously
+; ****************************************************************************
+
+; Test to check multiintance on VTG.
+
+;  - VTG master mode on HD monitor      : VTG1/Mix1
+;  - VTG aux on SD mode on Tv           : DENC/VTG2/Mix2   for STi7710
+
+HDLVTG1=0
+HDLVTG2=0
+
+define M_MULT_TESTS
+    api_report "MULTI_INSTANCE_TESTS"
+    ERRORCOUNT=0
+    api_report " TEST AUX DISPLAY ----> MAIN DISPLAY "
+    M_AUXVTG2_TEST
+    M_MAINVTG1_TEST
+
+    api_quest "Is picture on monitor and on Tv displayed correctly ?"
+    M_CHECK_RETCODE 0
+
+    vtg_close HDLVTG2
+    vtg_term "VTG2"
+
+    vtg_close HDLVTG1
+    vtg_term "VTG1"
+
+    api_report " TEST  MAIN DISPLAY -----> AUX DISPLAY "
+    M_MAINVTG1_TEST
+    M_AUXVTG2_TEST
+
+    api_quest "Is picture on monitor and on Tv displayed correctly ?"
+    M_CHECK_RETCODE 0
+    if (API_CHIPID!="7200")
+       api_report "Change VTG1 to 480P & change VTG2 to PAL"
+
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_480P60000_27027"
+       api_quest "Now, VTG on monitor is changed. Is it still correct ?"
+       M_CHECK_RETCODE 0
+
+       vtg_setmode HDLVTG2 "PAL"
+       M_CHECK_RETCODE ERR_NO_ERROR
+       vtg_event "VTG2" 1 60000
+       M_CHECK_RETCODE ERR_NO_ERROR
+       denc_setmode ,"PAL"
+        api_quest "Now, VTG on Tv is changed to PAL. Is it still correct ?"
+        M_CHECK_RETCODE 0
+    end
+
+    vtg_close HDLVTG2
+    vtg_term "VTG2"
+
+    if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+       M_LAYER_TERM_SD
+    end
+
+    vtg_close HDLVTG1
+    vtg_term "VTG1"
+
+
+    api_report "MULTI_INSTANCE" ERRORCOUNT
+end
+define M_AUXVTG2_TEST
+
+  if (API_CHIPID=="7710")
+             vtg_init "VTG2" , h20103C34
+    end
+    elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+      vtg_init "VTG2" , hB9005034
+    end
+    elif (API_CHIPID=="7200")
+      vtg_init "VTG2" , hFD10C200
+    end
+    else
+       vtg_init "VTG2" ,h8000
+    end
+    HDLVTG2=vtg_open "VTG2"
+    if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+       M_LAYER_INIT_SD
+    end
+    denc_setmode HDLDENC "NTSCM" 0 1 0
+    ;;vtg_setmode HDLVTG2 "MODE_480I59940_13500"
+    M_DISP_SET_MODE "VTG2" HDLVTG2 "MODE_480I59940_13500"
+    vtg_getmode HDLVTG2
+    vtg_event "VTG2" 1 60000
+    M_CHECK_RETCODE 0
+
+end
+define M_MAINVTG1_TEST
+    vtg_init "VTG1"
+    HDLVTG1=vtg_open "VTG1"
+    if (API_CHIPID=="7100")||(API_CHIPID=="7710")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+       M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I60000_74250"
+    end
+    else
+      M_DISP_SET_MODE "VTG1" HDLVTG1 "MODE_1080I50000_72000"
+    end
+
+
+
+end
+define M_MULT2_TESTS
+   api_report "MULTI_INSTANCE_TESTS"
+    ERRORCOUNT=0
+    if (API_CHIPID=="7200")
+       denc_init "DENC2" ,,, hFD10F000
+       HDLAUXDENC=denc_open "DENC2"
+
+        VTG_NAME= "VTG3"
+        vtg_init VTG_NAME , hFD10F200
+        HDLVTG3=vtg_open VTG_NAME
+        M_DISP_SET_MODE VTG_NAME HDLVTG3 "MODE_480I59940_13500"
+        denc_setmode HDLAUXDENC "NTSCM"
+        vtg_getmode HDLVTG3
+        vtg_event VTG_NAME 1 60000
+        M_CHECK_RETCODE 0
+
+        vtg_init "VTG2" , hFD10C200
+        HDLVTG2=vtg_open "VTG2"
+
+        denc_setmode HDLDENC "NTSCM" 0 1 0
+
+        M_DISP_SET_MODE "VTG2" HDLVTG2 "MODE_480I59940_13500"
+        vtg_getmode HDLVTG2
+        vtg_event "VTG2" 1 60000
+        M_CHECK_RETCODE 0
+
+        vtg_close HDLVTG3
+        vtg_term VTG_NAME
+        denc_term "DENC2" 1
+
+        vtg_close HDLVTG2
+        vtg_term "VTG2"
+
+    end
+    else
+       denc_init "DENC2" ,,, h19B00000
+       HDLAUXDENC=denc_open "DENC2"
+       VTG_NAME= "VTG"
+
+       vtg_init VTG_NAME , h19B00400
+       HDLVTG2=vtg_open VTG_NAME
+
+       M_DISP_SET_MODE VTG_NAME HDLVTG2 "MODE_480I59940_13500"
+       denc_setmode HDLAUXDENC "NTSCM"
+       vtg_getmode HDLVTG2
+       vtg_event VTG_NAME 1 60000
+       M_CHECK_RETCODE 0
+       ;api_quest
+
+         VTG_NAME= "VTG1"
+         vtg_init VTG_NAME
+         HDLVTG1=vtg_open VTG_NAME
+
+         M_DISP_SET_MODE VTG_NAME HDLVTG1 "MODE_480I59940_13500"
+         denc_setmode HDLDENC "NTSCM"
+         ;vtg_getmode HDLVTG1
+         ;vtg_event VTG_NAME 1 60000
+         api_quest "Is picture on both Tv displayed correctly ?"
+         M_CHECK_RETCODE 0
+
+          M_DISP_SET_MODE VTG_NAME HDLVTG1 "MODE_576I50000_13500"
+          denc_setmode HDLDENC "PAL"
+          api_quest "Now, VTG on main is changed. Is it still correct ?"
+          M_CHECK_RETCODE 0
+
+          M_DISP_SET_MODE VTG HDLVTG2 "MODE_576I50000_13500"
+          denc_setmode HDLAUXDENC "PAL"
+          api_quest "Now, VTG on AUX is changed. Is picture on both Tv displayed correctly?"
+          M_CHECK_RETCODE 0
+
+          vtg_close HDLVTG2
+          vtg_term "VTG"
+          denc_term "DENC2" 1
+
+          vtg_close HDLVTG1
+          vtg_term "VTG1"
+    end
+end
+
+

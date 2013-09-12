@@ -1,0 +1,112 @@
+;*****************************************************************************
+; File   :  VMIX13.MAC
+;           Connect various vout on MIXER3
+;           See STVMIX component test specification document for use
+; Author :  AM
+;*****************************************************************************
+
+;*******************************************************************************
+;Name        : M_VMIX13_7200
+;Description : Connecting on 7200 DENC output on mixer3
+;*******************************************************************************
+define M_VMIX13_7200 T_BASEADD VOUT_TYPE
+    HDLVOUTYC =0
+    HDLVOUTCVBS=0
+    HDLVOUTYUV=0
+
+   ; VTG3 Inits
+    vtg_init "VTG3" , hFD10F200
+    HDLVTGSEC=vtg_open "VTG3"
+
+   if VOUT_TYPE=="YC"
+        vout_init "VOUTYC" , "YC" "DENC2"
+        HDLVOUTYC=vout_open "VOUTYC"
+        vout_setparams HDLVOUTYC
+        vout_enable HDLVOUTYC
+
+        vmix_init "VMIX3" , T_BASEADD "VTG3" ,, "VOUTYC"
+    end
+
+    if VOUT_TYPE=="CVBS"
+
+        vout_init "VOUTCVBS" , "CVBS" "DENC2"
+        HDLVOUTCVBS=vout_open "VOUTCVBS"
+        vout_setparams HDLVOUTCVBS
+        vout_enable HDLVOUTCVBS
+
+        vmix_init "VMIX3" , T_BASEADD "VTG3" ,, "VOUTCVBS"
+    end
+
+    if VOUT_TYPE=="YUV"
+        HDLVOUTCVBS=M_VOUTDENC_YUV "ON"
+        vmix_init "VMIX3" , T_BASEADD "VTG3" ,, VOUT_NAME "VOUTYUV"
+    end
+
+    HDLVMIX3=vmix_open "VMIX3"
+
+    M_COMMON_SETMODE "NTSC" HDLVTGSEC HDLVMIX3 HDLDENC
+
+    vmix_enable HDLVMIX3
+
+    vmix_connect HDLVMIX3 "LAYVID3" "GDP5"
+
+    api_quest "Is video3 and Graphic2 are displayed on  output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_dconnect HDLVMIX3
+
+
+    ; Term mixer3
+    vmix_close HDLVMIX3
+    vmix_term "VMIX3"
+
+
+   if VOUT_TYPE=="YC"
+         M_VOUTDENC_YC "OFF" HDLVOUTYC
+    end
+   if VOUT_TYPE=="CVBS"
+         M_VOUTDENC_CVBS "OFF" HDLVOUTCVBS
+   end
+    vtg_close HDLVTGSEC
+    vtg_term "VTG3"
+
+    api_report "M_VMIX13_7200" ERRORCOUNT
+
+end  ;M_VMIX13_7200
+
+
+;*******************************************************************************
+;Name        : M_VMIX13_MAIN
+;Description : Main function redirect to specific targetting sub macros
+;*******************************************************************************
+define M_VMIX13_MAIN
+    ERRORCOUNT = 0
+    print ""
+    print "Starting M_VMIX13..."
+
+   if (API_CHIPID=="7200")
+      M_GAMMA_LAYER "START" h300 720 480
+       ; DENC Inits
+       denc_init "DENC2" ,,, hFD10F000
+       HDLDENC2=denc_open "DENC2"
+       denc_setmode HDLDENC2
+
+       api_report "Output CVBS on mixer3"
+       print ""
+       M_VMIX13_7200 hfda42C00 "CVBS"
+
+       api_report "Output YC on mixer3"
+       print ""
+       M_VMIX13_7200 hfda42C00 "YC"
+
+       M_GAMMA_LAYER "STOP" h300
+       denc_close HDLDENC
+       denc_term
+  end
+  else
+        print "not available on this platform "
+        TESTVMIX13=FALSE_
+  end
+
+  MC_CHECK_ERROR
+  ERR_VMIX13=GLOBERR
+end ;M_VMIX13_MAIN

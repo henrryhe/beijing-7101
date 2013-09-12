@@ -1,0 +1,179 @@
+; ****************************************************************************
+; File         : DNCMULT.MAC
+; Tests        : DENC multi instance tests on an analog TV
+; Author       : BS - January 2001
+; ****************************************************************************
+
+
+; Test to check DENC multi instance tests on an analog TV
+define M_MULT_TESTS
+        DENCSAVENAME=DENC_NAME
+        if (API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+                DENC_NAME="DENC_STi4629"
+                DENC_CHOSEN=EXTERNAL_DENC_TYPE
+                SET_EXTERNAL=1
+        end
+        if (API_BOARDID=="mb295")
+                DENC_ACCESS=1
+                DENC_TYPE=0
+        end
+        if (API_BOARDID=="mb295")||(EXTERNAL_DENC_TYPE!=0)
+        ERRORCOUNT=0
+        api_report "MULTI_INSTANCE_TESTS"
+        HDLSAVEDENC=HDLDENC
+        M_DISPLAY_ON
+
+        ; Check NTSC correct on both outputs
+        if (API_BOARDID=="mb519")
+                vtgsim_set HDLMAINDENC VTGSIM_TYPE 2 "MODE_480I59940_13500"
+        end
+        else
+                vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_480I59940_13500"
+        end
+        denc_setmode HDLDENC "NTSCM"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        denc_setmode HDLSAVEDENC "NTSCM"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is the image correct in NTSC on both outputs ?"
+        M_CHECK_RETCODE 0
+
+        ; Check PAL correct on both outputs
+        if (API_BOARDID=="mb519")
+                vtgsim_set HDLMAINDENC VTGSIM_TYPE 2 "MODE_576I50000_13500"
+        end
+        else
+                vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_576I50000_13500"
+        end
+        api_quest "Is the image incorrect on both outputs ?"
+        M_CHECK_RETCODE 0
+        denc_setmode HDLDENC "PAL"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is the image correct in PAL on external DENC ?"
+        M_CHECK_RETCODE 0
+        denc_setmode HDLSAVEDENC "PAL"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is the image correct in PAL on both outputs ?"
+        M_CHECK_RETCODE 0
+
+        ; Check color bar on both outputs
+        denc_cb HDLSAVEDENC
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is there a correct color bar only on internal DENC ?"
+        M_CHECK_RETCODE 0
+        denc_cb HDLSAVEDENC 0
+        M_CHECK_RETCODE ERR_NO_ERROR
+        denc_cb HDLDENC
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is there a correct color bar only on external DENC ?"
+        M_CHECK_RETCODE 0
+        denc_cb HDLDENC 0
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+        denc_cb HDLDENC 0
+        M_CHECK_RETCODE ERR_NO_ERROR
+        M_DISPLAY_OFF
+
+	DENC_CHOSEN=DENC_TYPE
+        DENC_NAME="DENC"
+        HDLDENC=HDLSAVEDENC
+        api_report "MULTI_INSTANCE" ERRORCOUNT
+        SET_EXTERNAL=0
+   end
+end
+
+define M_MULT_5525_TESTS
+        api_report "MULTI_INSTANCE_TESTS"
+        ; init AUX denc
+        denc_init "DENC2" ,,, h19B00000
+        HDLAUXDENC=denc_open "DENC2"
+        ; Check NTSC correct on both outputs
+        vtgsim_set HDLAUXDENC VTGSIM_TYPE 3 "MODE_480I59940_13500"
+        vtgsim_set HDLDENC VTGSIM_TYPE 2 "MODE_480I59940_13500"
+        denc_setmode HDLDENC "NTSCM"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        denc_setmode HDLAUXDENC "NTSCM"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is the image correct in NTSC on both outputs ?"
+        M_CHECK_RETCODE 0
+
+        ; Check PAL correct on both outputs
+        vtgsim_set HDLAUXDENC VTGSIM_TYPE 1 "MODE_576I50000_13500"
+        vtgsim_set HDLDENC VTGSIM_TYPE 2 "MODE_576I50000_13500"
+        api_quest "Is the image incorrect on both outputs ?"
+        M_CHECK_RETCODE 0
+        denc_setmode HDLAUXDENC "PAL"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is the image correct in PAL on AUX DENC ?"
+        M_CHECK_RETCODE 0
+        denc_setmode HDLDENC "PAL"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is the image correct in PAL on both outputs ?"
+        M_CHECK_RETCODE 0
+
+        ; Check color bar on both outputs
+        denc_cb HDLDENC
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is there a correct color bar only on MAIN DENC ?"
+        M_CHECK_RETCODE 0
+        denc_cb HDLDENC 0
+        M_CHECK_RETCODE ERR_NO_ERROR
+        denc_cb HDLAUXDENC
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is there a correct color bar only on AUX DENC ?"
+        M_CHECK_RETCODE 0
+        denc_cb HDLAUXDENC 0
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+        denc_cb HDLDENC 0
+        M_CHECK_RETCODE ERR_NO_ERROR
+        denc_term "DENC2" 1
+end
+
+define M_MULT_7200_TESTS
+        api_report "MULTI_INSTANCE_TESTS"
+        ; init AUX denc
+        denc_init "DENC2" ,,, hFD10F000
+        HDLAUXDENC=denc_open "DENC2"
+        ; Check NTSC correct on both outputs
+        vtgsim_set HDLAUXDENC 1 3 "MODE_480I59940_13500"
+        vtgsim_set HDLDENC 1 2 "MODE_480I59940_13500"
+        denc_setmode HDLDENC "NTSCM"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        denc_setmode HDLAUXDENC "NTSCM"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is the image correct in NTSC on both outputs ?"
+        M_CHECK_RETCODE 0
+
+        ; Check PAL correct on both outputs
+        vtgsim_set HDLAUXDENC 1 3 "MODE_576I50000_13500"
+        vtgsim_set HDLDENC 1 2 "MODE_576I50000_13500"
+        api_quest "Is the image incorrect on both outputs ?"
+        M_CHECK_RETCODE 0
+        denc_setmode HDLAUXDENC "PAL"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is the image correct in PAL on AUX DENC ?"
+        M_CHECK_RETCODE 0
+        denc_setmode HDLDENC "PAL"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is the image correct in PAL on both outputs ?"
+        M_CHECK_RETCODE 0
+
+        ; Check color bar on both outputs
+        denc_cb HDLDENC
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is there a correct color bar only on MAIN DENC ?"
+        M_CHECK_RETCODE 0
+        denc_cb HDLDENC 0
+        M_CHECK_RETCODE ERR_NO_ERROR
+        denc_cb HDLAUXDENC
+        M_CHECK_RETCODE ERR_NO_ERROR
+        api_quest "Is there a correct color bar only on AUX DENC ?"
+        M_CHECK_RETCODE 0
+        denc_cb HDLAUXDENC 0
+        M_CHECK_RETCODE ERR_NO_ERROR
+
+        denc_cb HDLDENC 0
+        M_CHECK_RETCODE ERR_NO_ERROR
+        denc_term "DENC2" 1
+end
+

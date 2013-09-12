@@ -1,0 +1,223 @@
+;*****************************************************************************
+; File   :  VMIX10.MAC
+;           VBI Test
+; Author :  SBEBA
+;*****************************************************************************
+
+define M_VMIX10_MAIN
+
+    print ""
+
+    api_report "M_VMIX10_MAIN: Test Teletext on 5105/5188/5525/5107/5162"
+
+    M_COMMON_BEIO "ON"
+    M_5100_LAYER "START" 7
+
+    vmix_init ,,,,2
+    HDLVMIX1 = vmix_open
+    vmix_enable HDLVMIX1
+    vmix_connect HDLVMIX1 "LVIDEO"
+    HDLVMIX2 = vmix_open
+    vmix_enable HDLVMIX2
+    VMIX_VBI_Test HDLVMIX2
+
+    vmix_dconnect  HDLVMIX1
+    vmix_dconnect  HDLVMIX2
+    ;  Term all possible layer
+    M_5100_LAYER "STOP" 7
+
+    ; Term mixer
+    vmix_disable  HDLVMIX1
+    vmix_disable  HDLVMIX2
+    vmix_close HDLVMIX1
+    vmix_close HDLVMIX2
+    vmix_term
+
+    ;  Term DENC, VTG & VOUT
+    M_COMMON_BEIO "OFF"
+
+    api_report "M_VMIX10_MAIN" ERRORCOUNT
+
+end
+
+
+define M_VMIX10_AUX
+
+    print ""
+
+        poke h1980002C hc00000
+        poke h19a00000 h38
+        poke h19a00018 h80
+        poke h19a0017c h00
+        poke h19b00000 h38
+        poke h19b00018 h80
+        poke h19b0017c h00
+
+    api_report "M_VMIX10_AUX: Test Teletext on 5525"
+
+       denc_init "DENC2" ,,, h19B00000
+        HDLDENC=denc_open "DENC2"
+        denc_setmode HDLDENC "PAL"
+
+        vtg_init "VTG2" , h19B00400
+        hdl_vtg2=vtg_open "VTG2"
+        vtg_setmode hdl_vtg2 "MODE_576I50000_13500"
+
+        vout_init "VOUT2" VOUT_DEVICE_TYPE_5525 "CVBS"  "DENC2" h19B00700 , 8
+        hndl_yuv2=vout_open "VOUT2"
+        vout_setparams hndl_yuv2 "CVBS"
+        vout_enable hndl_yuv2
+
+
+     M_5100_LAYER "START" 7
+
+    vmix_init "VMIX2" , G_MIX2_BA  "VTG2" 2 , "VOUT2"
+
+
+    HDLVMIX1 = vmix_open "VMIX2"
+
+    vmix_enable HDLVMIX1
+    vmix_connect HDLVMIX1 "LVIDEO"
+    HDLVMIX2 = vmix_open "VMIX2"
+    vmix_enable HDLVMIX2
+    VMIX_VBI_Test2 HDLVMIX2
+
+
+    vmix_dconnect  HDLVMIX1
+    vmix_dconnect  HDLVMIX2
+    ;  Term all possible layer
+    M_5100_LAYER "STOP" 7
+
+    ; Term mixer
+    vmix_disable  HDLVMIX1
+    vmix_disable  HDLVMIX2
+    vmix_close HDLVMIX1
+    vmix_close HDLVMIX2
+    vmix_term
+
+    ;  Term DENC, VTG & VOUT
+    M_COMMON_BEIO "OFF"
+
+    api_report "M_VMIX10_MAIN" ERRORCOUNT
+
+end
+
+define M_VMIX10_TXT_MULTI
+
+        poke h1980002C hc00000
+        poke h19a00000 h38
+        poke h19a00018 h80
+        poke h19a0017c h00
+        poke h19b00000 h38
+        poke h19b00018 h80
+        poke h19b0017c h00
+
+
+
+
+denc_init "DENC1" ,,, h19A00000
+HDLDENC1=denc_open "DENC1"
+denc_setmode HDLDENC1 "PAL"
+
+ vtg_init "VTG1" , h19A00400
+ hdl_vtg1=vtg_open "VTG1"
+ vtg_setmode hdl_vtg1 "MODE_576I50000_13500"
+
+ vout_init "VOUT1" VOUT_DEVICE_TYPE_5525 "CVBS"  "DENC1" h19A00700 , 8
+ hndl_yuv1=vout_open "VOUT1"
+ vout_setparams hndl_yuv1 "CVBS"
+ vout_enable hndl_yuv1
+
+
+
+denc_init "DENC2" ,,, h19B00000
+HDLDENC=denc_open "DENC2"
+denc_setmode HDLDENC "PAL"
+
+ vtg_init "VTG2" , h19B00400
+ hdl_vtg2=vtg_open "VTG2"
+ vtg_setmode hdl_vtg2 "MODE_576I50000_13500"
+
+ vout_init "VOUT2" VOUT_DEVICE_TYPE_5525 "CVBS"  "DENC2" h19B00700 , 8
+ hndl_yuv2=vout_open "VOUT2"
+ vout_setparams hndl_yuv2 "CVBS"
+ vout_enable hndl_yuv2
+
+
+
+    ; Init all possible layer
+    M_5100_LAYER "START" hf
+
+    ; Init mixer1
+    vmix_init "VMIX1" , G_MIX1_BA  "VTG1" ,, "VOUT1"
+
+
+    HDLVMIX1 = vmix_open "VMIX1"
+    vmix_sback HDLVMIX1 , 250 100 0   ;orange background
+    vmix_enable HDLVMIX1
+
+    ; Init mixer2
+      vmix_init "VMIX2" , G_MIX2_BA  "VTG2" ,, "VOUT2"
+      HDLVMIX2=vmix_open "VMIX2"
+      vmix_sback HDLVMIX2 , 250 0 100   ;pink background
+      vmix_enable HDLVMIX2
+
+
+
+    layer_svpalpha HDLVPSTILL 75
+    vmix_connect HDLVMIX1  "STILL" "LVIDEO" "OSD"
+
+
+      vmix_connect HDLVMIX2  "LVIDEO2"
+
+      VMIX_VBI_TestMulti  HDLVMIX1 HDLVMIX2
+      api_quest "Is Video on screen with pink background ?"
+      ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+
+
+
+    layer_svpalpha HDLVPSTILL 128
+    vmix_sback HDLVMIX1 , 0 0 0   ;black background
+    vmix_sback HDLVMIX2 , 0 0 0   ;black background
+    vmix_dconnect HDLVMIX2
+
+    vmix_dconnect HDLVMIX1
+
+    ; Term all possible layer
+    M_5100_LAYER "STOP" hF
+
+    ; Term mixer
+    vmix_disable HDLVMIX1
+    vmix_close HDLVMIX1
+    vmix_term "VMIX1"
+    vmix_disable HDLVMIX2
+    vmix_close HDLVMIX2
+    vmix_term "VMIX2"
+
+
+     ; Term VOUT in RGB
+        vout_close  hndl_yuv2
+        vout_term   "VOUT2"
+        vtg_close   hdl_vtg2
+        vtg_term    "VTG2"
+        denc_close  HDlDENC
+        denc_term   "DENC2"
+
+    ; Term DENC, VTG & VOUT
+        vout_close  hndl_yuv1
+        vout_term   "VOUT1"
+        vtg_close   hdl_vtg1
+        vtg_term    "VTG1"
+        denc_close  HDlDENC1
+        denc_term   "DENC1"
+
+    api_report "M_VMIX10_MAIN" ERRORCOUNT
+
+end
+
+
+;****************
+; COMMON MACROS *
+;****************
+

@@ -1,0 +1,357 @@
+; ****************************************************************************
+; File          : RETURNS.MAC
+; Requirements  :
+; Author        : Hubert Salle de La Marnierre - OCTOBER 2000
+; Last modified : BS - 17 Jan 2003
+; ****************************************************************************
+; Test returned error codes
+
+; general behavior :
+; driver is assumed to be not initialized before starting these file tests
+; all the M_RET_xxx macros set the driver closed and terminated when they leave
+
+; Test to check VTG driver error codes returned
+define M_RETURNS
+    if (VTG_TYPE=="TYPE_DENC")
+        denc_init
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    M_02_RET_ALREADY_INITIALIZED
+    M_03_RET_BAD_PARAMETER
+    M_04_RET_FEATURE_NOT_SUPPORT
+    M_05_RET_INVALID_HANDLE
+    M_06_RET_INVALID_MODE
+    M_07_RET_NO_FREE_HANDLE
+  if (API_CHIPID!="7100")&&(API_CHIPID!="7109") ;; tests is not available for STi7100/OS21
+    M_08_RET_NO_MEMORY
+  end
+    M_09_RET_OPEN_HANDLE
+    M_010_RET_UNKNOWN_DEVICE
+    if (VTG_TYPE=="TYPE_DENC")
+        denc_term
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+end
+
+
+; this macro tests the unknown device return code
+define M_010_RET_UNKNOWN_DEVICE
+    api_report "M_010_RET_UNKNOWN_DEVICE"
+    print "Functions called for a non initialized device."
+    print "Expected error : ST_ERROR_UNKNOWN_DEVICE."
+    ERRORCOUNT=0
+    print " "
+    vtg_term
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vtg_open
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vtg_capa
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vtg_init
+    vtg_capa "BADDEVICE"
+    M_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    ; driver is terminated before leaving.
+    vtg_term
+    api_report "M_010_RET_UNKNOWN_DEVICE" ERRORCOUNT
+end
+
+
+; this macro tests the invalid handle return code
+define M_05_RET_INVALID_HANDLE
+    api_report "M_05_RET_INVALID_HANDLE"
+    vtg_init
+    if ERRORCODE!=0
+        print "Unable to initialize driver. Macro M_RET_INVALID_HANDLE has been stopped."
+        api_break
+    end
+    print "Functions calls without previous STVTG_Open (but on initialized device)"
+    print "Expected error : ST_ERROR_INVALID_HANDLE "
+    ERRORCOUNT=0
+    BADHANDLE = -1
+    vtg_close BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vtg_setmode BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vtg_getmode BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    if (API_CHIPID!="7710") ; need to be confirmed
+        vtg_ssmparams BADHANDLE
+        M_CHECK_RETCODE ERR_INVALID_HANDLE
+        vtg_gsmparams BADHANDLE
+        M_CHECK_RETCODE ERR_INVALID_HANDLE
+    end
+    ; driver must be terminated before leaving
+    vtg_term
+    api_report "M_05_RET_INVALID_HANDLE" ERRORCOUNT
+end
+
+; this macro tests the bad parameter return code
+define M_03_RET_BAD_PARAMETER
+    api_report "M_03_RET_BAD_PARAMETER"
+    print "Functions called with bad parameters (included NULL pointers)."
+    print "Expected error : ST_ERROR_BAD_PARAMETER."
+    ERRORCOUNT=0
+    ; Longer than 16 caracters
+    BADNAME="012345678901234567"
+    vtg_init BADNAME
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vtg_capa BADNAME
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vtg_open BADNAME
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vtg_term BADNAME
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    vtg_init VTG_NAME ,, 20
+    ; 20 is more than max open
+    M_CHECK_RETCODE ERR_BAD_PARAMETER
+    nberrnull=vtg_nullpt
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+    vtg_init
+    vtg_open
+    if (VTG_TYPE=="TYPE_DENC")
+        vtg_ssmparams ,,, 3
+        M_CHECK_RETCODE ERR_BAD_PARAMETER
+    end
+    if (VTG_TYPE=="TYPE_VFE")||(VTG_TYPE=="TYPE_VFE2")
+        vtg_ssmparams ,,, 0
+        M_CHECK_RETCODE ERR_BAD_PARAMETER
+    end
+    if (VTG_TYPE=="TYPE_7015")||(VTG_TYPE=="TYPE_7020")||(VTG_TYPE=="TYPE_7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+        vtg_ssmparams ,,, 5
+        M_CHECK_RETCODE ERR_BAD_PARAMETER
+        vtg_ssmparams ,,,, 5
+        M_CHECK_RETCODE ERR_BAD_PARAMETER
+        vtg_ssmparams ,,,,,,, 2
+        M_CHECK_RETCODE ERR_BAD_PARAMETER
+    end
+    vtg_close
+    vtg_term
+    print " "
+    api_report "M_03_RET_BAD_PARAMETER" ERRORCOUNT
+end
+
+
+; this macro tests the already initialized return code
+define M_02_RET_ALREADY_INITIALIZED
+    api_report "M_02_RET_ALREADY_INITIALIZED"
+    print "STVTG_Init called twice with same DeviceName."
+    print "Expected error : ST_ERROR_ALREADY_INITIALIZED."
+    ERRORCOUNT=0
+    print " "
+    print "First STVTG_Init call. ST_NO_ERROR expected"
+    vtg_init
+    M_CHECK_RETCODE 0
+    print "Second STVTG_Init call with same DeviceName."
+    vtg_init
+    M_CHECK_RETCODE ERR_ALREADY_INITIALIZED
+    print " "
+    ; driver must be terminated before leaving
+    vtg_term
+    api_report "M_02_RET_ALREADY_INITIALIZED" ERRORCOUNT
+end
+
+; this macro tests the no memory return code
+define M_08_RET_NO_MEMORY
+    api_report "M_08_RET_NO_MEMORY"
+    ERRORCOUNT=0
+    MAX_DEVICE=0
+    M_SET_MAX_DEVICE
+    if (MAX_DEVICE==0)
+        print "Test not supported for this chip"
+    end
+    else
+        print " !!! TEST IS ACCURATE ONLY IF : STVTG_MAX_DEVICE = " MAX_DEVICE
+        print "STVTG_Init called" MAX_DEVICE " times with right parameters."
+        print "Expected error the last time: ST_ERROR_NO_MEMORY ."
+        FOR I 0 MAX_DEVICE
+            VTGNAME = api_int2str I "VTG"
+            if ((API_CHIPID=="5528")&&(I==1))
+                denc_init "EXTERNAL_DENC" , 4
+                vtg_init VTGNAME "TYPE_DENC" "EXTERNAL_DENC"
+            end
+            else
+                vtg_init VTGNAME
+            end
+            if I<MAX_DEVICE
+                M_CHECK_RETCODE ERR_NO_ERROR
+            end
+            else
+                M_CHECK_RETCODE ERR_NO_MEMORY
+            end
+        end
+        ; driver must be terminated before leaving
+        FOR I 0 MAX_DEVICE-1
+            VTGNAME = api_int2str I "VTG"
+            vtg_term VTGNAME
+            if ((API_CHIPID=="5528")&&(I==1))
+                denc_term "EXTERNAL_DENC"
+            end
+            M_CHECK_RETCODE ERR_NO_ERROR
+        end
+        api_report "M_08_RET_NO_MEMORY" ERRORCOUNT
+    end
+end
+
+; this macro tests the open handle return code
+define M_09_RET_OPEN_HANDLE
+    api_report "M_09_RET_OPEN_HANDLE"
+    print "STVTG_Term called when an opened handle and ForceTerminate false."
+    print "Expected error : ST_ERROR_OPEN_HANDLE ."
+    ERRORCOUNT=0
+    vtg_init
+    M_CHECK_RETCODE 0
+    vtg_open
+    M_CHECK_RETCODE 0
+    vtg_term
+    M_CHECK_RETCODE ERR_OPEN_HANDLE
+    ; driver must be terminated before leaving
+    vtg_close
+    M_CHECK_RETCODE 0
+    vtg_term
+    M_CHECK_RETCODE 0
+    api_report "M_09_RET_OPEN_HANDLE" ERRORCOUNT
+end
+
+; this macro tests the no free handle return code
+define M_07_RET_NO_FREE_HANDLE
+    api_report "M_07_RET_NO_FREE_HANDLE"
+    print "STVTG_Open called more times than allowed on same device."
+    print "Expected error : ST_ERROR_NO_FREE_HANDLES ."
+    ERRORCOUNT=0
+    vtg_init
+    hnd1=vtg_open
+    M_CHECK_RETCODE 0
+    hnd2=vtg_open
+    M_CHECK_RETCODE 0
+    vtg_open
+    M_CHECK_RETCODE ERR_NO_FREE_HANDLES
+    ; driver is terminated before leaving.
+    vtg_close hnd1
+    M_CHECK_RETCODE 0
+    vtg_close hnd2
+    M_CHECK_RETCODE 0
+    vtg_term
+    M_CHECK_RETCODE 0
+    api_report "M_07_RET_NO_FREE_HANDLE" ERRORCOUNT
+end
+
+; this macro tests the feature not supported return code
+define M_04_RET_FEATURE_NOT_SUPPORT
+    api_report "M_04_RET_FEATURE_NOT_SUPPORTED"
+    print "Functions called for device not supporting them."
+    print "Expected error : ST_ERROR_FEATURE_NOT_SUPPORTED."
+    ERRORCOUNT=0
+    print ""
+    vtg_init
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_open
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if (VTG_TYPE=="TYPE_DENC")
+        vtg_soptional , "EMBEDDED_SYNCHRO" 1
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+        vtg_soptional , "EMBEDDED_SYNCHRO" 0
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+        vtg_goptional , "EMBEDDED_SYNCHRO"
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+        vtg_soptional , "NO_OUTPUT_SIGNAL" 1
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+        vtg_soptional , "NO_OUTPUT_SIGNAL" 0
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+        vtg_goptional , "NO_OUTPUT_SIGNAL"
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+        vtg_soptional , "OUT_EDGE_POSITION"
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+        vtg_goptional , "OUT_EDGE_POSITION"
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    end
+    if (VTG_TYPE=="TYPE_VFE")||(VTG_TYPE=="TYPE_VFE2")
+        vtg_soptional , "EMBEDDED_SYNCHRO" 1
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+        vtg_soptional , "EMBEDDED_SYNCHRO" 0
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+        vtg_goptional , "EMBEDDED_SYNCHRO"
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+        vtg_soptional , "NO_OUTPUT_SIGNAL" 1
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+        vtg_soptional , "NO_OUTPUT_SIGNAL" 0
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+        vtg_goptional , "NO_OUTPUT_SIGNAL"
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    end
+    if (VTG_TYPE=="TYPE_7015")||(VTG_TYPE=="TYPE_7020")||(VTG_TYPE=="TYPE_7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+        vtg_setmode , "MODE_SLAVE"
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vtg_soptional , "EMBEDDED_SYNCHRO" 1
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+        vtg_setmode
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vtg_soptional , "EMBEDDED_SYNCHRO" 1
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vtg_setmode , "MODE_SLAVE"
+        M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    end
+
+    ; driver is terminated before leaving.
+    vtg_close
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_term
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_report "M_04_RET_FEATURE_NOT_SUPPORTED" ERRORCOUNT
+end
+
+
+; this macro tests the STVTG_ERROR_INVALID_MODE return code
+define M_06_RET_INVALID_MODE
+    api_report "M_06_RET_INVALID_MODE"
+    print "STVTG_SetMode called with wrong mode."
+    print "Expected error : STVTG_ERROR_INVALID_MODE"
+    ERRORCOUNT=0
+    vtg_init
+    hnd=vtg_open
+    print " "
+    print "STVTG_SetMode called with not allowed mode."
+    vtg_setmode hnd 19
+    M_CHECK_RETCODE ERR_VTG_INVALID_MODE
+    print " "
+    print "STVTG_SetMode called with unknown mode."
+    vtg_setmode hnd 63
+    M_CHECK_RETCODE ERR_VTG_INVALID_MODE
+    print " "
+    ; driver is terminated before leaving
+    vtg_close hnd
+    vtg_term
+    api_report "M_06_RET_INVALID_MODE" ERRORCOUNT
+end
+
+
+define M_SET_MAX_DEVICE
+    ; set MAX_DEVICE to 0, for chip not supporting several init on same HW cell (ST40GX1)
+    if (API_CHIPID=="5510")||(API_CHIPID=="5512")
+        MAX_DEVICE=1
+    end
+    elif (API_CHIPID=="5508")||(API_CHIPID=="5518")
+        MAX_DEVICE=1
+    end
+    elif (API_CHIPID=="5514")||(API_CHIPID=="5516")||(API_CHIPID=="5517")
+        MAX_DEVICE=1
+    end
+    elif (API_CHIPID=="7015")||(API_CHIPID=="7020")
+        MAX_DEVICE=5
+    end
+    elif (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+        MAX_DEVICE=3
+    end
+    elif (API_CHIPID=="5528")||(API_CHIPID=="5100")||(API_CHIPID=="5301")
+        MAX_DEVICE=2
+    end
+    elif API_CHIPID=="GX1"
+        MAX_DEVICE=0
+    end
+end
+
+
+
+
+
+
+

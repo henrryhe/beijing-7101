@@ -1,0 +1,152 @@
+;*******************************************************************************
+; File   :  CONFIG.MAC
+;           Variables used for test scripts
+; Author :  JROY - MARCH 2006
+;*******************************************************************************
+
+ERRORCOUNT=0
+DeviceName="DVM"
+
+;TUNER_LOCK
+Tuner_FREQ=514000
+Tuner_Polarity=HORIZ
+Tuner_LNBTone=LNBON
+Tuner_SymbolRate=22000000
+Tuner_FEC=FEC_2_3
+Tuner_MOD=QAM64
+Tuner_BandNum=3
+
+Tuner_FREQ1=514000
+Tuner_Polarity1=HORIZ
+Tuner_LNBTone1=LNBON
+Tuner_SymbolRate1=22000000
+Tuner_FEC1=FEC_2_3
+Tuner_MOD1=QAM64
+Tuner_BandNum1=3
+
+TUNER_INST_1=0
+TUNER_INST_2=1
+
+V_TYPE_1=MP2V
+V_PID_1=512
+A_TYPE_1=MP1A
+A_PID_1=640
+P_PID_1=8190
+
+V_TYPE_2=MP2V
+V_PID_2=512
+A_TYPE_2=MP1A
+A_PID_2=640
+P_PID_2=8190
+
+NEW_V_TYPE=MP2V
+NEW_V_PID=513
+NEW_A_TYPE=MP1A
+NEW_A_PID=641
+NEW_P_PID=8190
+
+Rec_EnableCrypt=0
+Rec_CryptKey="pqrs"
+Play_EnableCrypt=0
+Play_CryptKey="pqrs"
+
+
+;DVM_PlayStart
+Play_StartPosInMS=0
+Play_StartSpeed=100
+
+Play_NoOfPID_1=3
+Play_NoOfPID_2=3
+
+;DVM_RecordStart
+Rec_StreamName_1="dvm_test_stream1"
+Rec_NumberOfPIDS_1=3
+
+Rec_StreamName_2="dvm_test_stream2"
+Rec_NumberOfPIDS_2=3
+
+Rec_ChannelName_1="DD_News"
+Rec_ChannelName_2="DD_News"
+
+Rec_FileSizeInPack=0
+Rec_IsCircular=0
+
+;DVM_RecordInsertPkt
+;RecInsPkt_FileName
+;RecInsPkt_NumPkt
+
+;DVM_CopyStream
+;Cpy_OldStreamName
+;Cpy_NewStreamName
+;Cpy_StartTimeInMs
+;Cpy_EndTimeInMs
+
+;DVM Trickmode tests
+Trick_StreamName="tricktest"
+Trick_StreamDuration=3600
+Trick_ChannelName="dwtv"
+Trick_V_TYPE=MP2V
+Trick_V_PID=1300
+Trick_A_TYPE=MP1A
+Trick_A_PID=1301
+Trick_P_PID=1300
+
+;wait
+wait_LIVE_1RECPLAY_2RECPLAY_SECS = 60
+i1 = wait_LIVE_1RECPLAY_2RECPLAY_SECS
+
+wait_REC_PLAY_PAUSE_SECS = 30
+i2 = wait_REC_PLAY_PAUSE_SECS
+
+wait_STRESS_TEST_REC_IN_SECS = 600
+i3 = wait_STRESS_TEST_REC_IN_SECS
+
+wait_AUD_ONLY_TEST_SECS=30
+i4 = wait_AUD_ONLY_TEST_SECS
+
+
+;******************************************************************************
+;Name        : M_CHECK_RETCODE
+;Description : Increment ERRORCOUNT if ERRORCODE is not equal to expected value
+;Parameters  : EXPECTED value to compare to ERRORCODE. ERRORCODE is set by all
+;              api macro defined in dvm_cmd.c
+;Assumptions :
+;Limitations :
+;Returns     :
+;******************************************************************************
+; ERRORCOUNT is incremented if RETCODE is not equal to EXPECTED
+; ERRORCODE is set by DRIVER_CMD.C functions after each DRIVERxxx command call
+define M_CHECK_RETCODE EXPECTED
+    if ERRORCODE!=EXPECTED
+        ERRORCOUNT=ERRORCOUNT+1
+        print "!!!!!!!!!!!! TEST FAILED !!!!!!!!!!!!"
+        print "Error code:" ERRORCODE ", Expected code:" EXPECTED
+    end
+end  ;M_CHECK_RETCODE
+
+
+print ""
+print "wait few sec to lock the tuner"
+TUNER_LOCK TUNER_INST_1 Tuner_FREQ Tuner_BandNum Tuner_FEC Tuner_MOD
+M_CHECK_RETCODE ERR_NO_ERROR
+if ERRORCOUNT==0
+    print "1st tuner Successfully Locked, trying to lock second tuner "
+    TUNER_LOCK 1 Tuner_FREQ1 Tuner_BandNum1 Tuner_FEC1 Tuner_MOD1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if ERRORCOUNT==0
+        print "2nd tuner Successfully Locked"
+    end
+    else
+        TUNER_LOCK 1 Tuner_FREQ1 Tuner_BandNum1 Tuner_FEC1 Tuner_MOD1
+        if ERRORCOUNT!=0
+            print "Failed to lock 2nd tuner, exiting from testsuite"
+        end
+    end
+end
+else
+    print "Failed to lock any of the tuner, exiting from testsuite"
+    print "Unmounting file system"
+    dvm_shut
+end
+
+;EOF

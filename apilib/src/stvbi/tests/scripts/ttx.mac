@@ -1,0 +1,377 @@
+;*****************************************************************************
+; File         : TTX.MAC
+; Requirements :
+; Author       : BS - NOVEMBER 2000
+;*****************************************************************************
+
+; general behavior :
+; driver is assumed to be in a virgin state (no init, no open)
+
+define M_TTX_TESTS
+CAPATTX=api_evalstr STRCAPA 2
+print CAPATTX
+if CAPAVBI&TTX
+    TELETEXT_MODE=3
+    if (API_CHIPID=="7015")||(API_CHIPID=="7020")
+        if DENC_TYPE==0
+           TELETEXT_MODE=1
+        end
+        else
+           TELETEXT_MODE=0
+        end
+    end
+    elif API_CHIPID=="GX1"
+        TELETEXT_MODE=0
+    end
+
+
+    HDLVMIX1=0
+    api_report "1.1 TTX_MANUAL TESTS"
+    HDLVTGSTV=0
+    M_ENC_INIT "PAL"
+    if (API_CHIPID=="5105")||(API_CHIPID=="5107")||(API_CHIPID=="5188")
+      vmix_init
+      HDLVMIX1 = vmix_open
+      vmix_enable HDLVMIX1
+      ;Activate TVO_TTXT_CTRL register for STi5105
+      poke h2090070C hf
+    end
+
+    if (API_CHIPID=="5525")
+       vmix_init "VMIX1" , G_MIX1_BA  "MAIN_VTG" 2 , "MAIN_VOUT"
+       HDLVMIX1 = vmix_open "VMIX1"
+       vmix_enable HDLVMIX1
+       ;Activate TVO_TTXT_CTRL register for STi5525
+       poke h19a0070C hf
+       poke h19b0070C hf
+    end
+
+    M_TTX_CONFIG "INIT"
+    vbi_init , ,DENC_NAME
+    if TELETEXT_MODE&h01
+        vbi_open
+        M_TTX_UNITARY
+        M_TTX_LINES
+        M_TTX_ENABLE_DISABLE
+        vbi_close
+    end
+    if TELETEXT_MODE&h02
+        ;M_TTX_DRV_MEMORY
+        ;M_TTX_DRV_TUNER
+    end
+    if API_CHIPID=="GX1"
+        vbi_open
+        M_TTX_SOURCE
+        vbi_close
+    end
+    vbi_term
+    M_TTX_CONFIG "TERM"
+    M_ENC_TERM
+    api_report "2.1 TTX_AUTOMATIC TESTS"
+    M_TTX_STD_CAPA
+    M_TTX_STD_MASK
+end
+end
+;;;;;;;;;;;;;;;;; AUTOMATIC TESTS ;;;;;;;;;;;;;;;;;;
+
+; Tests in function of capability supported API & register 64
+define M_TTX_STD_CAPA
+    api_report "2.1.0 TTX_STANDARD_CAPA TEST"
+    ERRORCOUNT=0
+    vbi_init , ,DENC_NAME
+    j=1
+    while j!=16
+        if CAPATTX&j
+            vbi_open VBI_DEVICE_NAME TTX 2 1 1 j
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vbi_enable
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vbi_setparams , TTX 0             ; Mask Off
+            M_CHECK_RETCODE ERR_NO_ERROR
+            STD=(j*16)+16
+            vbi_regcheck TTX EXT_CHIP STD h08          ; Check register for right STD
+            ERRORCOUNT=ERRORCODE+ERRORCOUNT
+            vbi_close
+            M_CHECK_RETCODE ERR_NO_ERROR
+        end
+        j=j*2
+    end
+    vbi_term
+    api_report "2.1.0 TTX_STANDARD_CAPA" ERRORCOUNT
+    ; driver is back to a virgin state (no init, no open)
+end
+
+; Tests in function of Mask On/Off, test register 65
+define M_TTX_STD_MASK
+    api_report "2.1.1 TTX_STANDARD_MASK TEST"
+    ERRORCOUNT=0
+    vbi_init , ,DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_open VBI_DEVICE_NAME TTX
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_enable
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_setparams , TTX 0          ; Mask Off
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck TTX EXT_CHIP  h20 h08         ; Check value reg 65
+    M_CHECK_RETCODE 0
+    vbi_setparams , TTX 1          ; Mask On
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_regcheck TTX EXT_CHIP h20 h00         ; Check value reg 65
+    M_CHECK_RETCODE 0
+    vbi_close
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_term
+    api_report "2.1.1 TTX_STANDARD_MASK" ERRORCOUNT
+    ; driver is back to a virgin state (no init, no open)
+end
+
+
+;;;;;;;;;;;;;;;;; MANUEL TESTS ;;;;;;;;;;;;;;;;;;
+
+; PLAY TTX unitary test
+define M_TTX_UNITARY
+    api_report "2.0.0 TTX_UNITARY TEST"
+    ERRORCOUNT=0
+    vbi_setparams , TTX
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_enable
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if (API_CHIPID=="5105")||(API_CHIPID=="5525")||(API_CHIPID=="5188")||(API_CHIPID=="5107")
+        vbi_ttxinject HDLVMIX1 "../../simple5.ttx", , EXT_CHIP
+    end
+    else
+        ttx_inject STAPIGATDATA+"simple.ttx", , EXT_CHIP
+    end
+    if (API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+        ;Configure PIO[6] pins for STi4629
+        TTX_SetPIO6
+    end
+    api_quest "Does teletext working ?"
+
+    M_CHECK_RETCODE 0
+    if (API_CHIPID=="5105")||(API_CHIPID=="5525")||(API_CHIPID=="5188")||(API_CHIPID=="5107")
+        vbi_ttxkill
+    end
+    else
+        ttx_kill
+    end
+    vbi_disable
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_report "2.0.0 TTX_UNITARY" ERRORCOUNT
+end
+
+; Check TTX injection on different lines
+define M_TTX_LINES
+    api_report "2.0.1 TTX_LINES TEST"
+    ERRORCOUNT=0
+    vbi_enable
+    M_CHECK_RETCODE ERR_NO_ERROR
+    print "*** Check on odd lines ***"
+    vbi_setparams , TTX 0 1          ; Injection on only one line
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if (API_CHIPID=="5105")||(API_CHIPID=="5525")||(API_CHIPID=="5188")||(API_CHIPID=="5107")
+        vbi_ttxinject HDLVMIX1 "../../simple5.ttx", , EXT_CHIP
+    end
+    else
+        ttx_inject STAPIGATDATA+"simple.ttx", , EXT_CHIP
+    end
+    api_quest "Does teletext working ?"
+    if (API_CHIPID=="5105")||(API_CHIPID=="5525")||(API_CHIPID=="5188")||(API_CHIPID=="5107")
+        vbi_ttxkill
+    end
+
+    vbi_setparams , TTX 0 0 h2000   ; Injection on only one line not first
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if (API_BOARDID=="mb295")&&(DENC_ACCESS==1)
+        vbi_regcheck 34 EXT_CHIP 1 h66 hFF  ; Check values
+    end
+    else
+        vbi_regcheck 34 EXT_CHIP 5 h00 h10 h00 h00 h00 hFF  ; Check values
+    end
+    M_CHECK_RETCODE 0
+    if (API_CHIPID=="5105")||(API_CHIPID=="5525")||(API_CHIPID=="5188")||(API_CHIPID=="5107")
+        vbi_ttxinject HDLVMIX1 "../../simple5.ttx", , EXT_CHIP
+    end
+    else
+        ttx_inject STAPIGATDATA+"simple.ttx", , EXT_CHIP
+    end
+    vbi_setparams , TTX 0 16         ; Injection on 16 lines
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest "Does teletext working ?"
+    M_CHECK_RETCODE 0
+    if (API_BOARDID=="mb295")&&(DENC_ACCESS==1)
+        vbi_setparams , TTX 0 0 h1F80   ; Injection on 6 lines individually selected
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_regcheck 34 EXT_CHIP 1 h05 hFF  ; Check values
+    end
+    else
+        vbi_setparams , TTX 0 0 h2AA80  ; Injection on 6 lines individually selected
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_regcheck 34 EXT_CHIP 5 h05 h55 h00 h00 h00 hFF  ; Check values
+
+    end
+    M_CHECK_RETCODE 0
+    api_quest "Does teletext working ?"
+    M_CHECK_RETCODE 0
+    print "*** Check on even lines ***"
+    if (API_CHIPID=="5105")||(API_CHIPID=="5525")||(API_CHIPID=="5188")||(API_CHIPID=="5107")
+        vbi_ttxkill
+    end
+    vbi_setparams , TTX 0 1 0        ; Injection on only one line
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if (API_CHIPID=="5105")||(API_CHIPID=="5525")||(API_CHIPID=="5188")||(API_CHIPID=="5107")
+        vbi_ttxinject HDLVMIX1 "../../simple5.ttx", , EXT_CHIP
+    end
+    else
+        ttx_inject STAPIGATDATA+"simple.ttx", , EXT_CHIP
+    end
+    api_quest "Does teletext working ?"
+    M_CHECK_RETCODE 0
+    vbi_setparams , TTX 0 16 0       ; Injection on 16 lines
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_quest "Does teletext working ?"
+    M_CHECK_RETCODE 0
+    if (API_BOARDID=="mb295")&&(DENC_ACCESS==1)
+        vbi_setparams , TTX 0 0 h7E00 0  ; Injection on 6 lines individually selected
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_regcheck 35 EXT_CHIP 1 h27 hFF  ; Check values
+    end
+    else
+        vbi_setparams , TTX 0 0 h55500 0 ; Injection on 6 lines individually selected
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_regcheck 37 EXT_CHIP 2 h55 h50 hFF  ; Check values
+    end
+    M_CHECK_RETCODE 0
+    api_quest "Does teletext working ?"
+    M_CHECK_RETCODE 0
+    if (API_CHIPID=="5105")||(API_CHIPID=="5525")||(API_CHIPID=="5188")||(API_CHIPID=="5107")
+        vbi_ttxkill
+    end
+    else
+        ttx_kill
+    end
+    vbi_disable
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_report "2.0.1 TTX_LINES" ERRORCOUNT
+end
+
+; Check TTX multi enable/disable
+define M_TTX_ENABLE_DISABLE
+    api_report "2.0.2 TTX_ENABLE_DISABLE TEST"
+    ERRORCOUNT=0
+    vbi_setparams , TTX 1 10
+    if (API_CHIPID=="5105")||(API_CHIPID=="5525")||(API_CHIPID=="5188")||(API_CHIPID=="5107")
+        vbi_ttxinject HDLVMIX1 "../../simple5.ttx", , EXT_CHIP
+    end
+    else
+        ttx_inject STAPIGATDATA+"simple.ttx", , EXT_CHIP
+    end
+
+    api_quest "Does teletext working ?" ;0
+    M_CHECK_RETCODE 0
+    vbi_enable
+    api_quest "Does teletext working ?"
+    M_CHECK_RETCODE 0
+    for i 0 20
+        vbi_disable
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_enable
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    api_quest "Does teletext working ?"
+    M_CHECK_RETCODE 0
+    api_report "2.0.2 TTX_ENABLE_DISABLE" ERRORCOUNT
+    if (API_CHIPID=="5105")||(API_CHIPID=="5525")||(API_CHIPID=="5188")||(API_CHIPID=="5107")
+        vbi_ttxkill
+    end
+    else
+        ttx_kill
+    end
+end
+
+; PLAY TTX stream from memory with TTX driver
+define M_TTX_DRV_MEMORY
+    api_report "2.0.3 TTX_DRV_MEMORY TEST"
+    ERRORCOUNT=0
+    ; TTX Inits & Launch
+    ttx_init , , EXT_CHIP
+    ttx_open
+    ;ttx_setstreamid
+    ttx_setsource
+    ttx_start
+    api_quest "Does teletext working properly ?"
+    ; TTX termination
+    ttx_stop
+    ttx_close
+    ttx_term
+    api_report "2.0.3 TTX_DRV_MEMORY" ERRORCODE
+end
+
+; PLAY TTX from Tuner
+define M_TTX_DRV_TUNER
+    api_report "2.0.4 TTX_DRV_TUNER TEST"
+    ERRORCOUNT=0
+    ; TTX Inits & Launch
+    ttx_init , , EXT_CHIP
+    ttx_open
+    ; Playing Eurosport teletext
+    ttx_setstreamid , 430
+    ttx_setsource , 0
+    ttx_start
+    api_quest "Does teletext working properly ?"
+    ; TTX termination
+    ttx_stop
+    ttx_close
+    ttx_term
+    api_report "2.0.4 TTX_DRV_TUNER" ERRORCODE
+end
+
+; Configure access to STV0119 on a mb295 board
+define M_TTX_CONFIG PARAMS
+    if DENC_ACCESS==1
+        if PARAMS=="INIT"
+            vtg_init "VTG_STV0119" 0 DENC_NAME
+            M_CHECK_RETCODE ERR_NO_ERROR
+            HDLVTGSTV=vtg_open "VTG_STV0119"
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vtg_ssmparams HDLVTGSTV 0 0 1 0 0 0
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vtg_setmode HDLVTGSTV "MODE_SLAVE"
+            M_CHECK_RETCODE ERR_NO_ERROR
+
+        end
+        else
+            vtg_close HDLVTGSTV
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vtg_term "VTG_STV0119"
+        end
+    end
+end
+
+define M_TTX_SOURCE
+    api_report "2.0.5 TTX_SOURCE TEST"
+    ERRORCOUNT=0
+    vbi_setparams , TTX
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_enable
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_setttxsource , 1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    print "DMA Source selected"
+    vbi_fullregcheck ,0,2
+    M_CHECK_RETCODE 0
+    vbi_setttxsource , 2
+    M_CHECK_RETCODE ERR_NO_ERROR
+    print "PIN Source selected"
+    vbi_fullregcheck ,2,2
+    M_CHECK_RETCODE 0
+    vbi_setttxsource , 1
+    M_CHECK_RETCODE ERR_NO_ERROR
+    print "back to DMA Source selected"
+    vbi_fullregcheck ,0,2
+    M_CHECK_RETCODE 0
+    vbi_disable
+    M_CHECK_RETCODE ERR_NO_ERROR
+    api_report "2.0.5 TTX_SOURCE" ERRORCOUNT
+end

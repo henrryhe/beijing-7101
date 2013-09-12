@@ -1,0 +1,32 @@
+# Sample ST20/ST40/ST200 makefile
+
+DVD_MAKE_VERSION := 2
+ifdef IN_OBJECT_DIR
+
+include $(DVD_MAKE)/generic.mak
+
+ST20_TARGETS := <ST20 target library>
+ST40_TARGETS := <ST40 target library>
+ST200_TARGETS := <ST200 target library>
+
+SUBDIRS := <list of subdirs to build>
+
+include $(DVD_MAKE)/defrules.mak
+
+$(LIB_PREFIX)<target library>$(LIB_SUFFIX): $($(ARCHITECTURE)_OBJS)
+	@$(ECHO) Building $@
+	$(BUILD_LIBRARY)
+
+clean: $(SUBDIR_CLEAN)
+	@$(ECHO) Cleaning $($(ARCHITECTURE)_TARGETS)
+	-$(RM) $($(ARCHITECTURE)_TARGETS)
+
+# Local header dependencies
+
+else
+
+include $(DVD_MAKE)/builddir.mak
+
+endif
+
+# End of sample ST20/ST40/ST200 makefile

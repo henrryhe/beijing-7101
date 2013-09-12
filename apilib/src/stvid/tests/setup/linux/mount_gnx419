@@ -1,0 +1,6 @@
+# File     : mount.cifs
+# Function : mount the disk bistream for the specified user
+# Argument : user name
+
+echo "Mount bitstream for user ["$1"] ..."
+./mount.cifs //164.129.120.112/bitstream$ files/gnx419 -o user=$1,dom=ST

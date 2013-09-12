@@ -1,0 +1,2 @@
+/dev/nfs		/		nfs	defaults	0 0
+none			/proc		proc	defaults	0 0

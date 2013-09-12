@@ -1,0 +1,426 @@
+;*****************************************************************************
+; File         : MINS.MAC
+; Requirements :
+; Author       : BS - JANUARY 2001
+;*****************************************************************************
+
+; general behavior :
+; driver is assumed to be in a virgin state (no init, no open)
+
+define M_MINS_TESTS
+
+    if (API_BOARDID=="mb295")||(API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+         api_report "8.0 MULTI INSTANCCE MANUAL TESTS"
+;        api_report "8.1 MULTI INSTANCE AUTOMATIC TESTS"
+        ;M_MINS_TTX
+        M_MINS_CC
+    end
+ if (API_BOARDID=="mb428")
+
+       MULTI_TEST5525
+ end
+ if (API_BOARDID=="mb411")||(API_BOARDID=="mb391")
+      M_MULT_CC_TTX
+      M_MULT_HANDLE_CC
+   end
+ if ((API_BOARDID=="mb391")||(API_BOARDID=="mb411"))
+
+       MULTI_TEST7710
+  end
+
+end
+
+;;;;;;;;;;;;;;;;; AUTOMATIC TESTS ;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;; MANUEL TESTS ;;;;;;;;;;;;;;;;;
+
+; PLAY TTX stream from memory
+define M_MINS_TTX
+    api_report "8.0.1 TTX_DRV_MEMORY TEST"
+    ERRORCOUNT=0
+    ; TTX Inits & Launch
+    ttx_init , , EXT_CHIP
+    ttx_open
+    ttx_setstreamid
+    ttx_setsource
+    ttx_start
+    api_quest "Does teletext working properly ?"
+    api_report "8.0.1 TTX_DRV_MEMORY" ERRORCODE
+    ; Global term
+    ttx_close
+    ttx_term
+end
+
+; PLAY Closed Caption on 2 different chip
+define M_MINS_CC
+    api_report "8.0.0 MINS_CC TESTS"
+    ERRORCOUNT=0
+    M_DISPLAY_ON "NTSC"
+
+    ; Init internal denc already done
+    vbi_init
+    M_CHECK_RETCODE ERR_NO_ERROR
+    HDLVBIDENC=vbi_open VBI_DEVICE_NAME CC
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_setparams , CC , 21 284
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_enable
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ; Init denc (STV0119 if STi7015/20 || STi4629 if STi5528)
+    if (API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+    denc_init "AUX_DENC" , 4
+    end
+    else
+      denc_init "AUX_DENC" , 0 1
+    end
+    M_CHECK_RETCODE ERR_NO_ERROR
+    HDLDENCSTV=denc_open "AUX_DENC"
+
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_setmode , "NTSCM"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_init "AUX_VBI" , "AUX_DENC"
+    HDLVBISTV=vbi_open "AUX_VBI" CC
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_setparams , CC , 21 284
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_enable
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_init "AUX_VTG" 0 "AUX_DENC"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    HDLVTGSTV=vtg_open "AUX_VTG"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    if (API_BOARDID=="mb295")
+       vtg_ssmparams HDLVTGSTV 0 0 1 0 0 0
+    end
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_setmode HDLVTGSTV "MODE_SLAVE"
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ;Init VOUT for STi4629
+    M_VOUT_CONFIG "INIT"
+
+    ; Start Closed Caption Task on (7015/20 || 5528)
+    vbi_ccload STAPIGATDATA+"itesting.cc"
+    vbi_ccinject 1000 , HDLVBIDENC
+    api_quest "Do you see text : 'I AM TESTING CLOSED CAPTIONS' on main DENC [y/n] ?"
+
+    ;Start Closed Caption Task on (STV0119 if STi7015/20 || STi4629 if STi5528)
+
+
+    vbi_ccload STAPIGATDATA+"amamam.cc" 1
+    vbi_ccinject 1000 , HDLVBISTV
+    api_quest "Do you see scrolling text : 'AMAMAM' on AUX_DENC [y/n] ?"
+
+
+ ; Stop task on (STV0119 if STi7015/20 || STi4629 if STi5528)
+    vbi_cckill HDLVBISTV
+
+    ; Stop task on 7015/20 ||5528
+    vbi_cckill HDLVBIDENC
+
+
+    ;Term VOUT for STi4629
+     M_VOUT_CONFIG "TERM"
+
+    ; Term (STV0119 if STi7015/20 || STi4629 if STi5528)
+    vtg_close HDLVTGSTV
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vtg_term "AUX_VTG"
+    vbi_close HDLVBISTV
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_term "AUX_VBI"
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_close HDLDENCSTV
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_term "AUX_DENC"
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    ; Term 7015/20 ||5528
+    vbi_close HDLVBIDENC
+    M_CHECK_RETCODE ERR_NO_ERROR
+    vbi_term
+    M_CHECK_RETCODE ERR_NO_ERROR
+
+    M_DISPLAY_OFF
+
+
+    api_report "8.0.0 MINS_CC" ERRORCOUNT
+
+
+end
+
+; Configure access to STV0119 on a mb295 board
+define M_CC_CONFIG PARAMS
+    if DENC_ACCESS==1
+        if PARAMS=="INIT"
+            vtg_init "AUX_VTG" 0 DENC_NAME
+            M_CHECK_RETCODE ERR_NO_ERROR
+            HDLVTGSTV=vtg_open "AUX_VTG"
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vtg_ssmparams HDLVTGSTV 0 0 1 0 0 0
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vtg_setmode HDLVTGSTV "MODE_SLAVE"
+            M_CHECK_RETCODE ERR_NO_ERROR
+
+        end
+        else
+            vtg_close HDLVTGSTV
+            M_CHECK_RETCODE ERR_NO_ERROR
+            vtg_term "AUX_VTG"
+        end
+    end
+end
+
+define M_VOUT_CONFIG PARAMS
+        if PARAMS=="INIT"
+            ; Initialize digital output on STi5528
+                vout_init "VOUT_DIGITAL" VOUT_DEVICE_TYPE_DIGOUT
+                DIGITAL_VOUT_HDL = vout_open "VOUT_DIGITAL"
+                vout_setparams DIGITAL_VOUT_HDL "YCbCr422_8" 0
+                vout_enable  DIGITAL_VOUT_HDL
+
+            ; Initialise CVBS output on STi4629
+                vout_init "AUX_VOUT" VOUT_DEVICE_TYPE_4629 , "AUX_DENC"
+                AUX_VOUT_HDL=vout_open "AUX_VOUT"
+                vout_enable AUX_VOUT_HDL
+        end
+        else
+                vout_close AUX_VOUT_HDL
+                vout_term "AUX_VOUT"
+                vout_close DIGITAL_VOUT_HDL
+                vout_term "VOUT_DIGITAL"
+        end
+end
+
+
+define M_MULT_CC_TTX
+        api_report " Multiinstance with Teletext and closed Caption TESTS"
+        M_DISPLAY_ON "NTSC"
+        vbi_init , ,DENC_NAME
+        VbiHdl1 = vbi_open VBI_DEVICE_NAME CC
+        M_CHECK_RETCODE ERR_NO_ERROR
+         vbi_setparams VbiHdl1 CC , 21 284
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_enable VbiHdl1
+        ;;; CC INJECTION
+        vbi_ccload STAPIGATDATA+"itesting.cc"
+        vbi_ccinject 1000
+        api_quest "Do you see blinking text : 'I AM TESTING CLOSED CAPTIONS' [y/n] ?"
+        vbi_cckill
+        ;;;; TTX INJECTION
+        M_DISPLAY_OFF "NTSC"
+        M_ENC_INIT "PAL"
+        VbiHdl2 = vbi_open VBI_DEVICE_NAME
+        vbi_setparams VbiHdl2 TTX
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_enable VbiHdl2
+        M_CHECK_RETCODE ERR_NO_ERROR
+        ttx_inject STAPIGATDATA+"simple.ttx", , EXT_CHIP
+        api_quest "Does teletext working ?"
+        M_CHECK_RETCODE 0
+        ttx_kill
+        vbi_disable VbiHdl2
+        M_CHECK_RETCODE ERR_NO_ERROR
+        M_ENC_TERM
+        vbi_close VbiHdl1
+        vbi_close VbiHdl2
+        vbi_term VBI_DEVICE_NAME
+        api_report " Multiinstance with Teletext and closed Caption "
+end
+
+
+define M_MULT_HANDLE_CC
+
+        api_report " Two closed caption instance with different data : CC data Switch"
+        M_DISPLAY_ON "NTSC"
+        vbi_init , ,DENC_NAME
+        VbiHdl1 = vbi_open VBI_DEVICE_NAME CC
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_setparams VbiHdl1 CC 2 21 284
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_enable VbiHdl1
+        ;;; CC INJECTION
+        vbi_ccload STAPIGATDATA+"itesting.cc"
+        vbi_ccinject 100 , VbiHdl1
+        api_quest "Do you see blinking text : 'I AM TESTING CLOSED CAPTIONS' [y/n] ?"
+        vbi_cckill VbiHdl1
+        ;; Open Another Handle for different CC Injection
+        VbiHdl2 = vbi_open , CC 8
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_setparams VbiHdl2 CC 2 21 284
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vbi_enable VbiHdl2
+        vbi_ccload STAPIGATDATA+"amamam.cc"
+        vbi_ccinject 100 , VbiHdl2
+        api_quest "Do you see scrolling text on two lines : 'AMAMAM' [y/n] ?"
+        api_report "3.0.1 CC SCROLL STRING" ERRORCODE
+
+        vbi_cckill VbiHdl2
+        vbi_close VbiHdl1
+        vbi_close VbiHdl2
+        vbi_term VBI_DEVICE_NAME
+        M_DISPLAY_OFF
+
+end
+define MULTI_TEST7710
+
+    api_report "MULTI_INSTANCE TEST"
+
+        denc_init "DENC1"
+        HDLDENC1 = denc_open "DENC1"
+        denc_setmode HDLDENC1
+        if (API_CHIPID=="7710")
+        vtg_init  "VTG2" , h20103c34
+        end
+        if (API_CHIPID=="7100")
+        vtg_init  "VTG2" ,  hb9005034
+        end
+        if (API_CHIPID=="7109")
+        vtg_init  "VTG2" ,  hb9005034
+        end
+        SDVTG2 = vtg_open "VTG2"
+        vtg_setmode SDVTG2
+	vout_init "VOUT1" ,, "DENC1"
+        SDVOUT1 = vout_open "VOUT1"
+        vout_enable SDVOUT1
+        if (API_CHIPID=="7710")
+        poke h20103c70 h0
+        vmix_init "VMIX2" , h38215d00  "VTG2" ,, "VOUT1"
+        end
+        if (API_CHIPID=="7100")
+        vmix_init "VMIX2" , hb9200d00 "VTG2" ,, "VOUT1"
+        end
+        if (API_CHIPID=="7109")
+        vmix_init "VMIX2" , hb9200d00 "VTG2" ,, "VOUT1"
+        end
+
+        SDVMIX2 =vmix_open "VMIX2"
+        vmix_enable SDVMIX2
+        layer_init "GDP2" GAMMA_GDP G_GDP2_BA 500 500
+        SDGDP2=layer_open "GDP2"
+        SDVPGDP2=layer_openvp SDGDP2 5 STAPIGATDATA+"suzie.gam" 400 400 200 200
+        layer_svpiorect  SDVPGDP2 51 51 260 260  51 51 260 260
+        layer_enable SDVPGDP2
+        vmix_connect SDVMIX2 "GDP2"
+        vbi_init "VBI2" , "DENC1"
+        HDVBI2=vbi_open "VBI2"
+        vbi_setparams HDVBI2 TTX
+        vbi_enable  HDVBI2
+        ttx_inject STAPIGATDATA+"simple.ttx", , EXT_CHIP
+        wait 2000
+
+        vout_init "HDANA" , "HD_YUV" , , , , 1
+        HDVOUT =vout_open "HDANA"
+        vout_enable HDVOUT
+
+        if (API_CHIPID=="7710")
+        vtg_init  "VTG1" , h20103c00
+        end
+        if (API_CHIPID=="7100")
+        vtg_init  "VTG1" ,  hb9005000
+        end
+        if (API_CHIPID=="7109")
+        vtg_init  "VTG1" ,  hb9005000
+        end
+
+        HDLVTGMAIN=vtg_open "VTG1"
+        vtg_set HDLVTGMAIN MODE_1080I60000_74250
+        vtg_so HDLVTGMAIN 0 1
+        vout_setemb HDVOUT "HD_YUV" 1 0 4
+        vmix_init "VMIX1" ,, "VTG1" ,, "HDANA"
+        HDLVMIX1 =vmix_open "VMIX1"
+        vmix_enable HDLVMIX1
+        vmix_sscreen HDLVMIX1  ,,, 1920 1080 192 42
+        layer_init "GDP1" GAMMA_GDPVBI G_GDP1_BA 500 500
+        HDLGDP1=layer_open "GDP1"
+        HDLVPGDP1=layer_openvp HDLGDP1 5 STAPIGATDATA+"merou3.gam" 400 400 200 200
+        layer_svpiorect  HDLVPGDP1 1 1  230 230 201 201 230 230
+        layer_enable HDLVPGDP1
+        VBI_init "VBI1" VIEWPORT "GDP1"
+        HDVBI1=VBI_Open "VBI1" CGMSFULL M1080I
+        VBI_Enable HDVBI1
+        vmix_sback HDLVMIX1 , 0 250 150
+        vmix_connect HDLVMIX1 "GDP1"
+        print "Update CGMS-HD Data "
+        VBI_WriteData HDVBI1 3 h06 hb4 h5f
+
+        wait 2000
+        api_quest "Does Cgms-A +OSD Enabled on HD and Does Teletext+OSD  Enabled on SD ?"
+        M_CHECK_RETCODE 0
+
+        vbi_close HDVBI2
+        vbi_close HDVBI1
+        vbi_term  "VBI1"
+        vbi_term  "VBI2"
+        VMIX_Dconnect SDVMIX2
+        vmix_close SDVMIX2
+        vmix_term  "VMIX2"
+        VMIX_Dconnect HDLVMIX1
+        vmix_close HDLVMIX1
+        vmix_term  "VMIX1"
+
+        layer_close HDLGDP1
+        layer_term "GDP1" 1
+        layer_close SDGDP2
+        layer_term "GDP2" 1
+
+
+        vout_close SDVOUT1
+        vout_term  "VOUT1" 1
+        vout_close HDVOUT
+        vout_term  "HDANA" 1
+
+        vtg_close HDLVTGMAIN
+        vtg_close SDVTG2
+        vtg_term "VTG1"
+        vtg_term "VTG2"
+        denc_close HDLDENC1
+        denc_term  "DENC1"
+
+end
+
+
+define MULTI_TEST5525
+
+    api_report "MULTI_INSTANCE TEST"
+
+                M_ENC_INIT "PAL"
+                vmix_init "VMIX1" , G_MIX1_BA  "MAIN_VTG" 2 , "MAIN_VOUT"
+                HDLVMIX1 = vmix_open "VMIX1"
+                vmix_enable HDLVMIX1
+                vbi_init "VBI1" ,DENC_NAME
+                VBI_HDL1=vbi_open  "VBI1"
+                vbi_setparams VBI_HDL1 TTX
+                vbi_enable VBI_HDL1
+                vbi_ttxinject HDLVMIX1 "../../simple3.ttx", , EXT_CHIP
+
+                vmix_init "VMIX2" , G_MIX2_BA  "AUX_VTG" 2 , "AUX_VOUT"
+                HDLVMIX2 = vmix_open "VMIX2"
+                vmix_enable HDLVMIX2
+                vbi_init "VBI2" , "AUX_DENC"
+                VBI_HDL2=vbi_open  "VBI2"
+                vbi_setparams VBI_HDL2 TTX
+                vbi_enable VBI_HDL2
+                vbi_ttxinject_aux HDLVMIX2 "../../simple7.ttx", , EXT_CHIP
+
+             api_quest "Does teletext working on Both Aux and Main ?"
+
+
+        vbi_ttxkill
+        vbi_ttxkill_Aux
+        vbi_disable VBI_HDL2
+        vbi_disable VBI_HDL1
+
+        M_ENC_TERM
+
+
+end
+
+
+
+
+
+

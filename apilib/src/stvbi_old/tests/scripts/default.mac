@@ -1,0 +1,589 @@
+;*****************************************************************************
+; File         : DEFAULT.MAC
+; Requirements :
+; Author       : BS - OCTOBER 2001
+;*****************************************************************************
+; Overall tests are defined here
+
+
+;;;;;;;;;; HERE ARE USEFULL MACROS USED BY ALL TESTS ;;;;;;;;;;;;;
+
+; ERRORCOUNT is incremented if ERRORCODE is not equal to EXPECTED
+; ERRORCODE is set in each command file
+
+define M_CHECK_RETCODE EXPECTED
+    if ERRORCODE!=EXPECTED
+        ERRORCOUNT=ERRORCOUNT+1
+        print "!!!!!!!!!!!! TEST FAILED !!!!!!!!!!!!"
+        print "Expected code:" EXPECTED
+    end
+end
+
+;;; MACROS NEW ARCHI ;;;;;;;
+
+define M_ENC_INIT PARAMS
+    if ((CHIPID<>"4629")&&(CHIPID<>"5525"))
+       ;DENC Init
+
+        HDLDENC=denc_open
+        if PARAMS=="NTSC"
+             denc_setmode , "NTSCM"
+        end
+        else
+            denc_setmode , PARAMS
+        end
+
+        if (CHIPID=="7015")||(CHIPID=="7020")
+        vtg_init ,,h8000
+        end
+        elif (CHIPID=="7710")
+                if (CHIP_CUT=="STI7710_CUT2x")
+                vtg_init , , h20103034
+                end
+                else
+                vtg_init , , h20103C00
+                end
+        end
+        else
+        vtg_init
+        end
+        HDLVTGMAIN=vtg_open
+        vtg_setmode , PARAMS
+        ;VOUT
+        vout_init
+        HDLVOUT=vout_open
+        vout_enable
+    end
+    else
+        if (CHIPID=="5525")
+        M_DENC5525_INIT PARAMS
+        end
+        else
+        M_DENC5528_INIT PARAMS
+        end
+
+    end
+end
+
+
+define  M_DENC5525_INIT PARAMS
+
+        poke h1980002C hc00000
+        poke h19a00000 h38
+        poke h19a00018 h80
+        poke h19a0017c h00
+        poke h19b00000 h38
+        poke h19b00018 h80
+        poke h19b0017c h00
+
+denc_init "MAIN_DENC" ,,, h19A00000
+MAIN_DENC_HDL =denc_open "MAIN_DENC"
+denc_setmode MAIN_DENC_HDL "PAL"
+
+vtg_init "MAIN_VTG" , h19A00400
+MAIN_VTG_HDL =vtg_open "MAIN_VTG"
+vtg_setmode MAIN_VTG_HDL "MODE_576I50000_13500"
+
+vout_init "MAIN_VOUT" VOUT_DEVICE_TYPE_5525 "CVBS"  "MAIN_DENC" h19A00700 , 8
+MAIN_VOUT_HDL =vout_open "MAIN_VOUT"
+vout_setparams MAIN_VOUT_HDL "CVBS"
+vout_enable MAIN_VOUT_HDL
+
+
+denc_init "AUX_DENC" ,,, h19B00000
+AUX_DENC_HDL =denc_open "AUX_DENC"
+denc_setmode AUX_DENC_HDL "PAL"
+
+ vtg_init "AUX_VTG" , h19B00400
+ AUX_VTG_HDL=vtg_open "AUX_VTG"
+ vtg_setmode AUX_VTG_HDL "MODE_576I50000_13500"
+
+ vout_init "AUX_VOUT" VOUT_DEVICE_TYPE_5525 "CVBS"  "AUX_DENC" h19B00700 , 8
+ AUX_VOUT_HDL=vout_open "AUX_VOUT"
+ vout_setparams AUX_VOUT_HDL "CVBS"
+ vout_enable AUX_VOUT_HDL
+
+
+
+end
+
+
+
+define  M_DENC5528_INIT PARAMS
+     ; Initiliaze main denc
+     if PARAMS=="NTSC"
+             PARAMS="NTSCM"
+     end
+
+     denc_init "MAIN_DENC"
+     MAIN_DENC_HDL=denc_open "MAIN_DENC"
+     denc_setmode MAIN_DENC_HDL PARAMS
+
+    ; Initialise CVBS vout on 5528
+    vout_init "MAIN_VOUT" VOUT_DEVICE_TYPE_5528 , "MAIN_DENC"
+    MAIN_VOUT_HDL= vout_open "MAIN_VOUT"
+
+
+    ; Initialise VTG on STi5528
+    vtg_init "MAIN_VTG"
+    MAIN_VTG_HDL=vtg_open "MAIN_VTG"
+
+    if (PARAMS=="NTSCM")
+        vtg_setmode MAIN_VTG_HDL NTSC
+    end
+    else
+        vtg_setmode MAIN_VTG_HDL
+    end
+
+    ; Initialize digital output on STi5528
+    vout_init "VOUT_DIGITAL" VOUT_DEVICE_TYPE_DIGOUT
+    DIGITAL_VOUT_HDL = vout_open "VOUT_DIGITAL"
+    vout_setparams DIGITAL_VOUT_HDL "YCbCr422_8" 0
+    vout_enable  DIGITAL_VOUT_HDL
+
+    ; Initialise auxiliay DENC and set to PAL
+    ;denc_init "AUX_DENC" , 4
+    AUX_DENC_HDL=denc_open "AUX_DENC"
+    denc_setmode AUX_DENC_HDL PARAMS
+
+   ; Initialise CVBS output on STi4629
+    vout_init "AUX_VOUT" VOUT_DEVICE_TYPE_4629 , "AUX_DENC"
+    AUX_VOUT_HDL=vout_open "AUX_VOUT"
+    vout_enable AUX_VOUT_HDL
+
+    ; Initialise VTG on STi4629
+    vtg_init "AUX_VTG" "TYPE_DENC" "AUX_DENC"
+    AUX_VTG_HDL=vtg_open "AUX_VTG"
+    vtg_setmode AUX_VTG_HDL "MODE_SLAVE"
+
+end
+
+define M_ENC_TERM
+        if ((CHIPID<>"4629")&&(CHIPID<>"5525"))
+          ; VOUT Term
+                 vout_close HDLVOUT
+                 vout_term
+          ; VTG Term
+                 vtg_close HDLVTGMAIN
+                 vtg_term
+          ; DENC Term
+                 denc_close HDLDENC
+
+        end
+
+        else
+
+
+          ; VOUT Term
+                vout_close AUX_VOUT_HDL
+                vout_term "AUX_VOUT"
+                 if (CHIPID<>"5525")
+                vout_close DIGITAL_VOUT_HDL
+                vout_term "VOUT_DIGITAL"
+                 end
+                vout_close MAIN_VOUT_HDL
+                vout_term "MAIN_VOUT"
+
+          ; VTG Term
+                 vtg_close AUX_VTG_HDL
+                 vtg_term  "AUX_VTG"
+                 vtg_close MAIN_VTG_HDL
+                 vtg_term "MAIN_VTG"
+          ; DENC Term
+                denc_close AUX_DENC_HDL
+                denc_close MAIN_DENC_HDL
+                denc_term "MAIN_DENC"
+
+        end
+end
+
+define M_LAYER_INIT
+if (API_CHIPID=="7100")
+        layer_init "LAYVID1" "HDDISPO2_VIDEO1" 720 576
+end
+elif (API_CHIPID=="7109")
+        layer_init "LAYVID1" "VDP_VIDEO1" 720 576
+end
+HDLVID1 = layer_open "LAYVID1"
+HDLVPVID1 = layer_openvp HDLVID1 0 0 720 576 BUFF_ADD 0 0 720 576
+layer_enable HDLVPVID1
+layer_svpparams HDLVPVID1 ,, 720 576 720/3 200 360*3 288*3 1 720 576 BUFF_ADD
+
+VBI_GamSet
+end
+
+define M_DISPLAY_ON PARAMS
+   M_ENC_INIT PARAMS
+     if (CHIPID=="5528")||(CHIPID=="4629")
+        GammaDisplay
+     end
+     elif (CHIPID=="7015")||(CHIPID=="7020")||(CHIPID=="7710")
+        M_CONFIG_7015 "ON"
+        GammaDisplay
+    end
+    elif (CHIPID=="7100")||(CHIPID=="7109")
+     if (BUFF_ADD==0)
+      if (ST_OS=="LINUX")
+        if (CHIPID=="7100")
+                layer_init "LAYVID1" "HDDISPO2_VIDEO1" 720 576
+        end
+        elif (CHIPID=="7109")
+                layer_init "LAYVID1" "VDP_VIDEO1" 720 576
+        end
+      end
+       RET_STR = displayvideo
+       BUFF_ADD = api_evalstr RET_STR 1
+       M_LAYER_INIT
+    end
+    end
+
+    elif (CHIPID=="5100")||(CHIPID=="5105")||(CHIPID=="5301")||(CHIPID=="5525")||(CHIPID=="5188")||(CHIPID=="5107")
+      GDMADisplay
+    end
+    else
+      OSDDisplay
+
+    end
+end
+
+define M_DISPLAY_OFF
+    if (CHIPID=="7015")||(CHIPID=="7020")||(CHIPID=="7710")
+        M_CONFIG_7015 "OFF"
+    end
+   if (CHIPID=="7100")||(CHIPID=="7109")
+      layer_term "LAYVID1" 1
+   end
+    M_ENC_TERM
+end
+
+; Particular init for 7015/20 - 7710 chip
+define M_CONFIG_7015 PARAMS
+    if PARAMS=="ON"
+      if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+
+        ; VOUT Analog HD Configuration
+        vout_init "HDANA" , HD_RGB
+        HDLHDANAVOUT=vout_open "HDANA"
+        vout_enable
+     end
+     else  ;7020/7015
+        ; VOUT Digital HD Configuration
+        vout_init "HDDIG" , YCbCr422_8 h6100
+        HDLHDDIGVOUT=vout_open "HDDIG"
+        vout_enable
+
+        ; VOUT Analog HD Configuration
+        vout_init "HDANA" , HD_RGB h6100
+        HDLHDANAVOUT=vout_open "HDANA"
+        vout_enable
+     end
+    end
+    else
+
+        ; VOUT Analog HD Configuration
+        vout_close HDLHDANAVOUT
+        vout_term "HDANA"
+        if (API_CHIPID<>"7710")&&(API_CHIPID<>"7100")&&(API_CHIPID<>"7109")
+                ; VOUT Digital HD Configuration
+                vout_close HDLHDDIGVOUT
+                vout_term "HDDIG"
+        end
+    end
+end
+
+define M_TEST_MENU
+    if (TEST_4629==0)
+        CHIPID=API_CHIPID
+    end
+    x=115
+    while x==115
+        if (API_BOARDID=="mb295")
+            if DENC_ACCESS==0
+                print "DENC type selected: 7015/20"
+            end
+            else
+                print "DENC type selected: STV0119"
+            end
+        end
+        if (CHIPID=="5301")
+           poke h20d00004 h18000 ; write in ctrl-d register
+        end
+        print ""
+        print "0 - API GENERAL TESTS"
+        print "1 - TELETEXT TESTS"
+        print "2 - CLOSED CAPTION TESTS"
+        print "3 - WSS TESTS"
+        print "4 - CGMS TESTS"
+        print "5 - VPS TESTS"
+        print "6 - MV TESTS"
+        if (API_BOARDID=="mb295")
+            print "7 - MULTI INSTANCE TESTS"
+        end
+        if (API_BOARDID=="mb428")
+            print "7 - MULTI INSTANCE TESTS"
+        end
+
+        if (API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+                if (TEST_4629==0)
+                        print "7 - MULTI INSTANCE TESTS"
+                end
+        end
+        if (API_BOARDID=="mb391")||(API_BOARDID=="mb411")
+            print "7 - MULTI INSTANCE TESTS"
+            print "8 - CGMS-FULL TESTS"
+        end
+        print "9 - EXECUTE ALL TESTS"
+        if (API_BOARDID=="mb295")
+            print "S - SWITCH TO OTHER DENC"
+        end
+        if (API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+              if (TEST_4629==0)
+                 print "S - SWITCH TO AUX_CHIP STi4629"
+              end
+        end
+        print ""
+        print " Enter your choice :"
+        x=getkey
+        choice=1
+        ;Switch to Chip STi4629 if the main chip is STi5528
+        if x==115
+           if (API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+                CHIPID="4629"
+                DENC_NAME="AUX_DENC"
+                EXT_CHIP=1
+                TEST_4629 =1
+           end
+        end
+        if x==115
+            if (API_BOARDID=="mb295")
+                if DENC_ACCESS==1
+                    DENC_ACCESS=0
+                    DENC_TYPE=1
+                    vbi_access
+                end
+                else
+                    vtg_init
+                    vtg_open
+                    vtg_setmode , NTSC
+                    vtg_close
+                    vtg_term
+                    DENC_ACCESS=1
+                    DENC_TYPE=0
+                    vbi_access 2
+                end
+                denc_init ,, DENC_TYPE DENC_ACCESS
+                vbi_init
+                STRCAPA=vbi_capa
+                CAPAVBI=api_evalstr STRCAPA
+                vbi_term
+                denc_term
+          end
+            choice=0
+        end
+        else
+            if x>=48
+               x=x-48
+               print x
+            end
+            if x>9
+               choice=0
+            end
+            if x==9
+                choice=255
+            end
+            else
+                while x!=0
+                   choice=choice*2
+                   x=x-1
+                end
+            end
+        end
+        if choice&255
+              if (CHIPID<>"4629")
+                denc_init ,, DENC_TYPE DENC_ACCESS
+                TMPCAPA=denc_capa
+                CAPADENCID=api_evalstr TMPCAPA 5
+                if STRCAPA==""
+                vbi_init
+                STRCAPA=vbi_capa
+                CAPAVBI=api_evalstr STRCAPA
+                vbi_term
+                vbi_access
+                end
+            end
+            else
+               denc_init "AUX_DENC" , 4
+               TMPCAPA=denc_capa "AUX_DENC"
+               CAPADENCID=api_evalstr TMPCAPA 5
+                if STRCAPA==""
+                vbi_init , ,"AUX_DENC"
+                STRCAPA=vbi_capa
+                CAPAVBI=api_evalstr STRCAPA
+                vbi_term
+                vbi_access 0
+               end
+               ;denc_term "AUX_DENC"
+            end
+
+       end
+
+           if (API_CHIPID=="7710")
+                poke h20103c70 h1
+            end
+
+        if choice&1
+            ; GENERAL API TESTS
+            CLOSE
+            source OSPATH+DRV_PATH_VBI+"api.mac"
+            M_API_TESTS
+        end
+        if choice&2
+            ; TELETEXT TESTS
+            source OSPATH+DRV_PATH_VBI+"ttx.mac"
+            if (CHIPID=="7100")||(CHIPID=="7109")
+            VBI_GamSet
+            end
+            M_TTX_TESTS
+        end
+        if choice&4
+            ; CLOSED CAPTION TESTS
+            source OSPATH+DRV_PATH_VBI+"cc.mac"
+            M_CC_TESTS
+        end
+        if choice&8
+            ; WSS TESTS
+            source OSPATH+DRV_PATH_VBI+"wss.mac"
+            M_WSS_TESTS
+        end
+        if choice&16
+            ; CGMS TESTS
+            source OSPATH+DRV_PATH_VBI+"cgms.mac"
+            M_CGMS_TESTS
+        end
+        if choice&32
+            ; VPS TESTS
+            source OSPATH+DRV_PATH_VBI+"vps.mac"
+            M_VPS_TESTS
+        end
+        if choice&64
+            ; MV TESTS
+            source OSPATH+DRV_PATH_VBI+"mv.mac"
+            M_MV_TESTS
+        end
+         if ((API_BOARDID=="mb391")||(API_BOARDID=="mb411"))
+                if choice&256
+                        ; HDCGMS TESTS
+                        source OSPATH+DRV_PATH_VBI+"fullcgms.mac"
+                        M_FULL_CGMS_TESTS
+                 end
+        end
+
+        if (API_BOARDID=="mb295")||(API_BOARDID=="mb376")||(API_BOARDID=="espresso")||(API_BOARDID=="mb391")||(API_BOARDID=="mb411")||(API_BOARDID=="mb428")||(API_BOARDID=="mb457")||(API_BOARDID=="mb436")
+
+           if choice&128
+                ; MULTI DEVICETESTS
+                if (TEST_4629==0)
+                        source OSPATH+DRV_PATH_VBI+"mins.mac"
+                        M_MINS_TESTS
+                end
+            end
+        end
+
+        if (choice&255)
+             if (CHIPID<>"4629")
+                denc_term
+             end
+             else
+                 denc_term "AUX_DENC"
+             end
+        end
+
+    end
+end
+
+
+
+
+
+
+
+;;;;;;;;;; BEGINNING OF THE EXECUTION  ;;;;;;;;;;;;;
+
+; GLOBAL macro which need handle of VTG, DENC & VOUT
+ERRORCOUNT=0
+HDLVTGMAIN=0
+HDLDENC=0
+HDLVOUT=0
+HDLHDDIGVOUT=0
+HDLHDANAVOUT=0
+BUFF_ADD=0
+MAIN_DENC_HDL=0
+AUX_DENC_HDL=0
+MAIN_VOUT_HDL=0
+DIGITAL_VOUT_HDL=0
+AUX_VOUT_HDL=0
+MAIN_VTG_HDL=0
+AUX_VTG_HDL=0
+EXT_CHIP=0
+CHIPID=""
+STRCAPA=""
+CAPAVBI=0
+CAPADENCID=0
+api_error 0
+TEST_4629=0
+
+M_TEST_MENU
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,28 @@
+; ****************************************************************************
+; File         : METRICS.COM
+; Goal         : Testtool minimum stack usage calculation
+; Author       : CL - 03 Jul 2001
+; ****************************************************************************
+print "Starting execution of METRICS.COM file..."
+; ------------------------------------------------------------------------ End
+define M_PLUS_ONE VALUE
+    VALUE_PLUS_ONE = VALUE+1
+end VALUE_PLUS_ONE
+
+define M_PLUS_ONE_WRAP VALUE
+    VALUE_PLUS_ONE_WRAP = M_PLUS_ONE VALUE
+end VALUE_PLUS_ONE_WRAP
+
+; ----------------------------------------------------------------------- Main
+print "Starting the minimum stack usage calculation..."
+MYVAL = 2
+print "MYVAL = " MYVAL
+MYVAL = 2
+NEWVAL = M_PLUS_ONE MYVAL
+print "M_PLUS_ONE(MYVAL) = " NEWVAL
+NEWVAL = M_PLUS_ONE_WRAP MYVAL
+print "M_PLUS_ONE_WRAP(MYVAL) = " NEWVAL
+print "End of minimum stack usage calculation..."
+EXIT
+EXIT
+; ****************************************************************************

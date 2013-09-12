@@ -1,0 +1,8 @@
+//  co-arch.lnt, -si4 -sp4, 
+//  Standard lint options
+
+
+co.lnt                    // Generic compiler settings
+
+options.lnt  -si4 -sp4    // STAPI settings in options.lnt
+

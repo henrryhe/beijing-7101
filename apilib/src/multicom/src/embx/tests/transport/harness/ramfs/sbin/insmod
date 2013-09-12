@@ -1,0 +1,81 @@
+#!/bin/sh
+#
+# Shell script implementation of insmod that outputs onto the console a
+# gdb command to faciliate symbolic debugging of kernel modules.
+#
+# This can be run using only the busybox versions of the usual Unix tools.
+#
+# Authors: Amit S. Kale    (akale@veritas.com)
+#          Henry Bell      (henry.bell@st.com)
+#          Daniel Thompson (daniel.thompson@st.com)
+#
+
+# Argument processing
+set -- `getopt f $*`
+if [ $? != 0 ]; then
+        echo Usage: $0 [-f] modulefile
+        exit 2
+fi
+for i in $*
+do
+        case $i in
+        -f)
+		shift
+		;;
+        --)
+		shift
+		break
+		;;
+        esac
+done
+
+# Usage info
+if [ $# -lt 1 ] ; then {
+	echo Usage: $0 [-f] modulefile
+	exit
+} ; fi
+
+# Set up file locations
+modulefile=$1
+mapfile=`basename $1 .o`.map
+shift
+
+# We can't do any of these stunts on 2.6.x kernels
+case `uname -r` in
+2.6.*)
+	echo "*** insmod $modulefile $*"
+	exec /lib/modules/insmod $modulefile $*
+esac
+
+# Install the module and generate an easily processed map file
+/lib/modules/insmod -f -m $modulefile $* | \
+	sed 's/  / /g' | \
+	sed 's/  / /g' | \
+	sed 's/  / /g' | \
+	sed 's/  / /g' | \
+	sed 's/  / /g' > $mapfile
+                                                                                
+# Generate the bits of GDB script we need                                       
+numlines=`grep -n '^$' $mapfile | sed -e 's/:.*//g'`                            
+textaddr=0x`head -n $numlines $mapfile | grep "\\.text[^.]" | cut -d' ' -f3`    
+segaddrs=`head -n $numlines $mapfile | \
+        grep -v "^Sections:" | \
+        grep -v "^\\.text" | \
+        grep -v "^\\.this" | \
+        grep -v "^\\.kstrtab" | \
+        grep -v "^\\.kmodtab" | \
+        cut -d' ' -f1,3 | \
+        sed 's/ / 0x/' | \
+        sed 's/^/ -s /' | \
+        sed 's/^ -s $//' | \
+        tr -d \\n`
+
+# Now output the gdb command required and finish (note this requires an
+# patched kmsg implementation)
+grep -q kgdb /proc/cmdline
+if [ $? = 0 ]
+then
+	echo add-symbol-file `basename $modulefile` $textaddr $segaddrs > /proc/kmsg
+else
+	echo add-symbol-file `basename $modulefile` $textaddr $segaddrs
+fi

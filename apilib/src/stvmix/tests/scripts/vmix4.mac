@@ -1,0 +1,543 @@
+;*****************************************************************************
+; File   :  VMIX4.MAC
+;           Connect various vout on MIXER2
+;           See STVMIX component test specification document for use
+; Author :  BS - Reviewed november 2001
+;*****************************************************************************
+
+;*******************************************************************************
+;Name        : M_VMIX4_7015_20
+;Description : Connecting on 7015/7020, STV0119 & internal DENC output on mixer2
+;              Connecting on 7710 & internal DENC output on mixer2 (if ST_7710)
+;*******************************************************************************
+define M_VMIX4_7015_20 T_BASEADD T_LAYERNAME
+    api_report "M_VMIX4_7015_20: Various VOUTs on MIXER2"
+
+    ; Private variables
+    HDLDIGVOUT=0
+    HDLANAVOUT=0
+    HDLVTG119=0
+    HDLVOUT119=0
+    HDLDENC119=0
+    HDLVOUTRGB119=0
+
+    print ""
+    print "1) Test mixer2 with SVM output"
+    print ""
+    vout_init "VOUTSVM" , "SVM"
+
+    vmix_init "VMIX2" , T_BASEADD "VTG2" ,, "VOUTSVM"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    if ERRORCODE==0
+        vmix_term "VMIX2" 1 ; reset mixer
+    end
+    vout_term "VOUTSVM"
+
+    print ""
+    print "2) Test mixer2 with YCbCr444 output"
+    print ""
+    vout_init "VOUTYCbCr444" , "YCbCr444"
+    vmix_init "VMIX2" , T_BASEADD "VTG2" ,, "VOUTYCbCr444"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    if ERRORCODE==0
+        vmix_term "VMIX2" 1 ; reset mixer
+    end
+    vout_term "VOUTYCbCr444"
+
+    print ""
+    print "3) Test mixer2 with RGB888 output"
+    print ""
+    vout_init "VOUTRGB888" , "YCbCr422_16"
+    vmix_init "VMIX2" , T_BASEADD "VTG2" ,, "VOUTRGB888"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    if ERRORCODE==0
+        vmix_term "VMIX2" 1 ; reset mixer
+    end
+    vout_term "VOUTRGB888"
+
+    print ""
+    print "4) Test mixer2 with HD_YUV output"
+    print ""
+    vout_init "VOUTHD_YUV" , "HD_YUV"
+    vmix_init "VMIX2" , T_BASEADD "VTG2" ,, "VOUTHD_YUV"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    if ERRORCODE==0
+        vmix_term "VMIX2" 1 ; reset mixer
+    end
+    vout_term "VOUTHD_YUV"
+
+    print ""
+    print "5) Test mixer2 with HD_RGB output"
+    print ""
+    vout_init "VOUTHD_RGB" , "HD_RGB"
+    vmix_init "VMIX2" , T_BASEADD "VTG2" ,, "VOUTHD_RGB"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    if ERRORCODE==0
+        vmix_term "VMIX2" 1 ; reset mixer
+    end
+    vout_term "VOUTHD_RGB"
+
+    print ""
+
+    ; Init DENC, VOUT, VTG1
+    M_COMMON_BEIO "ON"
+
+    ; Disable VTG1 output
+    VTG_SOptional , "NO_OUTPUT_SIGNAL" TRUE
+
+    ; Init HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "ON"
+
+    if RET&2
+        ; Start layer VID2 & GFX2
+        M_7015_LAYER "START" hA 720 480
+    end
+    if RET&8
+        ; Start layer VID2 & GDP2
+        M_GAMMA_LAYER "START" hA 720 480
+    end
+
+    print ""
+    print "6) Test mixer2 with HDDIG & VOUT119"
+    print ""
+
+    ; Init mixer2
+    if AVAIL_STV0119==TRUE
+        vmix_init "VMIX2" , T_BASEADD "VTG2" ,, VOUT_NAME "HDDIG" "VOUT119"
+    end
+    else
+        vmix_init "VMIX2" , T_BASEADD "VTG2" ,, VOUT_NAME "HDDIG"
+    end
+    HDLVMIX2=vmix_open "VMIX2"
+    vmix_enable
+
+    ; Set NTSC mode for VTG2, MIX2 & internal DENC
+    M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+    vmix_connect HDLVMIX2 "LAYVID2"
+
+    vmix_enable HDLVMIX2
+
+    ; test to verify 'ddts GNBvd06551'
+    vmix_connect HDLVMIX2 T_LAYERNAME
+    api_quest "Is GFX2 on internal denc and STV0119 output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX2 "LAYVID2" T_LAYERNAME
+
+    if RET&2
+        ; WA Video 2
+        M_7015_LAYER "WA_SVPARAMS" h2 720 480
+    end
+    if RET&8
+        ; WA Video 2
+        M_GAMMA_LAYER "WA_SVPARAMS" h2 720 480
+    end
+
+    api_quest "Are video2 & GFX2 on internal denc and STV0119 output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX2
+
+    if RET&2
+        ; Stop layer VID2 & GFX2
+        M_7015_LAYER "STOP" hA
+    end
+    if RET&8
+        ; Stop layer VID2 & GDP2
+        M_GAMMA_LAYER "STOP" hA
+    end
+
+    ; Term mixer2
+    vmix_close
+    vmix_term "VMIX2"
+
+    ; Term HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "OFF"
+
+    ; Term DENC, VOUT, VTG1
+    M_COMMON_BEIO "OFF"
+
+    api_report "M_VMIX4_7015_20" ERRORCOUNT
+end  ;M_VMIX4_7015_20
+
+
+;*******************************************************************************
+;Name        : M_VMIX4_5528
+;Description : Connecting on 5528 & external DENC output on mixer2
+;*******************************************************************************
+define M_VMIX4_5528 T_BASEADD VOUT_TYPE
+    HDLVOUTTEST =0
+
+    ;Init vout, vtg & denc
+    M_MB376_BEIO "ON" "AUX"
+
+    ;init layers GDP1&GDP2
+    M_GAMMA_LAYER "START" h8 720 480
+
+    ;wa LAYVID1&LAYVID2
+    M_GAMMA_LAYER "WA_SVPARAMS" h3 720 480
+
+     ; Init mixer2
+    vmix_init "VMIX2" , G_MIX2_BA  VTG_NAME ,, VOUT_NAME
+    HDLVMIX2=vmix_open "VMIX2"
+    M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX2 HDLDENC HDLVOUT "4629"
+
+    vmix_enable HDLVMIX2
+
+    api_report "1) Test Mixer2 on CVBS "
+    vmix_sback HDLVMIX2 , 250 250 0
+    vmix_connect HDLVMIX2  "LAYVID1"
+    api_quest "Is video 1 displayed on CVBS output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_dconnect HDLVMIX2
+
+    api_report "2) Test Mixer2 on YC "
+    vmix_sback HDLVMIX2 , 0 0 0
+    vmix_connect HDLVMIX2  "GDP2" "LAYVID2"
+    api_quest "Are Video 2 & graphical merou on YC output  ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Term mixer2
+    vmix_dconnect HDLVMIX2
+    vmix_close
+    vmix_term "VMIX2"
+
+    ; stop layers
+    M_GAMMA_LAYER "STOP" hB
+
+    ; Term vout, vtg & denc
+    M_MB376_BEIO "OFF" "AUX"
+
+    api_report "M_VMIX4_5528" ERRORCOUNT
+end  ;M_VMIX4_5528
+
+;*******************************************************************************
+;Name        : M_VMIX4_7710
+;Description : Connecting on 7710 DENC output on mixer2
+;*******************************************************************************
+define M_VMIX4_7710 T_BASEADD VOUT_TYPE
+    HDLVOUTYC =0
+    HDLVOUTCVBS=0
+    HDLVOUTYUV=0
+
+   ; VTG2 Inits
+    if (API_CHIPID=="7710")
+                if (CHIP_CUT=="STI7710_CUT2x")
+                        vtg_init "VTG2" , h20103034
+                end
+                else
+                        vtg_init "VTG2" , h20103C34
+                end
+    end
+    else
+
+        if (API_CHIPID=="7100")&&(API_CUTID<hb0)
+        poke hb9000010 h0000c0de
+        poke hb9000070 h0000001f
+        poke hb9000074 h00000000
+        poke hb9000010 h0000c1a0
+        end
+        if (API_CHIPID!="7200")
+                vtg_init "VTG2" , hB9005034
+        end
+    end
+
+    if (API_CHIPID=="7200")
+        vtg_init "VTG2" , hFD10C200
+    end
+
+    HDLVTGAUX=vtg_open "VTG2"
+
+   if VOUT_TYPE=="YC"
+         HDLVOUTYC=M_VOUTDENC_YC "ON"
+         vmix_init "VMIX2" , T_BASEADD "VTG2" ,, "VOUTYC"
+    end
+
+    if VOUT_TYPE=="CVBS"
+        HDLVOUTCVBS=M_VOUTDENC_CVBS "ON"
+
+        vmix_init "VMIX2" , T_BASEADD "VTG2" ,, "VOUTCVBS"
+    end
+
+    if VOUT_TYPE=="YUV"
+        HDLVOUTCVBS=M_VOUTDENC_YUV "ON"
+        vmix_init "VMIX2" , T_BASEADD "VTG2" ,, VOUT_NAME "VOUTYUV"
+    end
+
+
+
+
+    HDLVMIX2=vmix_open "VMIX2"
+
+    M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+    vmix_enable HDLVMIX2
+
+
+    if (((API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2"))||(API_CHIPID=="7200"))
+                vmix_connect HDLVMIX2 "LAYVID2" "GDP3"
+    end
+    else
+                vmix_connect HDLVMIX2 "LAYVID2" "GDP2"
+    end
+
+    api_quest "Is video2 and Graphic2 are displayed on  output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_dconnect HDLVMIX2
+
+
+    ; Term mixer2
+    vmix_close
+    vmix_term "VMIX2"
+
+
+
+   if VOUT_TYPE=="YC"
+         M_VOUTDENC_YC "OFF" HDLVOUTYC
+    end
+   if VOUT_TYPE=="CVBS"
+         M_VOUTDENC_CVBS "OFF" HDLVOUTCVBS
+   end
+    vtg_close
+    vtg_term "VTG2"
+
+    api_report "M_VMIX4_7710" ERRORCOUNT
+
+end  ;M_VMIX4_7710
+
+
+
+;*******************************************************************************
+;Name        : M_VMIX4_5100
+;Description : Connecting on 5100,5301 output on mixer2
+;*******************************************************************************
+define M_VMIX4_5100
+    api_report "M_VMIX4_5100: Various VOUTs on MIXER2"
+    api_checkerr
+
+    ; Private variables
+    HDLVOUTRGB =0
+        hndl_yuv2=0
+        hdl_vtg2=0
+        HDLDENC=0
+
+
+    ; Init DENC, VTG & VOUT
+    if (API_CHIPID=="5525")
+
+        denc_init "DENC2" ,,, h19B00000
+        HDLDENC=denc_open "DENC2"
+        denc_setmode HDLDENC "PAL"
+
+        vtg_init "VTG2" , h19B00400
+        hdl_vtg2=vtg_open "VTG2"
+        vtg_setmode hdl_vtg2 "MODE_576I50000_13500"
+
+        vout_init "VOUT2" VOUT_DEVICE_TYPE_5525 "CVBS"  "DENC2" h19B00700 , 8
+        hndl_yuv2=vout_open "VOUT2"
+        vout_setparams hndl_yuv2 "CVBS"
+        vout_enable hndl_yuv2
+     end
+     else
+
+    M_COMMON_BEIO "ON"
+    end
+    ; Init VOUT in RGB
+    M_VOUTDENC_RGB "ON"
+
+    ; Init all possible layer
+    M_5100_LAYER "START" 7
+
+    ;MIXER1 Init, Opens & connect layer and enable mixer
+
+    if (API_CHIPID=="5525")
+     vmix_init "VMIX2" , G_MIX2_BA  "VTG2" ,, "VOUT2"
+    end
+    else
+    vmix_init "VMIX2" , G_MIX2_BA "VTG" ,, VOUT_NAME "VOUTRGB"
+    end
+
+    HDLVMIX2=vmix_open "VMIX2"
+    vmix_connect HDLVMIX2 "LVIDEO"
+    vmix_sscreen HDLVMIX2
+    vmix_enable HDLVMIX2
+
+    vmix_dconnect HDLVMIX2
+
+    ; Connect all possible layers
+    M_5100_LAYER "CONNECT_ALL"
+
+    api_quest "Are still behind video behind osd behind cursor on both RGB & CVBS output ?"
+
+    ; Test api_quest response
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX2
+
+    ; Term all possible layer
+    M_5100_LAYER "STOP" 7
+
+    ; Term mixer
+    vmix_disable
+    vmix_close
+    vmix_term "VMIX2"
+
+    ; Term VOUT in RGB
+
+
+
+    if (API_CHIPID=="5525")
+        vout_close  hndl_yuv2
+        vout_term   "VOUT2"
+        vtg_close   hdl_vtg2
+        vtg_term    "VTG2"
+        denc_close  HDlDENC
+        denc_term   "DENC2"
+
+     end
+
+else
+
+    M_VOUTDENC_RGB "OFF"
+    ; Term DENC, VTG & VOUT
+   ; VOUT Term
+        vout_close HDLVOUT
+        vout_term ,1
+
+        ; VTG Term
+        vtg_close HDLVTGMAIN
+        vtg_term
+
+        ; DENC Term
+        denc_close HDLDENC
+        denc_term
+end
+
+    api_report "M_VMIX4_5100" ERRORCOUNT
+end  ;M_VMIX4_5100
+
+
+;*******************************************************************************
+;Name        : M_VMIX4_MAIN
+;Description : Main function redirect to specific targetting sub macros
+;*******************************************************************************
+define M_VMIX4_MAIN
+    ERRORCOUNT = 0
+    print ""
+    print "Starting M_VMIX4..."
+
+    RET=MC_CHECK_TYPE
+    if RET&5
+        print "Not available on this platform "
+        TESTVMIX4=FALSE_
+    end
+    if RET&2
+        M_VMIX4_7015_20 hA800 LAYER_NAME
+    end
+    if RET&8
+        if (API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+        ; Start on 7710 layer Vid2 & GDP2 in NTSC mode
+
+                if (API_CHIPID=="7200")
+                        M_GAMMA_LAYER "START" h92 720 480
+                end
+                else
+                if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+                        M_GAMMA_LAYER "START" h7f 720 480
+                end
+                else
+                        M_GAMMA_LAYER "START" hB 720 480
+                end
+                end
+                if (API_CHIPID=="7200")
+                        ; DENC Inits
+                        denc_init
+                        HDLDENC = denc_open
+                        denc_setmode
+                end
+                else
+                        M_COMMON_BEIO "ON"
+                end
+                        api_report "Output CVBS on mixer2"
+                        print ""
+                if (API_CHIPID=="7200")
+                        M_VMIX4_7710 hfda41D00 "CVBS"
+                end
+                else
+                        M_VMIX4_7710 hB920AD00 "CVBS"
+                end
+                        api_report "Output YC on mixer2"
+                        print ""
+
+                if (API_CHIPID=="7200")
+                        M_VMIX4_7710 hfda41D00 "YC"
+                end
+                else
+                        M_VMIX4_7710 hB920AD00 "YC"
+                end
+                        ; stop layers
+                if (API_CHIPID=="7200")
+                        M_GAMMA_LAYER "STOP" h92
+                        denc_close HDLDENC
+                        denc_term
+                end
+                else
+                        M_GAMMA_LAYER "STOP" hB
+                        M_COMMON_BEIO "OFF"
+                end
+        end
+        else
+        if (API_CHIPID=="7710")
+        ; Start on 7710 layer Vid2 & GDP2 in NTSC mode
+        M_GAMMA_LAYER "START" hB 720 480
+        M_COMMON_BEIO "ON"
+          api_report "Output CVBS on mixer2"
+          print ""
+          M_VMIX4_7710 h38215D00 "CVBS"
+
+          api_report "Output YC on mixer2"
+          print ""
+          M_VMIX4_7710 h38215D00 "YC"
+
+          api_report "Output YUV on mixer2"
+          print ""
+          M_VMIX4_7710 h38215D00 "YUV"
+        ; stop layers
+        M_GAMMA_LAYER "STOP" hB
+        M_COMMON_BEIO "OFF"
+
+        end
+        else
+            M_VMIX4_7015_20 hAD00 "GDP2"
+        end
+        end
+   end
+    if RET&16
+        api_report "M_VMIX4_5528: Various VOUTs on MIXER2"
+       ;only CVBS and YC output types are tested on mixer 2 because it is the external denc that is used
+       ;RGB and YUV nead at least 4 dacs
+
+        M_VMIX4_5528 G_MIX2_BA "CVBS"
+
+        ;TESTVMIX4=FALSE_
+    end
+    if RET&32 ;5100 ,5301
+      if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+        api_report "M_VMIX4_5100: Various VOUTs on MIXER2"
+        M_VMIX4_5100
+      end
+      else
+        print "5105/5188/5107/5162 chip has only one GDMA : no mixer2 defined"
+      end
+    end
+    MC_CHECK_ERROR
+    ERR_VMIX4=GLOBERR
+end ;M_VMIX4_MAIN
+
+
+
+
+
+
+

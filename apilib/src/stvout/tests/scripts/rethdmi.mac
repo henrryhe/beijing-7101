@@ -1,0 +1,298 @@
+; ****************************************************************************
+; File         : Rethdmi.MAC
+; Requirements :
+; Author       : Adel Chaouch - November 2004
+; ****************************************************************************
+; Test DVI/HDMI returned error codes
+
+; general behavior :
+; driver is assumed to be not initialized before starting these file tests
+; all the M_RET_xxx macros set the driver closed and terminated when they leave
+
+; Test to check VOUT driver error codes returned
+define M_RET_HDMI_ALL ALL_TEST_R
+  loop=0
+  retchoice=""
+  while loop==0
+    if (DEVICETYPE==VOUT_DEVICE_TYPE_7710)||(DEVICETYPE==VOUT_DEVICE_TYPE_7100)||(DEVICETYPE==VOUT_DEVICE_TYPE_7200)
+      OUTPUTTYPE="HDMI_RGB888"
+    end
+    if ALL_TEST_R==1
+      retchoice="9"
+    end
+    else
+      print ">-----------------------------------------------------"
+      print ">Test VOUT HDMI API routines robustness on bad inputs "
+      retchoice=""
+      print "> 1  - test case M_RET_HDMI_ALREADY_INITIALIZED"
+      print "> 2  - test case M_RET_HDMI_INVALID_HANDLE"
+      print "> 3  - test case M_RET_HDMI_NO_FREE_HANDLE"
+      print "> 4  - test case M_RET_HDMI_OPEN_HANDLE"
+      print "> 5  - test case M_RET_HDMI_VOUT_NOT_ENABLE"
+      print "> 6  - test case M_RET_HDMI_VOUT_ENABLE"
+      print "> 7  - test case M_RET_HDMI_FEATURE_NOT_SUPPORTED"
+      print "> 8 - thread cases 1 to 7"
+      print " hit return to Quit this menu"
+      print " Enter your choice :"
+      retchoice=getstring
+    end
+    if retchoice==""
+        loop=1
+    end
+
+    if retchoice=="1"
+        M_RET_HDMI_ALREADY_INITIALIZED
+    end
+    if retchoice=="2"
+        M_RET_HDMI_INVALID_HANDLE
+    end
+    if retchoice=="3"
+        M_RET_HDMI_NO_FREE_HANDLE
+    end
+    if retchoice=="4"
+        M_RET_HDMI_OPEN_HANDLE
+    end
+    if retchoice=="5"
+        M_RET_HDMI_VOUT_NOT_ENABLE
+    end
+    if retchoice=="6"
+        M_RET_HDMI_VOUT_ENABLE
+    end
+    if retchoice=="7"
+        M_RET_HDMI_FEATURE_NOT_SUPPORTED
+     end
+    if retchoice=="8"
+        ERR_ALRIN=FALSE_
+        ERR_INVHN=FALSE_
+        ERR_NOFRE=FALSE_
+        ERR_OPENH=FALSE_
+        ERR_VNOTE=FALSE_
+        ERR_VENAB=FALSE_
+        ERR_FNOTS=FALSE_
+        M_RET_HDMI_ALREADY_INITIALIZED
+        M_RET_HDMI_INVALID_HANDLE
+        M_RET_HDMI_NO_FREE_HANDLE
+        M_RET_HDMI_OPEN_HANDLE
+        M_RET_HDMI_VOUT_NOT_ENABLE
+        M_RET_HDMI_VOUT_ENABLE
+        M_RET_HDMI_FEATURE_NOT_SUPPORTED
+        if ALL_TEST_R!=1
+          M_CHECK_RET9_ERR ERR_ALRIN ERR_INVHN ERR_NOFRE ERR_OPENH ERR_VNOTE ERR_VENAB ERR_FNOTS
+        end
+        loop=1
+    end
+  end
+end
+
+
+; this macro tests the already initialized return code
+define M_RET_HDMI_ALREADY_INITIALIZED
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_ALREADY_INITIALIZED.    ###"
+  print ""
+  print "    STVOUT_Init called twice with same DeviceName:"
+  ERRORCOUNT=0
+  print " "
+  print " First STVOUT_Init call. ST_NO_ERROR expected"
+  vout_init "Voutdvi" DEVICETYPE OUTPUTTYPE
+  M_CHECK_RETCODE 0
+  print " Second STVOUT_Init call with same DeviceName."
+  vout_init "Voutdvi" DEVICETYPE OUTPUTTYPE
+  M_CHECK_RETCODE ERR_ALREADY_INITIALIZED
+  M_CHECK_ERROR
+  ERR_ALRIN=GLOBERR
+  ; driver must be terminated before leaving
+  vout_term "Voutdvi"
+  print ""
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+end
+
+; this macro tests the invalid handle return code
+define M_RET_HDMI_INVALID_HANDLE
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_INVALID_HANDLE.         ###"
+  print ""
+  print "    Functions calls without previous STVOUT_Open         "
+  print "        (but on initialized device)                      "
+  ERRORCOUNT=0
+  print "> "
+  vout_init "Voutdvi" DEVICETYPE OUTPUTTYPE
+  if ERRORCODE!=0
+      print ">Unable to initialize driver. Macro M_RET_INVALID_HANDLE has been stopped."
+  end
+  else
+    BADHANDLE = -1
+    vout_close BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vout_setparams BADHANDLE "HDMI_RGB888"
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vout_getparams BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vout_enable BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    ; Add two common API functions related to hdmi outputs.
+    vout_getstate BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vout_gettarinfo BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    vout_disable BADHANDLE
+    M_CHECK_RETCODE ERR_INVALID_HANDLE
+    M_CHECK_ERROR
+    ERR_INVHN=GLOBERR
+  end
+  ; driver must be terminated before leaving
+  vout_term "Voutdvi"
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+end
+
+
+; this macro tests the no free handle return code
+define M_RET_HDMI_NO_FREE_HANDLE
+  print ""
+  print "#########################################################"
+  print "### Expected error :  ST_ERROR_NO_FREE_HANDLES.       ###"
+  print ""
+  print "    STVOUT_Open called more times than allowed on        "
+  print "        same device."
+  ERRORCOUNT=0
+  print "> "
+  vout_init "Vout" DEVICETYPE OUTPUTTYPE , , 1
+  hnd = vout_open "Vout"
+  vout_start hnd
+  hnd2 = vout_open "Vout"
+  M_CHECK_RETCODE ERR_NO_FREE_HANDLES
+  M_CHECK_ERROR
+  ERR_NOFRE=GLOBERR
+  ; driver is terminated before leaving.
+  vout_close hnd
+  vout_term "Vout"
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+ end
+
+
+; this macro tests the open handle return code
+define M_RET_HDMI_OPEN_HANDLE
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_OPEN_HANDLE.            ###"
+  print ""
+  print "    STVOUT_Term called when an opened handle and         "
+  print "     ForceTerminate false."
+  ERRORCOUNT=0
+  BADEVTNAME="EVTNAME"
+  BADVTGNAME="VTGNAME"
+  BADPIONAME="PIONAME"
+  print "> "
+  vout_init "Voutdvi0" DEVICETYPE OUTPUTTYPE , , , , BADEVTNAME
+  M_CHECK_RETCODE ERR_OPEN_HANDLE
+
+  vout_init "Voutdvi1" DEVICETYPE OUTPUTTYPE , , , , , , , , , BADPIONAME
+  M_CHECK_RETCODE ERR_OPEN_HANDLE
+  M_CHECK_ERROR
+  ERR_OPENH=GLOBERR
+  ; driver must be terminated before leaving
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+ end
+
+
+; this macro tests the vout not enable return code
+define M_RET_HDMI_VOUT_NOT_ENABLE
+  print ""
+  print "#########################################################"
+  print "### Expected error : STVOUT_ERROR_VOUT_NOT_ENABLE.    ###"
+  print ""
+  print "> function STVOUT_Disable call when driver is not enable"
+  ERRORCOUNT=0
+  print "> "
+  vout_init "Voutdvi" DEVICETYPE OUTPUTTYPE
+  hnd=vout_open "Voutdvi"
+  vout_disable hnd
+  M_CHECK_RETCODE ERR_VOUT_NOT_ENABLE
+  M_CHECK_ERROR
+  ERR_VNOTE=GLOBERR
+  ; driver must be terminated before leaving
+  vout_term "Voutdvi" 1
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+end
+
+
+; this macro tests the vout enable return code
+define M_RET_HDMI_VOUT_ENABLE
+  print ""
+  print "#########################################################"
+  print "### Expected error : STVOUT_ERROR_VOUT_ENABLE.        ###"
+  print ""
+  print "> function STVOUT_Enable call two times"
+  ERRORCOUNT=0
+  print "> "
+  if API_CHIPID=="7710"
+  vtg_init "VTG" 5 h20103000
+  end
+  else
+  vtg_init "VTG"
+  end
+  hdl_vtg1=vtg_open "VTG"
+  vtg_setmode , "MODE_1080I60000_74250"
+  vout_init "VOUT" DEVICETYPE OUTPUTTYPE
+  hnd=vout_open "VOUT"
+  vout_start hnd
+  vout_enable hnd
+  vout_enable hnd
+  M_CHECK_RETCODE ERR_VOUT_ENABLE
+  M_CHECK_ERROR
+  ERR_VENAB=GLOBERR
+  ; driver must be terminated before leaving
+  vout_disable hnd
+  vout_close hnd
+  vout_term "VOUT" 1
+  vtg_close hdl_vtg1
+  vtg_term "VTG"
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+end
+
+; this macro tests the vout incompatible return code
+define M_RET_HDMI_FEATURE_NOT_SUPPORTED
+  ;PRNT=0
+  print ""
+  print "#########################################################"
+  print "### Expected error : ST_ERROR_FEATURE_NOT_SUPPORTED.  ###"
+  print ""
+  ERRORCOUNT=0
+  print "> "
+  if API_CHIPID=="7710"
+   if (CHIP_CUT=="STI7710_CUT2x")
+      vtg_init "VTG" 5 h20103000
+   end
+   else
+      vtg_init "VTG" 5 h20103c00
+   end
+  end
+  else
+  vtg_init "VTG"
+  end
+  hdl_vtg1=vtg_open "VTG"
+  vtg_setmode , "MODE_1080I60000_74250"
+  vout_init "Vouthdmi" DEVICETYPE "HDMI_YcbCr444"
+  hndhdmi=vout_open "Vouthdmi"
+  vout_start hndhdmi
+  vout_setparams hndhdmi "HDMI_YcbCr444" 1
+  vout_enable hndhdmi
+  M_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+  M_CHECK_ERROR
+  ERR_FNOTS=GLOBERR
+  vout_close hndhdmi
+  vout_disable hndhdmi
+  vout_term "Vouthdmi"
+  vtg_close hdl_vtg1
+  vtg_term "VTG"
+  print " "
+  print """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+end
+

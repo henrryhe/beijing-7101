@@ -1,0 +1,30 @@
+console off
+
+define mb411bypass
+  enable_jtag
+  ## Manual control of JTAG (manual TCK)
+  jtag mode=manual
+
+  ## Reset TMC and then bypass to ST40
+  jtag tck=01010 ntrst=00011 tms=00000 tdo=01111
+
+  ## Reset STb7100 leaving ST40 in reset hold
+  jtag nrst=0
+  sleep 0 20000
+  jtag asebrk=0
+  sleep 0 20000
+  jtag asebrk=1
+  sleep 0 20000
+  jtag nrst=1
+
+  ## Normal control of JTAG
+  jtag mode=normal
+end
+
+set pagination 0
+file stos_test.exe
+
+## The micro connect address has to be updated according to the one used.
+mb411 10.129.101.199 "msglevel=none linktimeout=5 linkspeed=10MHz jtagreset jtagpinout=st40 -inicommand mb411bypass"
+load
+tbreak main

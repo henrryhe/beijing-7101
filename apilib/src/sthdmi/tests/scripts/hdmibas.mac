@@ -1,0 +1,76 @@
+; ****************************************************************************
+; File         : HDMIBAS.MAC
+; Requirements :
+; Author       : Adel Chaouch - May 2005
+; ****************************************************************************
+; Test to check basic features.
+
+define M_BASIC
+  print "-----------------------------------------"
+
+STVOUT_HDCP = 0
+STVOUT_HPD = 0
+
+  api_checkerr
+  api_error 0
+  ERRORCOUNT=0
+  print ""
+  print "######################################################"
+  print "###                Basic Test.                     ###"
+  print ""
+  print "--- start -----------------------------"
+  OUTPUTTYPE="HDMI_RGB888"
+  hdmi_revision
+  M_BEIO_ON "HD"
+  M_LAYER1_ON 1920 1080
+  vmix_connect HDLVMIX1 "LAYER1"
+  print "Select VID1 (HD) --> VP1 --> LAYER1 --> MIXER1 --> VTG1"
+  vid_init "VID1" VID1_CODEC
+  HDLVID1=vid_open "VID1"
+  ; for linux
+    if (ST_OS=="LINUX")
+    vid_setup HDLVID1 1 LMI_VID
+    end
+  HDLVP1VID1=vid_openvp HDLVID1 "LAYER1"
+  vid_setmemprof HDLVID1 1920 1088 , 1 0
+  vid_seterr HDLVID1 4
+  M_DISP_SET_MODE HDLVTGMAIN 0 HDLVMIX1 DEFAULT_HD_MODE
+  vid_disp HDLVP1VID1
+  vout_setparams , OUTPUTTYPE 0 0
+  if (API_CHIPID=="7710")
+  aud_init
+  end
+  vout_start
+  vout_enable
+  if (API_CHIPID=="7200")
+  poke hfd10c380 h02330233
+  poke hfd10c388 h04270417
+  poke hfd10C384 h02320232
+  poke hfd10c38C h08730863
+  ;poke hfd10c37c h7f004f
+  poke hfd10c37c h4f001f
+  end
+  if (ST_OS=="LINUX")
+  vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"atsc_05c.m2v"
+  end
+  else
+  vid_load HDMIDATA+DRV_PATH_HDMI_1080I+"MELCO2B.M2V"
+  end
+  vid_inject -1
+  vid_start , 0 1 1
+  print "   --- Set HDMI on ---"
+  hdmi_init "HDMI"
+  hnd=hdmi_open "HDMI"
+  hdmi_capa "HDMI"
+  print "   --- Set HDMI off ---"
+  hdmi_close hnd
+  hdmi_term "HDMI"
+  if (API_CHIPID=="7710")
+  aud_term
+  end
+  M_ALL_OFF
+  print "--- end -------------------------------"
+  M_CHECK_TEST_ERROR 0
+  ERR_BAS=GLOBERR
+end
+

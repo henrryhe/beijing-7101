@@ -1,0 +1,111 @@
+;*****************************************************************************
+; File   :  VMIX12.MAC
+;           Connect various layers on MIXER3
+;           See STVMIX component test specification document for use
+; Author :  AM
+;*****************************************************************************
+
+;*******************************************************************************
+;
+;*******************************************************************************
+
+define M_VMIX12_TEST_BACKGROUND
+
+         for I 1 30
+                vmix_sback HDLVMIX3 , 250 I*8 0
+        end
+        for I 1 30
+                vmix_sback HDLVMIX3 , 250-I*8 250 0
+        end
+        for I 1 30
+                vmix_sback HDLVMIX3 , 0 250-I*8 I*8
+        end
+        for I 1 30
+                vmix_sback HDLVMIX3 , I*8 0 250
+        end
+
+api_quest "is Background OK ?"
+ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    vmix_sback , 0 127 127 127
+end
+
+;*******************************************************************************
+;Name        : M_VMIX12_GAMMA_7200
+;Description : SubMacro for M_VMIX12 targetting 7200 chip
+;*******************************************************************************
+define M_VMIX12_GAMMA_7200 T_BASEADD T_LAYER_NAME
+    api_report "M_VMIX12_GAMMA_7200: Various LAYERs on MIXER3"
+
+    M_COMMON_BEIO "ON_SEC"
+
+   ; Init mixer3
+    vmix_init "VMIX3" , T_BASEADD "VTG3" ,, VOUT_NAME
+
+   ; Start on 7200 layer Vid3 & GDP5 in NTSC mode
+    M_GAMMA_LAYER "START" h300 720 480
+
+    HDLVMIX3=vmix_open "VMIX3"
+
+    ;M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+    vmix_enable HDLVMIX3
+
+    print ""
+    print "1) Background test"
+    print ""
+
+    M_VMIX12_TEST_BACKGROUND
+
+    print ""
+    print "2) Layer test"
+    print ""
+
+    vmix_connect HDLVMIX3 "LAYVID3"
+
+    api_quest "Is Video 3 on SD ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX3 T_LAYER_NAME
+    api_quest "Is graphical crow displayed on Remote SD ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX3 "LAYVID3" T_LAYER_NAME
+
+    api_quest "Are Video 3 behind  graphical crow on Remote SD ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX3
+
+    ; Stop on layer Vid3 & GDP5
+    M_GAMMA_LAYER "STOP" h300
+
+    vmix_close
+    vmix_term "VMIX3"
+
+    M_COMMON_BEIO "OFF_SEC"
+
+   api_report "M_VMIX12_GAMMA_7200" ERRORCOUNT
+
+end  ;M_VMIX12_GAMMA_7200
+
+
+;*******************************************************************************
+;Name        : M_VMIX12_MAIN
+;Description : Main function redirect to specific targetting sub macros
+;*******************************************************************************
+define M_VMIX12_MAIN
+    ERRORCOUNT = 0
+    print ""
+    print "Starting M_VMIX12..."
+
+ if (API_CHIPID=="7200")
+
+      M_VMIX12_GAMMA_7200 G_MIX3_BA "GDP5"
+  end
+  else
+        print "not available on this platform "
+        TESTVMIX12=FALSE_
+  end
+    MC_CHECK_ERROR
+    ERR_VMIX12=GLOBERR
+end ;M_VMIX12_MAIN

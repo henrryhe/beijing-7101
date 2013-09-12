@@ -1,0 +1,2312 @@
+;*****************************************************************************
+; File   :  MIXCOMM.MAC
+;           Macros set to test video mixer driver common functions
+;           See STVMIX component test specification document for use
+; Author :  CL - FEBRUARY 2000
+;*****************************************************************************
+
+ERRORCOUNT=0
+
+;*******************************************************************************
+;Name        : M_SUB_CHECK_CONNECTED
+;Description : Sub macro to check commected layer
+;Parameters  : String P_LAYER_NAMES givings expected layers connected
+;Assumptions :
+;Limitations :
+;Returns     : none
+;*******************************************************************************
+define M_SUB_CHECK_CONNECTED P_LAYER_NAMES
+    T_LAYNAME="NOT_EMPTY"
+    T_COUNT=1
+    if P_LAYER_NAMES==""
+        vmix_gconnect , 1
+        MC_CHECK_RETCODE ERR_VMIX_LAYER_UNKNOWN
+    end
+    else
+        while T_LAYNAME!=""
+            T_LAYNAME = api_evalstr P_LAYER_NAMES T_COUNT
+            if T_LAYNAME!=""
+                T_RETPARAMS=vmix_gconnect , T_COUNT
+                if ERRORCODE!=ERR_NO_ERROR
+                    ERRORCOUNT=ERRORCOUNT+1
+                    print "!!!!!!!!!!!! TEST FAILED !!!!!!!!!!!!"
+                end
+                else
+                    ; Get connected layer name
+                    T_GETNAME = api_evalstr T_RETPARAMS
+                    if T_GETNAME!=T_LAYNAME
+                        print T_COUNT
+                        print "Got name : " T_GETNAME
+                        ERRORCOUNT=ERRORCOUNT+1
+                        print "!!!!!!!!!!!! TEST FAILED !!!!!!!!!!!!"
+                    end
+                end
+                T_COUNT=T_COUNT+1
+            end
+        end
+    end
+end
+
+;*******************************************************************************
+;Name        : M_COM_1
+;Description : check normal Init/Open/Close/Term operations
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     : none
+;*******************************************************************************
+define M_COM_1
+    ERRORCOUNT=0
+    print "#########################################################"
+    print ">>> M_COM_1 start >>>"
+    vmix_revision
+    ; normal Init
+    vmix_init "MIX1" ,, ""
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    if ERRORCOUNT==0
+        ; success, try normal termination
+        vmix_term "MIX1"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        if ERRORCOUNT==0
+            ; reinit to try open and close
+            vmix_init "MIX1" ,, ""
+            HDLMIXER = 0
+            HDLMIXER = vmix_open "MIX1"
+            MC_CHECK_RETCODE ERR_NO_ERROR
+            if ERRORCOUNT==0
+                vmix_close HDLMIXER
+                MC_CHECK_RETCODE ERR_NO_ERROR
+                if ERRORCOUNT==0
+                    ; try terminate with open handle
+                    HDLMIXER = 0
+                    HDLMIXER = vmix_open "MIX1"
+                    vmix_term "MIX1"
+                    MC_CHECK_RETCODE ERR_OPEN_HANDLE
+                    if ERRORCOUNT==0
+                        ; force termination
+                        vmix_term "MIX1" 1
+                        MC_CHECK_RETCODE ERR_NO_ERROR
+                        ; check handle invalidation
+                        vmix_close HDLMIXER
+                        MC_CHECK_RETCODE ERR_INVALID_HANDLE
+                    end
+                end
+            end
+        end
+    end
+    ; repetitive calls and multi instance
+    RET=MC_CHECK_TYPE
+    if RET&1 ; 55XX
+        layer_init "LVID1" OMEGA1_VIDEO
+        layer_init "LOSD"  OMEGA1_OSD
+    end
+    if RET&2 ; 7015
+        layer_init "LCURS" GAMMA_CURSOR hA200 720 480 ,, 1
+        layer_init "LVID1" OMEGA2_VIDEO1 720 480
+    end
+    if RET&4 ; GX1
+        layer_init "GDP1" GAMMA_GDP
+        layer_init "GDP2" GAMMA_GDP h200
+    end
+
+    if RET&24 ; 5528 7710 7020
+        layer_init "LCURS" GAMMA_CURSOR G_CURSOR_BA 720 480 ,, 1
+        if (API_CHIPID=="7020")
+                layer_init "LVID1" 7020_VIDEO1 720 480
+        end
+        else
+                layer_init "LVID1" G_VIDEO1 720 480
+        end
+    end
+    if RET&32 ; 5100/5105/5301/5188/5107/5162
+        layer_init "GFX1" COMPOSITOR  720 480
+        layer_init "VID1" COMPOSITOR  720 480
+    end
+
+    if ERRORCOUNT==0
+        API_CHECKERR
+        for I 1 2
+            if (API_CHIPID=="7020")
+                vmix_init "MIX1" ,, "" 2 5
+            end
+            else
+            vmix_init "MIX1" ,, "" 1 5
+            end
+            HL1MIX1 = vmix_open "MIX1"
+            vmix_init "MIX2" ,, "" 1 5
+            HL1MIX2 = vmix_open "MIX2"
+            if RET&1
+                vmix_connect HL1MIX1 "LOSD"
+            end
+            if RET&2
+                vmix_connect HL1MIX1 "LCURS"
+            end
+            if RET&4
+                vmix_connect HL1MIX1 "GDP1"
+                vmix_connect HL1MIX1 "GDP2"
+            end
+            if RET&3
+                vmix_connect HL1MIX2 "LVID1"
+            end
+	    if RET&32
+                vmix_connect HL1MIX1 "GFX1"
+                vmix_connect HL1MIX2 "VID1"
+            end
+
+
+            vmix_dconnec HL1MIX1
+            vmix_dconnec HL1MIX2
+            vmix_close HL1MIX1
+            vmix_term "MIX1" 1
+            vmix_close HL1MIX2
+            vmix_term "MIX2" 1
+        end
+        LOCERR=API_GETERRORCOUNT
+        ERRORCOUNT=ERRORCOUNT+LOCERR
+    end
+    if RET&1 ; 55XX
+        layer_term "LOSD"
+        layer_term "LVID1"
+    end
+    if RET&2 ; 7015
+        layer_term "LCURS"
+        layer_term "LVID1"
+    end
+    if RET&4 ; GX1
+        layer_term "GDP1"
+        layer_term "GDP2"
+    end
+    if RET&24 ; 7020 or 5528 or 7710
+        layer_term "LCURS"
+        layer_term "LVID1"
+    end
+    if RET&32 ; 5100/5105/5301/5188/5107/5162
+        layer_term "GFX1"
+        layer_term "VID1"
+    end
+
+    MC_CHECK_ERROR
+    ERR_COM1=GLOBERR
+end ;M_COM_1
+
+
+;*******************************************************************************
+;Name        : M_COM_2
+;Description : Check errant use of Init, Open ,Close and Term functions
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;*******************************************************************************
+define M_COM_2
+    print "#########################################################"
+    print ">>> M_COM_2 start >>>"
+    ERRORCOUNT=0
+    vmix_capa "MIX1"
+    MC_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vmix_init "MIX1" ,, ""
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_capa "MIX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_init "MIX1" ,, ""
+    MC_CHECK_RETCODE ERR_ALREADY_INITIALIZED
+    vmix_init "MIX2" ,, ""
+    vmix_init "MIX3" ,, ""
+    MC_CHECK_RETCODE ERR_NO_MEMORY
+    vmix_term "MIX2"
+    vmix_term "MIX2"
+    MC_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vmix_term "MIX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_capa "MIX1"
+    MC_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    H1 = vmix_open "MIX1"
+    MC_CHECK_RETCODE ERR_UNKNOWN_DEVICE
+    vmix_close H1
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+    vmix_term "MIX1" 1
+    vmix_init "MIX1" ,, "" 1 2
+    HDL1MIX1 = vmix_open "MIX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    HDL2MIX1 = vmix_open "MIX1"
+    MC_CHECK_RETCODE ERR_NO_FREE_HANDLES
+    vmix_term "MIX1" 1
+    MC_CHECK_ERROR
+    ERR_COM2=GLOBERR
+end  ;M_COM_2
+
+define M_SUB_COM_3 HNDL
+    VMIX_Close       HNDL
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+    VMIX_Connect     HNDL
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+    VMIX_Dconnect    HNDL
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+    VMIX_Disable     HNDL
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+    VMIX_Enable      HNDL
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+    VMIX_GBack       HNDL
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+    VMIX_GOffset     HNDL
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+    VMIX_GConnect    HNDL
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+    VMIX_GScreen     HNDL
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+    VMIX_GTime       HNDL
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+    VMIX_SBack       HNDL
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+    VMIX_SOffset     HNDL
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+    VMIX_SScreen     HNDL
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+    VMIX_STime       HNDL
+    MC_CHECK_RETCODE ERR_INVALID_HANDLE
+end
+
+;*******************************************************************************
+;Name        : M_COM_3
+;Description : Errant use : Call functions which need a handle ID with an invalide handle
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;*******************************************************************************
+define M_COM_3
+    print "#########################################################"
+    print ">>> M_COM_3 start >>>"
+    ERRORCOUNT=0
+    ; Call with invalide handle
+    INVALID_HANDLE=543210
+    M_SUB_COM_3 INVALID_HANDLE
+    ; Call with valid but dropped handle (Closed by driver forced termination)
+    VMIX_Init "MIXER" ,, ""
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    LASTHND=VMIX_Open "MIXER"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    VMIX_Term "MIXER" 1
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    if ERRORCOUNT==0
+        ; Init + Open + forced termination successfull => LASTHND used to be valid
+        M_SUB_COM_3 LASTHND
+    end
+    MC_CHECK_ERROR
+    ERR_COM3=GLOBERR
+end  ;M_COM_3
+
+;*******************************************************************************
+;Name        : M_COM_4
+;Description : Errant use : Call all functions to bad parameters returns
+;Parameters  :
+;Assumptions : use vmix_nullpointer() function test
+;Limitations :
+;Returns     :
+;*******************************************************************************
+define M_COM_4
+    print "#########################################################"
+    print ">>> M_COM_4 start >>>"
+    ERRORCOUNT=0
+
+    RET=MC_CHECK_TYPE
+
+    if RET&1 ; 55XX
+        layer_init "LVID1"  OMEGA1_VIDEO
+        layer_init "LAY1"   OMEGA1_OSD
+        if (API_CHIPID=="5508")||(API_CHIPID=="5518")
+            layer_init "LCUR" OMEGA1_CURSOR h0400 ,, 0
+        end
+        else
+            layer_init "LCUR" OMEGA1_CURSOR h1000 ,, 0
+        end
+        if (API_CHIPID!="5508")&&(API_CHIPID!="5518")
+            layer_init "LAY2" OMEGA1_STILL
+        end
+    end
+    if RET&2 ; 7015
+        layer_init "LVID1"  OMEGA2_VIDEO1 720 576
+        layer_init "LAY1"   GAMMA_BKL hA000 720 576
+        layer_init "LCUR"   GAMMA_CURSOR hA200 720 576 ,, 1
+        layer_init "LAY2"   GAMMA_BKL ha500 720 576
+        layer_init "LVID2"  OMEGA2_VIDEO2 720 480
+    end
+    if RET&4 ; GX1
+        layer_init "LCUR" GAMMA_CURSOR h0 ,,,, 1
+        layer_init "LAY2" GAMMA_GDP h100
+        layer_init "LVID1" GAMMA_GDP h200
+        layer_init "LVID2" GAMMA_GDP h300
+        layer_init "LAY1" GAMMA_GDP h400
+    end
+    if RET&16 ; 5528
+        layer_init "LCUR"   GAMMA_CURSOR G_CURSOR_BA 720 576 ,, 1
+        layer_init "LVID1"  G_VIDEO1 720 576
+        layer_init "LVID2"  G_VIDEO2 720 480
+        layer_init "LAY1"   GAMMA_GDP G_GDP2_BA 720 576
+        layer_init "LAY2"   GAMMA_GDP G_GDP1_BA 720 576
+
+    end
+
+    if RET&8 ; 7020 - 7710 - 7100 - 7109 case
+
+        layer_init "LCUR" GAMMA_CURSOR G_CURSOR_BA 720 576 ,, 1
+
+
+        if (API_CHIPID=="7020")
+                layer_init "LVID1"  7020_VIDEO1 720 576
+                layer_init "LVID2" 7020_VIDEO2 720 480
+        end
+        else
+
+                layer_init "LVID1"  G_VIDEO1 720 576
+                layer_init "LVID2"  G_VIDEO2 720 480
+        end
+         layer_init "LAY1"  GAMMA_GDP G_GDP1_BA 720 480
+                 if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+
+
+                 layer_init "LAY2"  GAMMA_GDP G_GDP2_BA 720 480
+        end
+        else
+                layer_init "LAY2"   GAMMA_GDP hA300 720 576
+        end
+
+    end
+
+
+    if RET&32 ; 5100/5105/5301/5188/5107/5162
+        layer_init "LCUR"  COMPOSITOR  720 576
+        layer_init "LVID1"  COMPOSITOR  720 576
+        layer_init "LAY1"  COMPOSITOR  720 576
+    end
+
+    print " test max open limit mixer 1 :"
+    vmix_init "MIX1" ,, "" 1 1
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    if ERRORCODE==0
+        HDL1MIX1 = vmix_open "MIX1"
+        vmix_connect , "LVID1"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        vmix_connect , "LVID1" "LAY1"
+        MC_CHECK_RETCODE ERR_BAD_PARAMETER
+        vmix_gconnect , 0
+        MC_CHECK_RETCODE ERR_BAD_PARAMETER
+        vmix_gconnect , 2
+        MC_CHECK_RETCODE ERR_BAD_PARAMETER
+        vmix_dconnect ,
+        vmix_term "MIX1" 1
+        vmix_init "MIX1" ,, "" 1 2
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        if ERRORCODE==0
+            HDL1MIX1 = vmix_open "MIX1"
+            vmix_connect , "LVID1" "LAY1"
+            MC_CHECK_RETCODE ERR_NO_ERROR
+            vmix_connect , "LVID1" "LAY1" "LCUR"
+            MC_CHECK_RETCODE ERR_BAD_PARAMETER
+            vmix_gconnect , 3
+            MC_CHECK_RETCODE ERR_BAD_PARAMETER
+            vmix_dconnect ,
+            vmix_term "MIX1" 1
+            vmix_init "MIX1" ,, "" 1 3
+            MC_CHECK_RETCODE ERR_NO_ERROR
+            if ERRORCODE==0
+                HDL1MIX1 = vmix_open "MIX1"
+                vmix_connect , "LVID1" "LAY1" "LCUR"
+                MC_CHECK_RETCODE ERR_NO_ERROR
+                if (API_CHIPID!="5508")&&(API_CHIPID!="5518")&&(API_CHIPID!="5100")&&(API_CHIPID!="5105")&&(API_CHIPID!="5301")&&(API_CHIPID!="5188")&&(API_CHIPID!="5525")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+                    vmix_connect , "LVID1" "LAY1" "LCUR" "LAY2"
+                    MC_CHECK_RETCODE ERR_BAD_PARAMETER
+                    vmix_gconnect , 4
+                    MC_CHECK_RETCODE ERR_BAD_PARAMETER
+                    vmix_dconnect ,
+                    vmix_term "MIX1" 1
+                    vmix_init "MIX1" ,, "" 1 4
+                    MC_CHECK_RETCODE ERR_NO_ERROR
+                    if ERRORCODE==0
+                        HDL1MIX1 = vmix_open "MIX1"
+                        if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+                                vmix_connect , "LVID1" "LAY1" "LAY2" "LCUR"
+                        end
+                        else
+                                vmix_connect , "LAY2" "LVID1" "LAY1" "LCUR"
+                        end
+                        MC_CHECK_RETCODE ERR_NO_ERROR
+                        if RET&6 ; 7015 & GX1 case
+                            vmix_connect , "LAY2" "LVID1" "LVID2" "LAY1" "LCUR"
+                            MC_CHECK_RETCODE ERR_BAD_PARAMETER
+                            vmix_dconnect ,
+                            vmix_term "MIX1" 1
+                            vmix_init "MIX1" ,, "" 1 5
+                            MC_CHECK_RETCODE ERR_NO_ERROR
+                            if ERRORCODE==0
+                                HDL1MIX1 = vmix_open "MIX1"
+                                vmix_connect , "LAY2" "LVID1" "LVID2" "LAY1" "LCUR"
+                                MC_CHECK_RETCODE ERR_NO_ERROR
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    vmix_enable
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_gconnect
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_disable
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_dconnect
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_gconnect
+    MC_CHECK_RETCODE ERR_VMIX_LAYER_UNKNOWN
+
+    vmix_term "MIX1" 1
+
+    if API_CHIPID=="7015"
+        print " test max open limit mixer 2 :"
+        vmix_init "MIX2" 1 hA800 "" 1 1
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        if ERRORCODE==0
+            HDL1MIX2 = vmix_open "MIX2"
+            vmix_connect , "LVID2"
+            MC_CHECK_RETCODE ERR_NO_ERROR
+            vmix_connect , "LVID2" "LAY2"
+            MC_CHECK_RETCODE ERR_BAD_PARAMETER
+            vmix_gconnect , 2
+            MC_CHECK_RETCODE ERR_BAD_PARAMETER
+            vmix_dconnect ,
+            vmix_term "MIX2" 1
+            vmix_init "MIX2" 1 hA800 "" 1 2
+            MC_CHECK_RETCODE ERR_NO_ERROR
+            if ERRORCODE==0
+                HDL1MIX2 = vmix_open "MIX2"
+                vmix_connect , "LVID2" "LAY2"
+                MC_CHECK_RETCODE ERR_NO_ERROR
+            end
+        end
+        vmix_dconnect ,
+        vmix_term "MIX2" 1
+    end
+
+    print " test offset limits mixer 1 :"
+    vmix_init "MIX1" ,, "" 1 1
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    HDL1MIX1=vmix_open "MIX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    STRMODE=vmix_capa "MIX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    T_OFFHMIN=api_evalstr STRMODE 1
+    T_OFFHMAX=api_evalstr STRMODE 2
+    T_OFFVMIN=api_evalstr STRMODE 3
+    T_OFFVMAX=api_evalstr STRMODE 4
+    vmix_soffset HDL1MIX1 T_OFFHMIN T_OFFVMIN
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_soffset HDL1MIX1 T_OFFHMAX T_OFFVMAX
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_soffset HDL1MIX1 T_OFFHMIN-1 T_OFFVMIN
+    MC_CHECK_RETCODE ERR_BAD_PARAMETER
+    vmix_soffset HDL1MIX1 T_OFFHMIN T_OFFVMIN-1
+    MC_CHECK_RETCODE ERR_BAD_PARAMETER
+    vmix_soffset HDL1MIX1 T_OFFHMAX+1 T_OFFVMAX
+    MC_CHECK_RETCODE ERR_BAD_PARAMETER
+    vmix_soffset HDL1MIX1 T_OFFHMAX T_OFFVMAX+1
+    MC_CHECK_RETCODE ERR_BAD_PARAMETER
+    vmix_close HDL1MIX1
+    vmix_term "MIX1"
+
+    if API_CHIPID=="7015"
+        print " test offset limits mixer 2 :"
+        vmix_init "MIX2" 1 hA800 "" 1 1
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        HDL1MIX2=vmix_open "MIX2"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        STRMODE=vmix_capa "MIX2"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        T_OFFHMIN=api_evalstr STRMODE 1
+        T_OFFHMAX=api_evalstr STRMODE 2
+        T_OFFVMIN=api_evalstr STRMODE 3
+        T_OFFVMAX=api_evalstr STRMODE 4
+        vmix_soffset HDL1MIX2 T_OFFHMIN T_OFFVMIN
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        vmix_soffset HDL1MIX2 T_OFFHMAX T_OFFVMAX
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        vmix_soffset HDL1MIX2 T_OFFHMIN-1 T_OFFVMIN
+        MC_CHECK_RETCODE ERR_BAD_PARAMETER
+        vmix_soffset HDL1MIX2 T_OFFHMIN T_OFFVMIN-1
+        MC_CHECK_RETCODE ERR_BAD_PARAMETER
+        vmix_soffset HDL1MIX2 T_OFFHMAX+1 T_OFFVMAX
+        MC_CHECK_RETCODE ERR_BAD_PARAMETER
+        vmix_soffset HDL1MIX2 T_OFFHMAX T_OFFVMAX+1
+        MC_CHECK_RETCODE ERR_BAD_PARAMETER
+        vmix_close HDL1MIX2
+        vmix_term "MIX2"
+    end
+
+    if RET&1 ; 55XX
+        if (API_CHIPID!="5508")&&(API_CHIPID!="5518")
+            layer_term "LAY2"   ; STLAYER_OMEGA1_STILL
+        end
+        layer_term "LAY1"       ; STLAYER_OMEGA1_OSD
+        layer_term "LVID1"      ; STLAYER_OMEGA1_VIDEO
+        layer_term "LCUR"       ; STLAYER_OMEGA1_CURSOR
+    end
+    if RET&h1E ; 7015 & GX1 & 7020 & 5528 & 7710
+        layer_term "LVID1"
+        layer_term "LVID2"
+        layer_term "LCUR"
+        layer_term "LAY1"
+        layer_term "LAY2"
+    end
+
+    if RET&32 ; 5100/5105/5301/5188/5107/5162
+        layer_term "LCUR"
+        layer_term "LVID1"
+        layer_term "LAY1"
+    end
+
+    print ""
+    nberrnull = vmix_nullpt
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    MC_CHECK_ERROR
+    ERR_COM4=GLOBERR
+end  ;M_COM_4
+
+define M_SUB_COM_5_12 HDLVMIX
+    vmix_connect HDLVMIX "LSTILL"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LSTILL"
+
+    vmix_connect HDLVMIX "LVID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LVID1"
+
+    vmix_connect HDLVMIX "LOSD"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LOSD"
+
+    vmix_connect HDLVMIX "LCUR"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LCUR"
+
+    vmix_connect HDLVMIX "LSTILL" "LVID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LSTILL LVID1"
+
+    vmix_connect HDLVMIX "LSTILL" "LOSD"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LSTILL LOSD"
+
+    vmix_connect HDLVMIX "LSTILL" "LCUR"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LSTILL LCUR"
+
+    vmix_connect HDLVMIX "LVID1" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    M_SUB_CHECK_CONNECTED "LSTILL LCUR"
+
+    vmix_connect HDLVMIX "LVID1" "LOSD"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LVID1 LOSD"
+
+    vmix_connect HDLVMIX "LVID1" "LCUR"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LVID1 LCUR"
+
+    vmix_connect HDLVMIX "LOSD" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    M_SUB_CHECK_CONNECTED "LVID1 LCUR"
+
+    vmix_connect HDLVMIX "LOSD" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "LOSD" "LCUR"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "LCUR" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "LCUR" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "LCUR" "LOSD"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "LSTILL" "LVID1" "LOSD"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LSTILL LVID1 LOSD"
+
+    vmix_connect HDLVMIX "LSTILL" "LVID1" "LCUR"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "LSTILL" "LOSD" "LCUR"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LSTILL LOSD LCUR"
+
+    vmix_connect HDLVMIX "LSTILL" "LOSD" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    M_SUB_CHECK_CONNECTED "LSTILL LOSD LCUR"
+
+    vmix_connect HDLVMIX "LSTILL" "LCUR" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LSTILL" "LCUR" "LOSD"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_connect HDLVMIX "LVID1" "LSTILL" "LOSD"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID1" "LSTILL" "LCUR"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID1" "LOSD" "LCUR"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_connect HDLVMIX "LVID1" "LOSD" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID1" "LCUR" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID1" "LCUR" "LOSD"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_connect HDLVMIX "LOSD" "LSTILL" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LOSD" "LSTILL" "LCUR"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LOSD" "LVID1" "LCUR"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LOSD" "LVID1" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LOSD" "LCUR" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LOSD" "LCUR" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LCUR" "LSTILL" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LCUR" "LSTILL" "LOSD"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LCUR" "LVID1" "LOSD"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LCUR" "LVID1" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LCUR" "LOSD" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LCUR" "LOSD" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "LSTILL" "LVID1" "LOSD" "LCUR"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LSTILL LVID1 LOSD LCUR"
+
+    vmix_connect HDLVMIX "LSTILL" "LVID1" "LCUR" "LOSD"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LSTILL LVID1 LCUR LOSD"
+
+    vmix_connect HDLVMIX "LSTILL" "LOSD" "LVID1" "LCUR"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    M_SUB_CHECK_CONNECTED "LSTILL LVID1 LCUR LOSD"
+
+    vmix_connect HDLVMIX "LSTILL" "LOSD" "LCUR" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LSTILL" "LCUR" "LVID1" "LOSD"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LSTILL" "LCUR" "LOSD" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID1" "LSTILL" "LOSD" "LCUR"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID1" "LSTILL" "LCUR" "LOSD"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID1" "LOSD" "LSTILL" "LCUR"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID1" "LOSD" "LCUR" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID1" "LCUR" "LSTILL" "LOSD"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID1" "LCUR" "LOSD" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LOSD" "LVID1" "LSTILL" "LCUR"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LOSD" "LVID1" "LCUR" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LOSD" "LSTILL" "LVID1" "LCUR"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LOSD" "LSTILL" "LCUR" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LOSD" "LCUR" "LVID1" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LOSD" "LCUR" "LSTILL" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LCUR" "LVID1" "LOSD" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LCUR" "LVID1" "LSTILL" "LOSD"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LCUR" "LOSD" "LVID1" "LSTILL"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LCUR" "LOSD" "LSTILL" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LCUR" "LSTILL" "LVID1" "LOSD"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LCUR" "LSTILL" "LOSD" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+end
+
+define M_SUB_COM_5_18 HDLVMIX
+    vmix_connect HDLVMIX "LVID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LVID1"
+
+    vmix_connect HDLVMIX "LOSD"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LOSD"
+
+    vmix_connect HDLVMIX "LCUR"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LCUR"
+
+    vmix_connect HDLVMIX "LVID1" "LOSD"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LVID1 LOSD"
+
+    vmix_connect HDLVMIX "LOSD" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    M_SUB_CHECK_CONNECTED "LVID1 LOSD"
+
+    vmix_connect HDLVMIX "LVID1" "LCUR"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_connect HDLVMIX "LCUR" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LOSD" "LCUR"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_connect HDLVMIX "LCUR" "LOSD"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "LVID1" "LOSD" "LCUR"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LVID1 LOSD LCUR"
+
+    vmix_connect HDLVMIX "LVID1" "LCUR" "LOSD"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "LVID1 LCUR LOSD"
+
+    vmix_connect HDLVMIX "LOSD" "LVID1" "LCUR"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    M_SUB_CHECK_CONNECTED "LVID1 LCUR LOSD"
+
+    vmix_connect HDLVMIX "LOSD" "LCUR" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LCUR" "LVID1" "LOSD"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LCUR" "LOSD" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+end
+
+define M_SUB_COM_5_7015_MIX2 HDLVMIX
+    vmix_connect HDLVMIX "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    M_SUB_CHECK_CONNECTED ""
+
+    vmix_connect HDLVMIX "LVID2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "VID2"
+
+    vmix_connect HDLVMIX "GFX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "GFX2"
+
+    vmix_connect HDLVMIX "GFX1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    M_SUB_CHECK_CONNECTED "GFX2"
+
+    vmix_connect HDLVMIX "LVID1" "LVID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID2" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID1" "GFX2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "GFX2" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID2" "GFX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "VID2 GFX2"
+
+    vmix_connect HDLVMIX "GFX2" "LVID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "LVID1" "LVID2" "GFX2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID1" "GFX2" "LVID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "GFX2" "LVID1" "LVID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "GFX2" "LVID2" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID2" "LVID1" "GFX2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "LVID2" "GFX2" "LVID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+end
+define M_SUB_COM_5_5528_MIX1 HDLVMIX
+    vmix_connect HDLVMIX "VID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "VID1"
+
+    vmix_connect HDLVMIX "VID2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "VID2"
+
+    vmix_connect HDLVMIX "GDP2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "GDP2"
+
+    vmix_connect HDLVMIX "GDP1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "GDP1"
+
+    vmix_connect HDLVMIX "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "GDP3"
+
+    vmix_connect HDLVMIX "GDP4"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "GDP4"
+
+
+    vmix_connect HDLVMIX "ALPHA"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "CURS"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP3"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "VID2"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "GDP2"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "GDP4"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "VID2" "GDP2"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "VID2" "GDP3"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "VID2" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "GDP2" "GDP3"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "GDP2" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "GDP2" "VID2"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "GDP3" "GDP4"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "VID2" "GDP2" "GDP3"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "VID2" "GDP2" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "VID2" "GDP2" "GDP3" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "VID2" "GDP3" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "GDP2" "VID2" "GDP3"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "GDP2" "VID2" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "GDP2" "VID2" "GDP3" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "GDP2" "GDP3" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID2"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID1"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "GDP4"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID2" "VID1"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID2" "GDP3"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID2" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID1" "GDP3"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID1" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID1" "VID2"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "GDP3" "GDP4"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID2" "VID1" "GDP3"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID2" "VID1" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID2" "VID1" "GDP3" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID2" "GDP3" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID1" "VID2" "GDP3"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID1" "VID2" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID1" "VID2" "GDP3" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2" "VID1" "GDP3" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "VID1"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "GDP2"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "GDP4"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "VID1" "GDP2"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "VID1" "GDP3"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "VID1" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "GDP2" "GDP3"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "GDP2" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "GDP2" "VID1"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "GDP3" "GDP4"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "VID1" "GDP2" "GDP3"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "VID1" "GDP2" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "VID1" "GDP2" "GDP3" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "VID1" "GDP3" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "GDP2" "VID1" "GDP3"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "GDP2" "VID1" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "GDP2" "VID1" "GDP3" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "GDP2" "GDP3" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+
+    vmix_connect HDLVMIX "GDP1" "VID2"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP2"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP3"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP4"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID1" "VID2"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID2" "VID1"
+     MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID1" "GDP2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP2" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP3" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "ALPHA" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "VID2 GDP2"
+
+    vmix_connect HDLVMIX "GDP2" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX  "VID1" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP3" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "VID2" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "GDP2" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "VID1" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "VID2" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "VID1" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP2" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP3" "GDP1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP3" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "GDP3" "GDP1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "GDP3" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP1" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID2" "GDP2" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID1" "GDP1" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID1" "GDP2" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP3" "VID2" "GDP1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP3" "VID2" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP3" "VID1" "GDP1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP3" "VID1" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "GDP3"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "VID2" "GDP3"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "GDP3"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "VID1" "GDP3"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP1" "GDP3" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP1" "GDP3" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "GDP3" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "GDP3" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+end
+define M_SUB_COM_5_5528_MIX2 HDLVMIX
+    vmix_connect HDLVMIX "VID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "VID1"
+
+    vmix_connect HDLVMIX "VID2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "VID2"
+
+    vmix_connect HDLVMIX "GDP2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "GDP2"
+
+    vmix_connect HDLVMIX "GDP1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "GDP1"
+
+    vmix_connect HDLVMIX "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "GDP3"
+
+    vmix_connect HDLVMIX "ALPHA"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "CURS"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "GDP1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP1" "VID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+
+    vmix_connect HDLVMIX "VID1" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "VID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP3" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+
+    vmix_connect HDLVMIX "VID2" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "VID2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID2" "GDP1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP1" "VID2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+
+    vmix_connect HDLVMIX  "VID1" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP3" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "VID2" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "GDP2" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "VID1" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "VID2" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "VID1" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP2" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP3" "GDP1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP3" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "GDP3" "GDP1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "GDP3" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP1" "GDP3"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP2" "GDP3"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "GDP1" "GDP3"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "GDP2" "GDP3"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP3" "VID2" "GDP1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP3" "VID2" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP3" "VID1" "GDP1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP3" "VID1" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP1" "VID2" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP2" "VID2" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "VID1" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP2" "VID1" "GDP3"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GDP1" "GDP3" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP1" "GDP3" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "GDP3" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "GDP3" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+end
+
+define M_SUB_COM_5_5100_MIX2 HDLVMIX
+    vmix_connect HDLVMIX "VID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID1" "GFX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX1" "VID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX2" "VID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID1" "GFX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX1" "GFX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX2" "GFX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX1" "VID1" "GFX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX1" "GFX2" "VID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID1" "GFX1" "GFX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID1" "GFX2" "GFX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX2" "VID1" "GFX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX2" "GFX1" "VID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+end
+
+define M_SUB_COM_5_5100_MIX1 HDLVMIX
+    vmix_connect HDLVMIX "VID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID1" "GFX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX1" "VID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX2" "VID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID1" "GFX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX1" "GFX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX2" "GFX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX1" "VID1" "GFX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX1" "GFX2" "VID1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID1" "GFX1" "GFX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "VID1" "GFX2" "GFX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX2" "VID1" "GFX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    vmix_connect HDLVMIX "GFX2" "GFX1" "VID1"
+    MC_CHECK_RETCODE ERR_NO_ERRORD
+end
+
+
+define M_SUB_COM_5_7020_MIX2 HDLVMIX
+
+    vmix_connect HDLVMIX "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    M_SUB_CHECK_CONNECTED ""
+
+    vmix_connect HDLVMIX "VID2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "VID2"
+
+    vmix_connect HDLVMIX "GDP2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "GDP2"
+
+    vmix_connect HDLVMIX "GDP1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    M_SUB_CHECK_CONNECTED "GDP2"
+
+    vmix_connect HDLVMIX "GDP3"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "ALPHA"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "CURS"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "GDP2" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")
+        vmix_connect HDLVMIX "GDP3" "VID2"
+        MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    end
+
+    vmix_connect HDLVMIX "ALPHA" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "VID2 GDP2"
+
+    vmix_connect HDLVMIX "GDP2" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "VID2" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "GDP2" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "VID1" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "VID2" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "VID1" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP2" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+   ; vmix_dconnect HDLVMIX
+
+end
+
+define M_SUB_COM_5_7710_MIX2 HDLVMIX
+
+    vmix_connect HDLVMIX "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    M_SUB_CHECK_CONNECTED ""
+
+    vmix_connect HDLVMIX "VID2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "VID2"
+
+    vmix_connect HDLVMIX "GDP2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "GDP2"
+
+    vmix_connect HDLVMIX "GDP1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    M_SUB_CHECK_CONNECTED "GDP2"
+
+
+    vmix_connect HDLVMIX "ALPHA"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "CURS"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+    vmix_connect HDLVMIX "GDP2" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+
+    vmix_connect HDLVMIX "ALPHA" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    M_SUB_CHECK_CONNECTED "VID2 GDP2"
+
+    vmix_connect HDLVMIX "GDP2" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "VID2" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID1" "GDP2" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "VID1" "VID2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "GDP2" "VID2" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "VID1" "GDP2"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+    vmix_connect HDLVMIX "VID2" "GDP2" "VID1"
+    MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+   ; vmix_dconnect HDLVMIX
+
+end
+
+;*******************************************************************************
+;Name        : M_COM_5
+;Description : Errant use : Call all functions to feature not supported parameters returns
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     :
+;*******************************************************************************
+define M_COM_5
+    ERRORCOUNT=0
+    print "#########################################################"
+    print ">>> M_COM_5 start >>>"
+
+    RET=MC_CHECK_TYPE
+    if RET&1  ; 55XX case
+        vmix_init "MIX1" 1 , ""
+        MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+        if API_CHIPID!="5508"
+            if API_CHIPID!="5518"
+                layer_init "LSTILL" OMEGA1_STILL
+            end
+        end
+        layer_init "LOSD"  OMEGA1_OSD
+        layer_init "LVID1" OMEGA1_VIDEO
+        if API_CHIPID!="5508"   ; STLAYER_OMEGA1_CURSOR
+            if API_CHIPID!="5518"
+                layer_init "LCUR" OMEGA1_CURSOR h1000 ,, 0
+            end
+            else
+                layer_init "LCUR" OMEGA1_CURSOR h0400 ,, 0
+            end
+        end
+
+        vmix_init "MIX1" 0 , "VTG" 1 4
+        HDL1MIX1 = vmix_open "MIX1"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        vmix_enable HDL1MIX1
+        vmix_gscreen HDL1MIX1
+
+        vmix_sback HDL1MIX1 1 128 128 128
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        if API_CHIPID!="5508"
+            if API_CHIPID!="5518" ; check all cases  for 5510/12/14
+                M_SUB_COM_5_12 HDL1MIX1
+            end
+            else  ; check all cases for 5518 (layer Video / Osd / Cursor)
+                M_SUB_COM_5_18 HDL1MIX1
+            end
+        end
+        else
+            ; check all cases for 5508 (layer Video / Osd / Cursor)
+            M_SUB_COM_5_18 HDL1MIX1
+        end
+
+        vmix_sback HDL1MIX1 0 ; no background
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        vmix_dconnect HDL1MIX1
+        if API_CHIPID!="5508"
+            if API_CHIPID!="5518"
+                layer_term "LSTILL" 1      ; STLAYER_OMEGA1_STILL
+            end
+        end
+        layer_term "LCUR" 1
+        layer_term "LVID1" 1
+        layer_term "LOSD" 1
+        vmix_term "MIX1" 1
+    end
+    if RET&2 ; 7015 case
+
+        layer_init "GFX1" GAMMA_BKL ha000 720 480
+        layer_init "GFX2" GAMMA_BKL ha500 720 480
+        layer_init "CURS" GAMMA_CURSOR hA200 720 480 ,, 1
+        layer_init "VID1" OMEGA2_VIDEO1 720 480
+        layer_init "VID2" OMEGA2_VIDEO2 720 480
+
+        print ""
+        print " Test mixer 1 :"
+        print ""
+        vmix_init "MIX1" 1 ha700 "VTG" 1 5
+        HDL1MIX1 = vmix_open "MIX1"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        vmix_sback HDL1MIX1 1 128 128 128
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        ; All layers connection tested with background
+        nberrconnect = vmix_tconnect HDL1MIX1
+        ERRORCOUNT=ERRORCOUNT+nberrconnect
+
+        vmix_sback HDL1MIX1 0 ; no background
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        ; All layers connection tested without background
+        nberrconnect = vmix_tconnect HDL1MIX1
+        ERRORCOUNT=ERRORCOUNT+nberrconnect
+
+        vmix_dconnect HDL1MIX1
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        print ""
+        print " Test mixer 2 :"
+        print ""
+        vmix_init "MIX2" 1 hA800 "VTG2" 1 5
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        HDL2MIX2=vmix_open "MIX2"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        vmix_enable HDL2MIX2
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        vmix_gscreen HDL2MIX2
+
+        M_SUB_COM_5_7015_MIX2 HDL2MIX2
+        vmix_dconnect HDL2MIX2
+        layer_term "GFX1" 1
+        layer_term "GFX2" 1
+        layer_term "CURS" 1
+        layer_term "VID1" 1
+        layer_term "VID2" 1
+        vmix_term "MIX1" 1
+        vmix_term "MIX2" 1
+    end
+    if RET&4 ; GX1 case
+        vmix_init "MIX1" 0
+        MC_CHECK_RETCODE ERR_FEATURE_NOT_SUPPORTED
+
+        layer_init "CURS" GAMMA_CURSOR h0 ,,,, 1
+        layer_init "GDP1" GAMMA_GDP
+        layer_init "GDP2" GAMMA_GDP h200
+        layer_init "GDP3" GAMMA_GDP h300
+        layer_init "GDP4" GAMMA_GDP h400
+        ;layer_init "GDP4" GAMMA_FILTER h400
+        vmix_init "MIX1" ,,
+        HDL1MIX1 = vmix_open "MIX1"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        ; Background on
+        vmix_sback HDL1MIX1 1 128 128 128
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+
+        ; All layers connection tested with background
+        nberrconnect = vmix_tconnect HDL1MIX1
+        ERRORCOUNT=ERRORCOUNT+nberrconnect
+
+        ; Background off
+        vmix_sback HDL1MIX1 0
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        ; All layers connection tested without background
+        nberrconnect = vmix_tconnect HDL1MIX1
+        ERRORCOUNT=ERRORCOUNT+nberrconnect
+
+        vmix_dconnect HDL1MIX1
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        layer_term "CURS"
+        layer_term "GDP1"
+        layer_term "GDP2"
+        layer_term "GDP3"
+        layer_term "GDP4"
+        vmix_term "MIX1" 1
+    end
+
+    if RET&8 ; 7020 - 7710 case
+        layer_init "CURS" GAMMA_CURSOR G_CURSOR_BA 720 480 ,, 1
+        layer_init "GDP1" GAMMA_GDP G_GDP1_BA 720 480
+        layer_init "GDP2" GAMMA_GDP G_GDP2_BA 720 480
+        if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")
+        layer_init "GDP3" GAMMA_GDP hA300 720 480
+        end
+        layer_init "ALPHA" GAMMA_ALPHA G_ALPHA_BA 720 480 ,, 1
+        if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")
+               layer_init "VID1" 7020_VIDEO1 720 480
+               layer_init "VID2" 7020_VIDEO2 720 480
+        end
+        else
+           layer_init "VID1" G_VIDEO1 720 480
+           layer_init "VID2" G_VIDEO2 720 480
+
+        end
+        ; VTG1
+        vtg_init
+        HDLVTGMAIN=vtg_open
+        vtg_setmode
+    end
+
+    if RET&16 ; 5528
+
+        layer_init "CURS" GAMMA_CURSOR G_CURSOR_BA 720 480 ,, 1
+        layer_init "GDP1" GAMMA_GDP G_GDP1_BA 720 480
+        layer_init "GDP2" GAMMA_GDP G_GDP2_BA 720 480
+        layer_init "GDP3" GAMMA_GDP G_GDP3_BA 720 480
+        ;layer_init "GDP4" GAMMA_GDP G_GDP4_BA   720 480
+        layer_init "GDP4" GAMMA_FILTER G_GDP4_BA 720 480
+        layer_init "ALPHA" GAMMA_ALPHA G_ALPHA_BA 720 480 ,, 1
+        layer_init "VID1" G_VIDEO1 720 480
+        layer_init "VID2" G_VIDEO2 720 480
+
+        ; VTG1
+
+        vtg_init
+        HDLVTGMAIN=vtg_open
+        vtg_setmode
+    end
+
+    if RET&32 ; 5100/5105/5301/5188/5107/5162
+        layer_init "GFX1"  COMPOSITOR  720 480
+        layer_init "VID1"  COMPOSITOR  720 480
+        layer_init "GFX2"  COMPOSITOR  720 480
+
+        ; VTG1
+        vtg_init
+        HDLVTGMAIN=vtg_open
+        vtg_setmode
+    end
+
+    if RET&8 ; 7020 or 7710 case
+        ; VTG2
+        if (API_CHIPID=="7710")
+                if (CHIP_CUT=="STI7710_CUT2x")
+                        vtg_init "VTG2" , h20103034
+                end
+                else
+                        vtg_init "VTG2" , h20103C34
+                end
+        end
+        else
+           if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+                vtg_init "VTG2" , hB9005034
+           end
+           else
+               vtg_init "VTG2" , h8000
+           end
+        end
+        HDLVTGAUX=vtg_open "VTG2"
+        vtg_setmode
+
+        print ""
+        print " Test mixer 1:"
+        print ""
+
+       if (API_CHIPID=="7710")
+                vmix_init "MIX1" , h38215C00 ""
+        end
+       else
+         if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+                vmix_init "MIX1" , hB920AC00 ""
+        end
+        else
+                vmix_init "MIX1" 3 hAC00 ""
+        end
+       end
+
+        HDL1MIX1=vmix_open "MIX1"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        ; Background on
+        vmix_sback HDL1MIX1 1 128 128 128
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        ; All layers connection tested with background
+        nberrconnect=vmix_tconnect HDL1MIX1
+        ERRORCOUNT=ERRORCOUNT+nberrconnect
+
+        ; Background off
+        vmix_sback HDL1MIX1 0
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        ; All layers connection tested without background
+        nberrconnect=vmix_tconnect HDL1MIX1
+        ERRORCOUNT=ERRORCOUNT+nberrconnect
+
+        vmix_dconnect HDL1MIX1
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        print ""
+        print " Test mixer 2 :"
+        print ""
+        if (API_CHIPID=="7710")
+                vmix_init "MIX2" , h38215D00 ""
+        end
+        else
+        if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+                vmix_init "MIX2" , hB920AD00 ""
+        end
+        else
+               vmix_init "MIX2" , hAD00 ""
+        end
+       end
+
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+
+        HDL2MIX2=vmix_open "MIX2"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        vmix_enable HDL2MIX2
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        vmix_gscreen HDL2MIX2
+
+        ; All layers connection tested (no background)
+        if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")
+                M_SUB_COM_5_7710_MIX2 HDL2MIX2
+        end
+        else
+           M_SUB_COM_5_7020_MIX2 HDL2MIX2
+        end
+
+        vmix_dconnect HDL2MIX2
+
+        layer_term "CURS" 1
+        layer_term "GDP1" 1
+        layer_term "GDP2" 1
+        if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")
+                layer_term "GDP3" 1
+        end
+        layer_term "ALPHA" 1
+        layer_term "VID1" 1
+        layer_term "VID2" 1
+
+        ; VTG1
+        vtg_close HDLVTGMAIN
+        vtg_term
+
+        ; VTG2
+        vtg_close HDLVTGAUX
+        vtg_term "VTG2"
+
+        vmix_term "MIX1" 1
+        vmix_term "MIX2" 1
+
+    end
+
+    if RET&16 ; 5528 case
+        print ""
+        print " Test mixer 1:"
+        print ""
+
+        vmix_init "MIX1" , G_MIX1_BA ""
+        HDL1MIX1=vmix_open "MIX1"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        ; Background on
+        vmix_sback HDL1MIX1 1 128 128 128
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        ; All layers connection tested with background
+        nberrconnect=vmix_tconnect HDL1MIX1
+        ERRORCOUNT=ERRORCOUNT+nberrconnect
+
+        ; Background off
+        vmix_sback HDL1MIX1 0
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        ; All layers connection tested without background
+        ;nberrconnect=vmix_tconnect HDL1MIX1
+        ;ERRORCOUNT=ERRORCOUNT+nberrconnect
+
+        vmix_dconnect HDL1MIX1
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        print ""
+        print " Test mixer 2 :"
+        print ""
+        vmix_init "MIX2" , G_MIX2_BA ""
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        HDL2MIX2=vmix_open "MIX2"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        M_COMMON_SETMODE "NTSC" HDLVTGAUX
+
+        vmix_enable HDL2MIX2
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        vmix_gscreen HDL2MIX2
+        print " Background on mix2"
+        ; Background on
+        vmix_sback HDL2MIX2 1 0 128 0
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        print "All layers connection tested with background"
+
+        ; All layers connection tested with background
+        M_SUB_COM_5_5528_MIX2 HDL2MIX2
+
+        print "Background off"
+
+        ; Background off
+        vmix_sback HDL2MIX2 0
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+         ;All layers connection tested (no background)
+        print "layers connection tested without background"
+        M_SUB_COM_5_5528_MIX2 HDL2MIX2
+        print "end layers connection test"
+        vmix_dconnect HDL2MIX2
+
+        layer_term "CURS" 1
+        layer_term "GDP1" 1
+        layer_term "GDP2" 1
+        layer_term "GDP3" 1
+        layer_term "GDP4" 1
+        layer_term "ALPHA" 1
+        layer_term "VID1" 1
+        layer_term "VID2" 1
+
+        ; VTG1
+        vtg_close HDLVTGMAIN
+        vtg_term
+
+        vmix_term "MIX1" 1
+        vmix_term "MIX2" 1
+    end
+
+    if RET&32 ; 5100/5105/5301/5188/5107/5162 cases
+        print ""
+        print " Test mixer 1:"
+        print ""
+
+        vmix_init "MIX1" , G_MIX1_BA ""
+        HDL1MIX1=vmix_open "MIX1"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        ; Background on
+        vmix_sback HDL1MIX1 1 128 128 128
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        ; All layers connection tested with background
+        nberrconnect=vmix_tconnect HDL1MIX1
+        ERRORCOUNT=ERRORCOUNT+nberrconnect
+
+        ; Background off
+        vmix_sback HDL1MIX1 0
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+        ; All layers connection tested without background
+        ;nberrconnect=vmix_tconnect HDL1MIX1
+        ;ERRORCOUNT=ERRORCOUNT+nberrconnect
+
+        vmix_dconnect HDL1MIX1
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+      if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+        print ""
+        print " Test mixer 2 :"
+        print ""
+        vmix_init "MIX2" , G_MIX2_BA ""
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        HDL2MIX2=vmix_open "MIX2"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        M_COMMON_SETMODE "NTSC" HDLVTGAUX
+
+        vmix_enable HDL2MIX2
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        vmix_gscreen HDL2MIX2
+        print " Background on mix2"
+        ; Background on
+        vmix_sback HDL2MIX2 1 0 128 0
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        print "All layers connection tested with background"
+
+        ; All layers connection tested with background
+        M_SUB_COM_5_5100_MIX2 HDL2MIX2
+
+        print "Background off"
+
+        ; Background off
+        vmix_sback HDL2MIX2 0
+        MC_CHECK_RETCODE ERR_NO_ERROR
+
+         ;All layers connection tested (no background)
+        print "layers connection tested without background"
+        M_SUB_COM_5_5100_MIX2 HDL2MIX2
+        print "end layers connection test"
+        vmix_dconnect HDL2MIX2
+      end
+
+        layer_term "GFX1" 1
+        layer_term "VID1" 1
+        layer_term "GFX2" 1
+
+        ; VTG1
+        vtg_close HDLVTGMAIN
+        vtg_term
+
+        vmix_term "MIX1" 1
+      if (API_CHIPID!="5105")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(API_CHIPID!="5162")
+        vmix_term "MIX2" 1
+      end
+    end
+
+
+
+    MC_CHECK_ERROR
+    ERR_COM5=GLOBERR
+end  ;M_COM_5
+
+;*******************************************************************************
+;Name        : M_COM_6
+;Description : check MAXOPEN and MAXLAYER InitParams respect and VOUT params
+;Parameters  :
+;Assumptions :
+;Limitations :
+;Returns     : none
+;*******************************************************************************
+define M_COM_6
+
+    ERRORCOUNT=0
+    print "#########################################################"
+    print ">>> M_COM_6 start >>>"
+
+    ; DENC for VTG on Omega1
+    denc_init
+
+    ; VTG
+    vtg_init
+    vtg_open
+    vtg_setmode
+
+    ;Initialize video mixer MIX1 for
+    vmix_init "MIX1" ,, "" 1 2
+    HDL1MIX1 = vmix_open "MIX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    ; On 55XX, another virtual mixer is created to test mixer API
+    vmix_init "MIX2" ,, "" 1 2
+    HDL2MIX2 = vmix_open "MIX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    print ""
+    print "  Generated error : STVMIX_ERROR_LAYER_UNKNOWN "
+    print ""
+    VMIX_Connect HDL1MIX1 "LVIDEO"
+    MC_CHECK_RETCODE ERR_VMIX_LAYER_UNKNOWN
+
+    RET=MC_CHECK_TYPE
+    if RET&1 ; 55XX
+        layer_init "LVIDEO" OMEGA1_VIDEO
+        if (API_CHIPID=="5508")||(API_CHIPID=="5518")
+            layer_init "LCUR" OMEGA1_CURSOR h0400 ,, 0
+        end
+        else
+            layer_init "LCUR" OMEGA1_CURSOR h1000 ,, 0
+        end
+    end
+    if RET&2 ; 7015
+        layer_init "LVIDEO" OMEGA2_VIDEO1 720 576
+        layer_init "LCUR"   GAMMA_CURSOR hA200 720 576 ,, 1
+    end
+    if RET&4 ; GX1
+        layer_init "LCUR"   GAMMA_CURSOR h0 ,,,, 1
+        layer_init "LVIDEO" GAMMA_GDP h100
+    end
+    if RET&24 ; 7020 or 5528 or 7710
+        if (API_CHIPID=="7020")
+                layer_init "LVIDEO" 7020_VIDEO1 720 576
+        end
+        else
+                layer_init "LVIDEO" G_VIDEO1 720 576
+        end
+        layer_init "LCUR"   GAMMA_CURSOR G_CURSOR_BA 720 576 ,, 1
+    end
+
+    if RET&32 ; 5100/5105/5301/5188/5107/5162
+        layer_init "LVIDEO" COMPOSITOR 720 576
+        layer_init "LCUR" COMPOSITOR  720 576
+    end
+
+
+    print ""
+    print "  Generated error : STVMIX_ERROR_LAYER_UPDATE_PARAMETERS "
+    print "                    STVMIX_ERROR_LAYER_ALREADY_CONNECTED "
+    print ""
+    VMIX_Connect HDL1MIX1 "LVIDEO" "LCUR"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    VMIX_SScreen HDL1MIX1 0 0 , 19 10
+    MC_CHECK_RETCODE ERR_VMIX_UPDATE_PARAMETERS
+    VMIX_Connect HDL2MIX2 "LVIDEO"
+    MC_CHECK_RETCODE ERR_VMIX_ALREADY_CONNECTED
+    VMIX_DConnect HDL1MIX1
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+    layer_term "LCUR"
+
+    if RET&1 ; 55XX
+        if (API_CHIPID=="5508")||(API_CHIPID=="5518")
+            layer_init "LCUR" OMEGA1_CURSOR h0400 ,, 0
+        end
+        else
+            layer_init "LCUR" OMEGA1_CURSOR h1000 ,, 0
+        end
+    end
+    if RET&2 ; 7015
+        layer_init "LCUR" GAMMA_CURSOR hA200 720 576 ,, 1
+    end
+    if RET&4 ; GX1
+        layer_init "LCUR" GAMMA_CURSOR h0 ,,,, 1
+    end
+    if RET&24 ; 7020 or 5528  or 7710
+        layer_init "LCUR" GAMMA_CURSOR G_CURSOR_BA 720 576 ,, 1
+    end
+
+    if RET&32 ; 5100/5105/5301/5188/5107/5162
+        layer_init "LCUR" COMPOSITOR  720 576
+    end
+
+    VMIX_SScreen HDL1MIX1 1 1 , 100 100
+    VMIX_Connect HDL1MIX1 "LCUR"
+    MC_CHECK_RETCODE ERR_VMIX_UPDATE_PARAMETERS
+    VMIX_DConnect HDL1MIX1
+
+    print "  generated error : STVMIX_ERROR_LAYER_ACCESS "
+    VMIX_SScreen HDL1MIX1 1 1 , 720 576
+    VMIX_Connect HDL1MIX1 "LVIDEO"
+    layer_term "LVIDEO" 1
+
+    VMIX_SScreen HDL1MIX1 ,,, 720 480
+    MC_CHECK_RETCODE ERR_VMIX_LAYER_ACCESS
+
+    if RET&h1F ; 55XX,7015,GX1,7020,5528,7710
+    VMIX_SOffset HDL1MIX1 0 0
+    MC_CHECK_RETCODE ERR_VMIX_LAYER_ACCESS
+    end
+
+    VMIX_STime HDL1MIX1 ,
+    MC_CHECK_RETCODE ERR_VMIX_LAYER_ACCESS
+    VMIX_Connect HDL1MIX1 "LVIDEO"
+    MC_CHECK_RETCODE ERR_VMIX_LAYER_ACCESS
+    VMIX_DConnect HDL1MIX1
+    MC_CHECK_RETCODE ERR_VMIX_LAYER_ACCESS
+
+    layer_term "LCUR"
+
+    vmix_term "MIX1" 1
+    vmix_term "MIX2" 1
+
+    print "  generated error : STVMIX_ERROR_VOUT_UNKNOWN "
+    print "                    STVMIX_ERROR_VOUT_ALREADY_CONNECTED"
+    vmix_init "MIX1" ,, "" 1 2 "VOUT"
+    MC_CHECK_RETCODE ERR_VMIX_VOUT_UNKNOWN
+
+    vout_init
+    vmix_init ,,, "" 1 2 VOUT_NAME
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_init "MIX2" ,, "" 1 2 VOUT_NAME
+    MC_CHECK_RETCODE ERR_VMIX_VOUT_ALREADY_CONNECTED
+    vmix_term
+    vout_term
+
+    ; VTG
+    vtg_close
+    vtg_term
+
+    ; DENC
+    denc_term
+
+    MC_CHECK_ERROR
+    ERR_COM6=GLOBERR
+end ;M_COM_6
+
+
+; Test to check VMIX driver error codes returned
+define M_COM_ALL ALL_TEST_R
+  ; default for 55XX
+  loop=0
+  retchoice=""
+  while loop==0
+    if ALL_TEST_R==1
+      retchoice="7"
+    end
+    else
+      if (ST_OS=="LINUX")
+        layer_term "LAYVID1"
+      end
+      print "------------------------------------------------"
+      print "Test VMIX API routines robustness on bad inputs "
+      print " 1  - test case M_COM_1"
+      print " 2  - test case M_COM_2"
+      print " 3  - test case M_COM_3"
+      print " 4  - test case M_COM_4"
+      print " 5  - test case M_COM_5"
+      print " 6  - test case M_COM_6"
+      print " 7  - thread cases 1 to 6"
+      print " hit return to Quit this menu"
+      print " Enter your choice :"
+      retchoice=getstring
+    end
+    if retchoice==""
+;         retchoice="8"
+        loop=1
+    end
+    if retchoice=="1"
+        M_COM_1
+	end
+    if retchoice=="2"
+        M_COM_2
+	end
+    if retchoice=="3"
+        M_COM_3
+	end
+    if retchoice=="4"
+        M_COM_4
+	end
+    if retchoice=="5"
+        M_COM_5
+        end
+    if retchoice=="6"
+        M_COM_6
+	end
+    if retchoice=="7"
+        ERR_COM1=FALSE_
+        ERR_COM2=FALSE_
+        ERR_COM3=FALSE_
+        ERR_COM4=FALSE_
+        ERR_COM5=FALSE_
+        ERR_COM6=FALSE_
+        M_COM_1
+        M_COM_2
+        M_COM_3
+        M_COM_4
+        M_COM_5
+        M_COM_6
+        if ALL_TEST_R!=1
+          MC_CHECK_COM_ERR ERR_COM1 ERR_COM2 ERR_COM3 ERR_COM4 ERR_COM5 ERR_COM6
+        end
+        loop=1
+    end
+  end
+end

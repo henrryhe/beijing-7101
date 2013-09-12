@@ -1,0 +1,620 @@
+;*****************************************************************************
+; File   :  VMIX3.MAC
+;           Connect various vout on MIXER1
+;           See STVMIX component test specification document for use
+; Author :  AC - Reviewed December 2003
+;*****************************************************************************
+
+
+;*******************************************************************************
+;Name        : M_VMIX3_55XX
+;Description : Connecting on 55XX, DENC CVBS&RGB output on mixer
+;*******************************************************************************
+define M_VMIX3_55XX
+    api_report "M_VMIX3_55XX: Various VOUTs on MIXER1"
+    api_checkerr
+
+    ; Private variables
+    HDLVOUTRGB =0
+
+    ; Init DENC, VTG & VOUT
+    M_COMMON_BEIO "ON"
+
+    ; Init VOUT in RGB
+    M_VOUTDENC_RGB "ON"
+
+    ; Init all possible layer
+    M_55XX_LAYER "START" hF
+
+    ;MIXER1 Init, Opens & connect layer and enable mixer
+    vmix_init ,,, "VTG" ,, VOUT_NAME "VOUTRGB"
+    HDLVMIX1=vmix_open
+    vmix_connect HDLVMIX1 "LVIDEO"
+    vmix_sscreen HDLVMIX1
+    vmix_enable HDLVMIX1
+
+    vmix_dconnect HDLVMIX1
+
+    if API_CHIPID!="5508"
+        if API_CHIPID!="5518"
+            vmix_connect HDLVMIX1 "STILL"
+            api_quest "Is still on screen ?"
+            ERRORCOUNT=ERRORCOUNT+ERRORCODE
+        end
+    end
+
+    ; Connect all possible layers
+    M_55XX_LAYER "CONNECT_ALL"
+
+    if API_CHIPID=="5508"
+        api_quest "Are video behind osd behind cursor on both RGB & CVBS output ?"
+    end
+    elif API_CHIPID=="5518"
+        api_quest "Are video behind osd behind cursor on both RGB & CVBS output ?"
+    end
+    else ; 5510 5512 5514 5516
+        api_quest "Are still behind video behind osd behind cursor on both RGB & CVBS output ?"
+    end
+    ; Test api_quest response
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Term mixer
+    vmix_disable
+    vmix_dconnect
+    vmix_close
+    vmix_term
+
+    ; Term all possible layer
+    M_55XX_LAYER "STOP" hF
+
+    ; Term VOUT in RGB
+    M_VOUTDENC_RGB "OFF"
+
+    ; Term DENC, VTG & VOUT
+    M_COMMON_BEIO "OFF"
+
+    api_report "M_VMIX3_55XX" ERRORCOUNT
+end  ;M_VMIX3_55XX
+
+
+;*******************************************************************************
+;Name        : M_VMIX3_5100
+;Description : Connecting on 5100/5105/5301/5188/5107/5162, DENC CVBS&RGB output on mixer
+;*******************************************************************************
+define M_VMIX3_5100
+    api_report "M_VMIX3_5100: Various VOUTs on MIXER1"
+    api_checkerr
+
+    ; Private variables
+    HDLVOUTRGB =0
+
+    ; Init DENC, VTG & VOUT
+    M_COMMON_BEIO "ON"
+
+    ; Init VOUT in RGB
+    M_VOUTDENC_RGB "ON"
+
+    ; Init all possible layer
+    M_5100_LAYER "START" 7
+
+    ;MIXER1 Init, Opens & connect layer and enable mixer
+    vmix_init ,,, "VTG" ,, VOUT_NAME "VOUTRGB"
+    HDLVMIX1=vmix_open
+    vmix_connect HDLVMIX1 "LVIDEO"
+    vmix_sscreen HDLVMIX1
+    vmix_enable HDLVMIX1
+
+    vmix_dconnect HDLVMIX1
+
+    ; Connect all possible layers
+    M_5100_LAYER "CONNECT_ALL"
+
+    api_quest "Are still behind video behind osd behind cursor on both RGB & CVBS output ?"
+
+    ; Test api_quest response
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect
+
+    ; Term all possible layer
+    M_5100_LAYER "STOP" 7
+
+
+    ; Term mixer
+    vmix_disable
+    vmix_close
+    vmix_term
+
+
+    ; Term VOUT in RGB
+    M_VOUTDENC_RGB "OFF"
+
+    ; Term DENC, VTG & VOUT
+    M_COMMON_BEIO "OFF"
+
+    api_report "M_VMIX3_5100" ERRORCOUNT
+end  ;M_VMIX3_5100
+
+
+;*******************************************************************************
+;Name        : M_VMIX3_7015_20
+;Description : Connecting on 7015, STV0119 & internal DENC output on mixer1
+;*******************************************************************************
+define M_VMIX3_7015_20 T_LAYERNAME
+    api_report "M_VMIX3_7015_20: Various VOUTs on MIXER1"
+
+    ; Private variables
+    HDLDIGVOUT=0
+    HDLANAVOUT=0
+    HDLVTG119=0
+    HDLVOUT119=0
+    HDLDENC119=0
+    HDLVOUTRGB119=0
+
+    ; Init DENC, VOUT, VTG1
+    M_COMMON_BEIO "ON"
+
+    ; Init HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "ON"
+
+    ; Init Mixer1
+    ; Vout that are really relevant for mixer are 7015 output type
+    ; VOUTRGB119 & VOUT119 are not relevant
+    if AVAIL_STV0119==TRUE
+        vmix_init ,,,,,, "HDANA" "HDDIG" "VOUTRGB119" "VOUT119" VOUT_NAME
+    end
+    else
+        vmix_init ,,,,,, "HDANA" "HDDIG" VOUT_NAME
+    end
+    HDLVMIX1 = vmix_open
+    vmix_enable HDLVMIX1
+
+    ; Set NTSC mode for VTG1, MIX1 & internal DENC
+    M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1 HDLDENC
+
+    if RET&2
+        ; Start layer GFX1
+        M_7015_LAYER "START" h4 720 480
+    end
+    if RET&8
+        ; Start layer GDP1
+        M_GAMMA_LAYER "START" h4 720 480
+    end
+
+    vmix_sback HDLVMIX1 , 128 200 200
+    vmix_connect , T_LAYERNAME
+    if AVAIL_STV0119==TRUE
+        api_quest "Are light blue background and merou on both internal denc & STV0119 output ?"
+    end
+    else
+        api_quest "Are light blue background and merou on internal denc output ?"
+    end
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dcon
+    ; Set HD mode for VTG1, MIX1
+    M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+
+    vmix_connect , T_LAYERNAME
+    api_quest "Are light blue background and merou on HD ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect HDLVMIX1
+
+    if RET&2
+        ; Stop layer GFX1
+        M_7015_LAYER "STOP" h4
+    end
+    if RET&8
+        ; Stop layer GDP1
+        M_GAMMA_LAYER "STOP" h4
+    end
+
+    ; Back to default NTSC mode for correct I2C access
+    M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1 HDLDENC
+
+    ; Term Mixer1
+    vmix_close HDLVMIX1
+    vmix_term
+
+    M_7015_BEIO "OFF"
+
+    M_COMMON_BEIO "OFF"
+
+    api_report "M_VMIX3_7015_20" ERRORCOUNT
+end  ;M_VMIX3_7015_20
+
+;*******************************************************************************
+;Name        : M_VMIX3_7710
+;Description : Connecting on 7710 on mixer1
+;*******************************************************************************
+define M_VMIX3_7710 T_LAYERNAME  VOUT_TYPE I
+    api_report "M_VMIX3_7710: Various VOUTs on MIXER1"
+    ; Private variables
+    HDLVOUTRGB =0
+    HDLVOUTYUV =0
+    HDLVOUTCVBS =0
+    HDLVOUTYC =0
+
+    ;Init vout
+    if (MIX1_SD==1)
+        if VOUT_TYPE=="CVBS"
+                M_VOUTDENC_CVBS "ON"
+                vmix_init , , , , , , VOUT_NAME "VOUTCVBS"
+        end
+
+        if VOUT_TYPE=="RGB"
+                M_VOUTDENC_RGB "ON"
+                vmix_init , , , , , , VOUT_NAME "VOUTRGB"
+        end
+        if VOUT_TYPE=="YUV"
+                M_VOUTDENC_YUV "ON"
+                vmix_init , , , , , , VOUT_NAME "VOUTYUV"
+        end
+        if VOUT_TYPE=="YC"
+                M_VOUTDENC_YC "ON"
+                vmix_init , , , , , , VOUT_NAME "VOUTYC"
+        end
+
+        ; Init Mixer1
+        HDLVMIX1 = vmix_open
+        vmix_enable HDLVMIX1
+        ;Set NTSC mode for VTG1, MIX1 & internal DENC
+        M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1 HDLDENC
+    end
+
+    if (MIX1_HD==1)
+        if VOUT_TYPE=="HD_RGB"
+           vout_init "HDANA" , "HD_RGB"
+        end
+
+        if VOUT_TYPE=="HD_YUV"
+           vout_init "HDANA" , "HD_YUV"
+        end
+
+        HDLANAVOUT = vout_open "HDANA"
+        vout_enable
+        vmix_init ,,,,,, "HDANA"
+        HDLVMIX1 = vmix_open
+        vmix_enable HDLVMIX1
+        if (API_CHIPID!="7200")
+        M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+        end
+    end
+
+    vmix_sback HDLVMIX1 , 128+I 200-I 200
+    vmix_connect , "GDP1"
+    api_quest "Is merou on output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+if (API_CHIPID=="7200")
+    vmix_connect HDLVMIX1 "GDP2" "CURS"
+    api_quest "Are graphical susie, cursor component on output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    end
+else
+    vmix_connect HDLVMIX1 "ALPHA" "GDP2" "CURS"
+    layer_attvp HDLVPALPHA HDLGDP2
+    api_quest "Are graphical susie, cursor and alpha component on output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+end
+    vmix_connect HDLVMIX1 "LAYVID1" "GDP2"
+    api_quest "Are video1 & susie on output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Term Mixer1
+    vmix_dconnect HDLVMIX1
+    vmix_close HDLVMIX1
+    vmix_term
+
+    if (MIX1_SD==1)
+        if VOUT_TYPE=="CVBS"
+                M_VOUTDENC_CVBS "OFF"
+        end
+
+        if VOUT_TYPE=="RGB"
+                M_VOUTDENC_RGB "OFF"
+        end
+        if VOUT_TYPE=="YUV"
+                M_VOUTDENC_YUV "OFF"
+        end
+        if VOUT_TYPE=="YC"
+                M_VOUTDENC_YC "OFF"
+        end
+    end
+
+    if (MIX1_HD==1)
+        vout_close
+        vout_term "HDANA"
+    end
+
+    api_report "M_VMIX3_7710" ERRORCOUNT
+
+end  ;M_VMIX3_7710
+
+;*******************************************************************************
+;Name        : M_VMIX3_GX1
+;Description : SubMacro for M_VMIX3 targetting GX1 chip
+;*******************************************************************************
+define M_VMIX3_GX1
+
+    ; Private variables
+    LAYVPHDL = 0
+    T_GDP1HDL = 0
+    T_GDP1VPHDL = 0
+    HDLVOUTRGB =0
+
+    M_COMMON_BEIO "ON"
+
+    vout_init "VOUTRGB" , RGB , hbb440040
+    HDLVOUTRGB = vout_open "VOUTRGB"
+    vout_enable
+
+    vmix_init ,,,,,, VOUT_NAME "VOUTRGB"
+    HDLVMIX1 = vmix_open
+    vmix_enable
+
+    M_COMMON_SETMODE "PAL"
+
+    T_GDP1HDL = M_GX1_GDP_ON "GDP1" h100 2 20 20
+    T_GDP1VPHDL = LAVYPHDL
+
+    vmix_connect , "GDP1"
+    vmix_sback
+
+    api_quest "Do you see merou & background on both output CVBS & RGB ?"
+    ERRORCOUNT = ERRORCOUNT+ERRORCODE
+
+    vmix_dconnect
+
+    M_GX1_GDP_OFF "GDP1" T_GDP1HDL T_GDP1VPHDL
+
+    vmix_close
+    vmix_term
+
+    vout_close HDLVOUTRGB
+    vout_term "VOUTRGB"
+
+    M_COMMON_BEIO "OFF"
+end
+
+;*******************************************************************************
+;Name        : M_VMIX3_5528
+;Description : Connecting on 5528 output on mixer1
+;*******************************************************************************
+define M_VMIX3_5528 T_LAYERNAME VOUT_TYPE I
+    api_report "M_VMIX3_5528: Various VOUTs on MIXER1"
+    ; Private variables
+    HDLVOUTRGB =0
+    HDLVOUTYUV =0
+    HDLVOUTCVBS =0
+    HDLVOUTYC =0
+
+    ;Init vout
+    if VOUT_TYPE=="RGB"
+         M_VOUTDENC_RGB "ON"
+         vmix_init , , , , , , VOUT_NAME "VOUTRGB"
+    end
+    if VOUT_TYPE=="YUV"
+         M_VOUTDENC_YUV "ON"
+         vmix_init , , , , , , VOUT_NAME "VOUTYUV"
+    end
+    if VOUT_TYPE=="YC"
+         M_VOUTDENC_YC "ON"
+         vmix_init , , , , , , VOUT_NAME "VOUTYC"
+    end
+   ; Init Mixer1
+    if VOUT_TYPE=="CVBS"
+    vmix_init , , , , , , VOUT_NAME
+    end
+
+    HDLVMIX1 = vmix_open
+    vmix_enable HDLVMIX1
+
+    ; Set NTSC mode for VTG1, MIX1 & internal DENC
+    M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1 HDLDENC
+
+    vmix_sback HDLVMIX1 , 128+I 200-I 200
+    vmix_connect , "GDP1"
+    api_quest "Is merou on output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX1 "ALPHA" "GDP2" "CURS"
+    layer_attvp HDLVPALPHA HDLGDP2
+    api_quest "Are graphical merou, cursor and alpha component on output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    vmix_connect HDLVMIX1 "LAYVID1" "GDP3"
+    api_quest "Are video1 & susie on output ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Term Mixer1
+    vmix_dconnect HDLVMIX1
+    vmix_close HDLVMIX1
+    vmix_term
+
+    if VOUT_TYPE=="RGB"
+         M_VOUTDENC_RGB "OFF"
+    end
+    if VOUT_TYPE=="YUV"
+         M_VOUTDENC_YUV "OFF"
+    end
+    if VOUT_TYPE=="YC"
+         M_VOUTDENC_YC "OFF"
+    end
+
+    api_report "M_VMIX3_5528" ERRORCOUNT
+end  ;M_VMIX3_5528
+
+
+define M_VOUT_HDANA P_ACTION P_HDL
+    RET=0
+    if P_ACTION=="ON"
+        ; VOUT Analog HD Configuration
+        vout_init "HDANA" , "HD_RGB"
+        RET=vout_open "HDANA"
+        vout_enable
+    end
+    if P_ACTION=="OFF"
+        vout_close P_HDL
+        vout_term "HDANA"
+    end
+end RET
+
+;*******************************************************************************
+;Name        : M_VMIX3_MAIN
+;Description : Main function redirect to specific targetting sub macros
+;*******************************************************************************
+define M_VMIX3_MAIN
+    ERRORCOUNT = 0
+    print ""
+    print "Starting M_VMIX3..."
+
+    MIX1_SD=0
+    MIX1_HD=1
+
+    for I 1 2
+      if (((API_CHIPID=="7200")&&(I==1))||(API_CHIPID!="7200"))
+        if (MIX1_HD==1)
+                api_report "TEST HD"
+        end
+        if (MIX1_SD==1)
+                api_report "TEST SD"
+        end
+
+        if (MIX1_HD==1)
+           if (API_CHIPID=="7109")
+              VTG_EnableHVSync
+           end
+        end
+
+        RET=MC_CHECK_TYPE
+
+        if RET&1
+                M_VMIX3_55XX
+        end
+        if RET&2
+                M_VMIX3_7015_20 "GFX1"
+        end
+        if RET&4
+                M_VMIX3_GX1
+        end
+        if RET&8
+                if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+                        if (API_CHIPID=="7200")
+                                vtg_init
+                                HDLVTGMAIN = vtg_open
+                                vtg_setmode HDLVTGMAIN "MODE_1080I60000_74250"
+                                M_GAMMA_LAYER "START" h2D 720 480
+                        end
+                        else
+                                M_GAMMA_LAYER "START" h7D 720 480
+                                M_COMMON_BEIO "ON"
+                        end
+
+                         if (MIX1_SD==1)
+                                print ""
+                                api_report "Output CVBS on mixer1"
+                                print ""
+                                M_VMIX3_7710 "GDP1" "CVBS" 50
+
+                                api_report "Output RGB on mixer1"
+                                M_VMIX3_7710  "GDP1" "RGB" 0
+                                print ""
+
+                                api_report "Output YUV on mixer1"
+                                print ""
+                                M_VMIX3_7710  "GDP1" "YUV" 100
+
+                                print ""
+                                api_report "Output YC on mixer1"
+
+                                print ""
+                                M_VMIX3_7710  "GDP1" "YC" 128
+                                print ""
+                        end
+                        if (MIX1_HD==1)
+                                print ""
+                                api_report "Output HD_RGB on mixer1"
+                                print ""
+                                M_VMIX3_7710 "GDP1" "HD_RGB" 50
+
+                                print ""
+                                api_report "Output HD_YUV on mixer1"
+                                print ""
+                                M_VMIX3_7710 "GDP1" "HD_YUV" 50
+
+                        end
+                        if (API_CHIPID=="7200")
+                                M_GAMMA_LAYER "STOP" h2D
+                        end
+                        else
+                                M_GAMMA_LAYER "STOP" h7D
+                        end
+                        if (API_CHIPID=="7200")
+                        vtg_close HDLVTGMAIN
+                        vtg_term
+                        end
+                        else
+                        M_COMMON_BEIO "OFF"
+                        end
+                        end
+                else
+                        M_VMIX3_7015_20 "GDP1"
+                end
+        end
+        if RET&16 ; 5528
+                M_GAMMA_LAYER "START" h7C 720 480
+                M_GAMMA_LAYER "WA_SVPARAMS" h1 720 480
+                M_MB376_BEIO "ON" "MAIN"
+
+                print ""
+                api_report "Output CVBS on mixer1"
+                print ""
+                M_VMIX3_5528  "GDP1" "CVBS" 50
+
+                api_report "Output RGB on mixer1"
+                M_VMIX3_5528  "GDP1" "RGB" 0
+                print ""
+
+                api_report "Output YUV on mixer1"
+                print ""
+                M_VMIX3_5528  "GDP1" "YUV" 100
+
+                print ""
+                api_report "Output YC on mixer1"
+
+                print ""
+                M_VMIX3_5528  "GDP1" "YC" 128
+                print ""
+                M_GAMMA_LAYER "STOP" h7D
+                M_MB376_BEIO "OFF" "MAIN"
+
+        end
+
+        if RET&32 ; 5100/5105/5301/5188/5107/5162
+                M_VMIX3_5100
+        end
+
+
+        if (MIX1_SD==1)
+                MIX1_SD=0
+                MIX1_HD=1
+        end
+        else
+                if (MIX1_HD==1)
+                        MIX1_SD=1
+                        MIX1_HD=0
+                end
+        end
+      end ; if ((API_CHIPID=="7200")&&(I==1)||(API_CHIPID!="7200"))
+    end ; for I 1 2
+
+    MC_CHECK_ERROR  ERRORCOUNT
+
+    ERR_VMIX3=GLOBERR
+end ;M_VMIX3_MAIN
+
+
+
+

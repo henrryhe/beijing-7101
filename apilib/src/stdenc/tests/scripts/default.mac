@@ -1,0 +1,377 @@
+;*****************************************************************************
+; File         : DEFAULT.MAC
+; Requirements :
+; Author       : BS - NOVEMBER 2000
+;*****************************************************************************
+; Overall tests are defined here
+
+;;;;;;;;;; HERE ARE USEFULL MACROS USED BY ALL TESTS ;;;;;;;;;;;;;
+
+; ERRORCOUNT is incremented if ERRORCODE is not equal to EXPECTED
+; ERRORCODE is set in each command file
+
+
+define M_CHECK_RETCODE EXPECTED
+    if ERRORCODE!=EXPECTED
+        ERRORCOUNT=ERRORCOUNT+1
+        print "!!!!!!!!!!!! TEST FAILED !!!!!!!!!!!!"
+        print "Expected code:" EXPECTED
+    end
+end
+
+
+;;;;;; MACROS NEW ARCHI ;;;;;;;
+
+define M_DISPLAY_ON
+    if DENC_ACCESS==0
+        if (API_CHIPID=="7200")
+                ckg_init
+                denc_init DENC_NAME ,,, DENC_BA
+        end
+        else
+                denc_init DENC_NAME,,DENC_CHOSEN
+        end
+        M_CHECK_RETCODE ERR_NO_ERROR
+        HDLDENC=denc_open DENC_NAME,SET_AUX,SET_EXTERNAL
+        if SET_EXTERNAL==0
+                HDLMAINDENC=HDLDENC
+        end
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    else
+        DENC_NAME="DENC_STV0119"
+        denc_init DENC_NAME 5 DENC_TYPE DENC_ACCESS
+        M_CHECK_RETCODE ERR_NO_ERROR
+        HDLDENC=denc_open DENC_NAME,SET_AUX ,SET_EXTERNAL
+        M_CHECK_RETCODE ERR_NO_ERROR
+        vtgsim_set HDLDENC VTGSIM_TYPE 1 "MODE_SLAVE"
+    end
+end
+
+define M_DISPLAY_OFF
+    denc_close HDLDENC
+    M_CHECK_RETCODE ERR_NO_ERROR
+    denc_term DENC_NAME
+    M_CHECK_RETCODE ERR_NO_ERROR
+end
+
+
+define M_TEST_MENU
+    x=115
+    while (x==115)||(x==109)
+        print ""
+        if API_BOARDID=="mb295"
+            if DENC_ACCESS==0
+                print "DENC type selected: 7015/20"
+            end
+            else
+                print "DENC type selected: STV0119"
+            end
+        end
+        y=0
+        if API_CHIPID=="7200"
+                loop=0
+                while (y!=48)&&(y!=49)&&(y!=13)&&(loop==0)
+                        print "0 - DENC1 tests"
+                        print "1 - DENC2 tests"
+                        print " hit return to Quit this menu"
+                        print ""
+                        print " Enter your choice :"
+                        y=getkey
+                        if y==48
+                                print ""
+                                print "  +++++++++++++++++++++++++++++++++ "
+                                print "  +         DENC1 TESTS           + "
+                                print "  +++++++++++++++++++++++++++++++++ "
+                                DENC_BA=hfd10c000
+                                DENC_SELECT=1
+                                DENC_NAME="DENC_1"
+                        end
+                        elif y==49
+                                print ""
+                                print "  +++++++++++++++++++++++++++++++++ "
+                                print "  +         DENC2 TESTS           + "
+                                print "  +++++++++++++++++++++++++++++++++ "
+                                DENC_BA=hfd10f000
+                                DENC_SELECT=2
+                                DENC_NAME="DENC_2"
+                        end
+                        elif y!=13
+                                DENC_BA=hfd10c000
+                                DENC_NAME="DENC_1"
+                                print ""
+                                print "The DENC selected is DENC1"
+                                loop=1
+                        end
+                end
+        end
+        if (API_CHIPID!="7200")||(y!=13)
+                print ""
+                print "0 - API BASIC TESTS"
+                print "1 - RETURNS TESTS"
+                print "2 - VIDEO MODE TESTS"
+                print "3 - OPTION MODE TESTS"
+
+                if (DENC_ACCESS==0)&&(SET_EXTERNAL==0)
+                        if (API_CHIPID!="5100")&&(API_CHIPID!="5105")&&(API_CHIPID!="5301")&&(API_CHIPID!="5188")&&(API_CHIPID!="5107")&&(DENC_SELECT==1)&&(API_CHIPID!="5162")
+                                print "4 - MULTI INSTANCE TESTS"
+                        end
+                end
+                print "5 - RUN ALL TESTS"
+                if API_BOARDID=="mb295"
+                    print "S - SWITCH TO OTHER DENC"
+                end
+                if AUXDENC==1
+                        if (API_CHIPID!="5100")&&(API_CHIPID!="7710")&&(API_CHIPID!="5105")&&(API_CHIPID!="7100")&&(API_CHIPID!="5301")&&(API_CHIPID!="7109")
+                                if (API_CHIPID!="5188")&&(API_CHIPID!="5525")&&(API_CHIPID!="5107")&&(API_CHIPID!="7200")&&(API_CHIPID!="5162")
+                                        print "S - SWITCH TO AUX/MAIN DENC OUTPUT"
+                                end
+                        end
+                end
+                if EXTERNAL_DENC_TYPE>0
+                    print "M - Move output to external/internal DENC"
+                end
+                print " hit return to Quit this menu"
+                print ""
+                print " Enter your choice :"
+                x=getkey
+        end
+        if (API_CHIPID=="7200")&&(y==13)
+                x=y
+        end
+        ;;;;;;;;;;;;;
+        ;If S pressed
+        ;;;;;;;;;;;;;
+        if x==115
+                if AUXDENC==1
+                        if SET_AUX==1
+                                SET_AUX=0
+                                print "Switching to main output"
+                        end
+                        else
+                                SET_AUX=1
+                                print "Switching to auxiliary output"
+                        end
+                end
+
+                if API_BOARDID=="mb295"
+                    if DENC_ACCESS==1
+                        DENC_ACCESS=0
+                        DENC_TYPE=1
+                    end
+                    else
+                        ; set 7015/7020 VTG1 in PAL mode
+                        vtgsim_set 0 VTGSIM_TYPE 1
+                        DENC_ACCESS=1
+                        DENC_TYPE=0
+                    end
+               end
+         end
+        ;;;;;;;;;;;;;
+        ;If M pressed
+        ;;;;;;;;;;;;;
+        if x==109 && EXTERNAL_DENC_TYPE>0
+                if SET_EXTERNAL==1
+                        SET_EXTERNAL=0
+                        AUXDENC=1
+                        print " "
+                        print "=> Moving output to internal denc"
+                        print " "
+                        denc_term "main_denc",1
+                        HDLMAINDENC=HDLDENC
+                        DENC_CHOSEN=DENC_TYPE
+                end
+                else
+                        SET_EXTERNAL=1
+			AUXDENC=0
+                        print " "
+                        print "=> Moving output to external denc"
+                        print "Opening internal denc to let SimVTG work (needs DENC handle)"
+                        print " "
+                        denc_init "main_denc",,DENC_TYPE
+                        HDLMAINDENC=denc_open "main_denc"
+                        DENC_CHOSEN=EXTERNAL_DENC_TYPE
+                end
+        end
+    end
+    if x>=48
+       x=x-48
+    end
+    choice=1
+    if x>5
+       choice=0
+    end
+    if x==5
+        choice=255
+    end
+    else
+        while x!=0
+           choice=choice*2
+           x=x-1
+        end
+    end
+    if choice&1
+        ; API BASIC TESTS
+        source OSPATH+DRV_PATH_DENC+"dncbasic.mac"
+        M_BASIC_TESTS
+    end
+    if choice&2
+        ; RETURNS TESTS
+        source OSPATH+DRV_PATH_DENC+"returns.mac"
+        M_RET_TESTS
+    end
+    if choice&hFC  ; Check if one of the other mode
+        if (API_CHIPID=="5301")
+                poke h20d00004 h18000 ; write in ctrl-d register to active denc programming
+        end
+        M_DISPLAY_ON
+        if (API_CHIPID=="7200")
+                vtgsim_set HDLMAINDENC VTGSIM_TYPE DENC_SELECT+1 "MODE_576I50000_13500"
+        end
+        else
+                vtgsim_set HDLMAINDENC VTGSIM_TYPE 1 "MODE_576I50000_13500"
+        end
+        denc_setmode
+        M_CHECK_RETCODE ERR_NO_ERROR
+    end
+    if choice&4
+        ; VIDEO MODE TESTS
+         source OSPATH+DRV_PATH_DENC+"dncmode.mac"
+        if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+          M_LAYER_INIT
+        end
+        M_MODE_TESTS
+        if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+                M_LAYER_TERM_SD
+        end
+    end
+    if choice&8
+        ; VIDEO MODE TESTS
+        source OSPATH+DRV_PATH_DENC+"dncopt.mac"
+        if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+          M_LAYER_INIT
+        end
+        M_OPTION_TESTS
+        if (API_CHIPID=="7100")||(API_CHIPID=="7109")
+                M_LAYER_TERM_SD
+        end
+    end
+    if DENC_ACCESS==0
+        if SET_EXTERNAL==0
+                if choice&16
+                        ; MULTI INSTANCE TESTS
+                        source OSPATH+DRV_PATH_DENC+"dncmult.mac"
+                        if (API_CHIPID=="5525")
+                            M_MULT_5525_TESTS
+                        end
+                        elif (API_CHIPID=="7200")
+                            M_MULT_7200_TESTS
+                        end
+                        else
+                            M_MULT_TESTS
+                        end
+                end
+        end
+    end
+    if choice&hFC  ; Check if one of the other mode
+        M_DISPLAY_OFF
+    end
+end
+
+;;;;;;;;;; BEGINNING OF THE EXECUTION  ;;;;;;;;;;;;;
+
+ERRORCOUNT=0
+HDLDENC=0
+HDLMAINDENC=0
+; auxiliary encoder availability (never for DENC cells <12)
+AUXDENC=0
+SET_AUX=0
+EXTERNAL_DENC_TYPE=0
+SET_EXTERNAL=0
+DENC_CHOSEN=DENC_TYPE
+BUFF_ADD=0
+;there must be a programmable VTG cell on chip to support square pixel and 60 Hz
+VTGPROG=0
+DENC_SELECT=1
+DENC_BA=0
+
+define M_LAYER_INIT
+if (ST_OS=="LINUX")
+        layer_term "LAYVID1" 1
+end
+if (API_CHIPID=="7100")
+        layer_init "LAYVID1" "HDDISPO2_VIDEO1" 720 576
+end
+elif (API_CHIPID=="7109")
+        layer_init "LAYVID1" "VDP_VIDEO1" 720 576
+end
+HDLVID1 = layer_open "LAYVID1"
+HDLVPVID1 = layer_openvp HDLVID1 0 0 720 576 BUFF_ADD 0 0 720 576
+layer_enable HDLVPVID1
+layer_svpparams HDLVPVID1 ,, 720 576 720/3 200 360*3 288*3 1 720 576 BUFF_ADD
+DENC_GamSet
+end
+
+define M_LAYER_TERM_SD
+layer_term "LAYVID1" 1
+end
+
+api_error 0
+ if (API_CHIPID=="5528")||(API_CHIPID=="5100")||(API_CHIPID=="7710")||(API_CHIPID=="5105")||(API_CHIPID=="7100")
+ AUXDENC=1
+ end
+ if (API_CHIPID=="5301")||(API_CHIPID=="7109")||(API_CHIPID=="5188")||(API_CHIPID=="5525")||(API_CHIPID=="5107")||(API_CHIPID=="7200")||(API_CHIPID=="5162")
+ AUXDENC=1
+ end
+
+if (API_BOARDID=="mb376")||(API_BOARDID=="espresso")
+; External denc is STi4629
+        EXTERNAL_DENC_TYPE=4
+end
+if (API_CHIPID=="7015")||(API_CHIPID=="7020")||(API_CHIPID=="GX1")||(API_CHIPID=="5528")
+  ;  GammaDisplay
+     VTGPROG=1
+end
+elif (API_CHIPID=="7710")||(API_CHIPID=="7200")
+     GammaDisplay
+     VTGPROG=0
+end
+elif (API_CHIPID=="7100")||(API_CHIPID=="7109")
+   if (ST_OS=="LINUX")
+        if (API_CHIPID=="7100")
+                layer_init "LAYVID1" "HDDISPO2_VIDEO1" 720 576
+        end
+        elif (API_CHIPID=="7109")
+                layer_init "LAYVID1" "VDP_VIDEO1" 720 576
+        end
+   end
+   RET_STR = displayvideo
+   BUFF_ADD = api_evalstr RET_STR 1
+end
+else
+   if (API_CHIPID=="5100")||(API_CHIPID=="5301")
+     GDMADisplay
+     VTGPROG=1
+   end
+   elif (API_CHIPID=="5105")||(API_CHIPID=="5188")
+     poke h20402004 h0
+     GDMADisplay
+     VTGPROG=0
+   end
+   elif (API_CHIPID=="5107")||(API_CHIPID=="5162")
+    poke h20402004 h0
+    GDMADisplay
+    VTGPROG=0
+   end
+   elif (API_CHIPID=="5525")
+      poke h1980002C hc00000
+      GDMADisplay  , 1
+      VTGPROG=1
+   end
+   else
+     OSDDisplay
+   end
+end
+
+; Start tests
+M_TEST_MENU

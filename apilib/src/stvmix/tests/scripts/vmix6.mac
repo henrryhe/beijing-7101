@@ -1,0 +1,1747 @@
+;*****************************************************************************
+; File   :  VMIX6.MAC
+;           Dynamic resizing on MIX1
+;           See STVMIX component test specification document for use
+; Author :  BS - Reviewed november 2001
+;*****************************************************************************
+
+
+define M_TEST_SCREEN_1 WID HEI
+    wait 2000
+    vmix_sscreen HDLVMIX1 ,,, 720 576 132 23   ; max screen
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_sscreen HDLVMIX1 , , , (WID-1) (HEI) 132 23   ; Xscreen = Xlayer - 1
+    MC_CHECK_RETCODE ERR_VMIX_UPDATE_PARAMETERS
+    vmix_sscreen HDLVMIX1 , , , (WID) (HEI-1) 132 23   ; Yscreen = Ylayer - 1
+    MC_CHECK_RETCODE ERR_VMIX_UPDATE_PARAMETERS
+    vmix_sscreen HDLVMIX1 , , , (WID) (HEI) 132 23   ; screen = layer
+    MC_CHECK_RETCODE ERR_NO_ERROR
+
+  ; Screen parameter :
+    T_OFFSET_X = (720-WID)/12
+    T_OFFSET_Y = (490-HEI)/12
+    for I 0 12
+        vmix_sscreen HDLVMIX1 ,,, (I*T_OFFSET_X)+WID (T_OFFSET_Y*I)+HEI 132 23
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        wait 200
+    end
+    api_quest "Is display not changed, on SD ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+end
+
+define M_TEST_SCREEN_2
+    wait 1000
+  ; Offset :
+  ; XStart = 111 min to 141 max (HD mode)
+  ; YStart = 20 min to 40 max (HD mode)
+    for I 10 20
+        vmix_sscreen HDLVMIX1 ,,, 720 576 (3*I)+81 (2*I)
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        wait 200
+    end
+    api_quest "Is display increased on SD ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+end
+
+
+define M_TEST_OFFSET_3 HDLMIX HMIN HMAX VMIN VMAX
+; Offset parameters : X = min to max , Y = min to max (HD mode)
+    wait 2000
+
+    for I HMIN HMAX 5
+        for J VMIN VMAX 5
+            vmix_soffset HDLMIX I J
+            MC_CHECK_RETCODE ERR_NO_ERROR
+            wait 100
+        end
+    end
+    api_quest "Is Offset ok ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+end
+
+
+;*******************************************************************************
+;Name        : M_VMIX6_55XX
+;Description : Submacro for M_VMIX6 targetting 55XX chips
+;*******************************************************************************
+define M_VMIX6_55XX DEVICE_TYPE BASE_ADDRESS
+    api_report " M_VMIX6_55XX: Dynamic resizing test"
+
+    api_checkerr
+
+    ; Init DENC, VTG & VOUT
+    M_COMMON_BEIO "ON"
+
+    ; Init all possible layer
+    M_55XX_LAYER "START" hF
+
+    ; Init mixer without VTG
+    vmix_init ,,, "" ,, VOUT_NAME
+    HDLVMIX1=vmix_open
+    vmix_stime
+    vmix_enable
+    M_COMMON_SETMODE "PAL"
+
+    vmix_connect HDLVMIX1 "LVIDEO"
+
+    wait 2000
+    vmix_dconnect
+
+    ; Workaround to set still plane in good place
+;    if API_CHIPID!="5508"
+;        if API_CHIPID!="5518"
+;            bpoke h9d h0
+;        end
+;    end
+
+    print ""
+    print "1) Test width & height screen parameter on mixer"
+    print ""
+    nberrnull = vmix_tscreenp HDLVMIX1 0 768 0 576
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    print ""
+    print "2) Test XStart & YStart screen parameter on mixer"
+    print ""
+    nberrnull = vmix_tstartp HDLVMIX1 111 141 20 40
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    vmix_soffset , 0 0
+    vmix_sscreen ,,,, 720 576 132 23
+
+    STRMODE=""
+    if API_CHIPID=="5508"
+        vmix_connect HDLVMIX1 "LVIDEO" "OSD"
+        STRMODE=layer_gparam HDLOSD
+    end
+    elif API_CHIPID=="5518"
+        vmix_connect HDLVMIX1 "LVIDEO" "OSD"
+        STRMODE=layer_gparam HDLOSD
+    end
+    else
+        ; case 5510 5512 5514 5516
+        vmix_connect , "LVIDEO" "CURSOR"
+
+        ; Resize layer cursor
+        M_COMMON_LAYER_FIT HDLCUR HDLVPCUR
+        STRMODE=layer_gparam HDLCUR
+    end
+    T_WIDTH=api_evalstr STRMODE 3
+    T_HEIGH=api_evalstr STRMODE 4
+
+    print ""
+    print "3) Test width & height screen parameter on mixer with all layer"
+    print ""
+    M_TEST_SCREEN_1 T_WIDTH T_HEIGH
+
+    ; Reset to default
+    M_COMMON_SETMODE "PAL"
+
+    print ""
+    print "4) Test XStart & YStart screen parameter on mixer with all layer"
+    print ""
+    M_55XX_LAYER "CONNECT_ALL_NOT_VIDEO"
+    M_TEST_SCREEN_2
+
+    vmix_dconnect HDLVMIX1
+
+    print ""
+    print "5) Test offset parameter on mixer"
+    print ""
+    STRMODE=vmix_capa
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    T_OFFHMIN=api_evalstr STRMODE 1
+    T_OFFHMAX=api_evalstr STRMODE 2
+    T_OFFVMIN=api_evalstr STRMODE 3
+    T_OFFVMAX=api_evalstr STRMODE 4
+    nberrnull = vmix_toffsetp HDLVMIX1 T_OFFHMIN T_OFFHMAX T_OFFVMIN T_OFFVMAX
+
+    vmix_soff
+
+    print ""
+    print "6) Test offset parameter on mixer with all layer"
+    print ""
+    M_55XX_LAYER "CONNECT_ALL_NOT_VIDEO"
+    M_TEST_OFFSET_3 HDLVMIX1 T_OFFHMIN T_OFFVMIN T_OFFVMIN T_OFFVMAX
+
+    ; Term mixer
+    vmix_disable
+    vmix_dconnect
+    vmix_close
+    vmix_term
+
+    ; Term all possible layer
+    M_55XX_LAYER "STOP" hF
+
+    ; Term DENC, VTG & VOUT
+    M_COMMON_BEIO "OFF"
+
+    api_report " M_VMIX6_55XX"  ERRORCOUNT
+
+end  ;M_VMIX6_55XX
+
+
+;*******************************************************************************
+;Name        : M_VMIX6_5100
+;Description : Submacro for M_VMIX6 targetting 5100/5105/5301/5188/5107/5162 chips
+;*******************************************************************************
+define M_VMIX6_5100 DEVICE_TYPE BASE_ADDRESS
+    api_report " M_VMIX6_5100: Dynamic resizing test"
+
+    api_checkerr
+
+    ; Init DENC, VTG & VOUT
+    M_COMMON_BEIO "ON"
+
+    ; Init all possible layer
+    M_5100_LAYER "START" 7
+
+    ; Init mixer without VTG
+    vmix_init ,,, "" ,, VOUT_NAME
+    HDLVMIX1=vmix_open
+    vmix_stime
+    vmix_enable
+    M_COMMON_SETMODE "PAL"
+
+    vmix_connect HDLVMIX1 "LVIDEO"
+
+    api_quest "Is Video on screen  ?"
+    vmix_dconnect
+
+    print ""
+    print "1) Test width & height screen parameter on mixer"
+    print ""
+    nberrnull = vmix_tscreenp HDLVMIX1 10 720 10 576
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    print ""
+    print "2) Test XStart & YStart screen parameter on mixer"
+    print ""
+    nberrnull = vmix_tstartp HDLVMIX1 111 141 20 40
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    vmix_soffset , 0 0
+    vmix_sscreen ,,,, 720 576 132 23
+
+    STRMODE=""
+    vmix_connect , "OSD"
+
+    ; Resize layer OSD
+    M_COMMON_LAYER_FIT HDLOSD HDLVPOSD
+    STRMODE=layer_gparam HDLOSD
+
+    T_WIDTH=api_evalstr STRMODE 3
+    T_HEIGH=api_evalstr STRMODE 4
+
+    print ""
+    print "3) Test width & height screen parameter on mixer with OSD Layer"
+    print ""
+    M_TEST_SCREEN_1 T_WIDTH T_HEIGH
+
+    ; Reset to default
+    M_COMMON_SETMODE "PAL"
+
+    print ""
+    print "4) Test XStart & YStart screen parameter on mixer with all layer"
+    print ""
+    M_5100_LAYER "CONNECT_ALL"
+    M_TEST_SCREEN_2
+
+    vmix_dconnect HDLVMIX1
+
+    print ""
+    print "5) Test offset parameter on mixer"
+    print ""
+    STRMODE=vmix_capa
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    T_OFFHMIN=api_evalstr STRMODE 1
+    T_OFFHMAX=api_evalstr STRMODE 2
+    T_OFFVMIN=api_evalstr STRMODE 3
+    T_OFFVMAX=api_evalstr STRMODE 4
+    nberrnull = vmix_toffsetp HDLVMIX1 T_OFFHMIN T_OFFHMAX T_OFFVMIN T_OFFVMAX
+
+    vmix_sscreen
+    vmix_soff
+
+
+    print ""
+    print "6) Test offset parameter on mixer with all layer"
+    print ""
+    M_5100_LAYER "CONNECT_ALL"
+    M_TEST_OFFSET_3 HDLVMIX1 T_OFFHMIN T_OFFHMAX T_OFFVMIN T_OFFVMAX
+
+    vmix_dconnect
+
+    ; Term all possible layer
+    M_5100_LAYER "STOP" 7
+
+    ; Term mixer
+    vmix_disable
+    vmix_close
+    vmix_term
+
+    ; Term DENC, VTG & VOUT
+    M_COMMON_BEIO "OFF"
+
+    api_report " M_VMIX6_5100"  ERRORCOUNT
+
+end  ;M_VMIX6_5100
+
+
+;*******************************************************************************
+;
+;*******************************************************************************
+
+define M_TEST_06549
+    ; test : GNBvd06549, malfunction of GAM_MX1_AV0 register
+    vmix_sscreen HDLVMIX1 ,,, 200 200 500 500
+    vmix_soffset HDLVMIX1 0 0
+    vmix_sscreen HDLVMIX1 ,,, 200 200 511 511
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_sscreen HDLVMIX1 ,,, 200 200 512 511
+    MC_CHECK_RETCODE ERR_BAD_PARAMETER
+    vmix_sscreen HDLVMIX1 ,,, 200 200 511 512
+    MC_CHECK_RETCODE ERR_BAD_PARAMETER
+    vmix_sscreen HDLVMIX1 ,,, 200 200 510 510
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_soffset HDLVMIX1 2 0
+    MC_CHECK_RETCODE ERR_BAD_PARAMETER
+    vmix_soffset HDLVMIX1 0 2
+    MC_CHECK_RETCODE ERR_BAD_PARAMETER
+    vmix_soffset HDLVMIX1 0 0
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_sscreen HDLVMIX1 ,,, 400 400 280 45
+
+    ; test : GNBvd06549, malfunction of GAM_MX2_AV0 register
+    vmix_sscreen HDLVMIX2 ,,, 200 200 500 500
+    vmix_soffset HDLVMIX2 0 0
+    vmix_sscreen HDLVMIX2 ,,, 200 200 511 511
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_sscreen HDLVMIX2 ,,, 200 200 512 511
+    MC_CHECK_RETCODE ERR_BAD_PARAMETER
+    vmix_sscreen HDLVMIX2 ,,, 200 200 511 512
+    MC_CHECK_RETCODE ERR_BAD_PARAMETER
+    vmix_sscreen HDLVMIX2 ,,, 200 200 510 510
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_soffset HDLVMIX2 2 0
+    MC_CHECK_RETCODE ERR_BAD_PARAMETER
+    vmix_soffset HDLVMIX2 0 2
+    MC_CHECK_RETCODE ERR_BAD_PARAMETER
+    vmix_soffset HDLVMIX2 0 0
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_sscreen HDLVMIX2 ,,, 400 400 280 45
+end
+
+define M_TEST_SCREEN_3 P_LAYER_NAME
+    api_report " M_TEST_SCREEN_3 "
+    wait 1000
+    vmix_sscreen HDLVMIX1 ,,, 1920 1080 280 45   ; max screen
+    vmix_connect HDLVMIX1 P_LAYER_NAME
+    MC_CHECK_RETCODE ERR_NO_ERROR
+if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")
+    vmix_sscreen HDLVMIX1 , , , 268 344 280 45   ; screen = layer
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_sscreen HDLVMIX1 , , , 267 344 280 45   ; Xscreen = Xlayer - 1
+    MC_CHECK_RETCODE ERR_VMIX_UPDATE_PARAMETERS
+    vmix_sscreen HDLVMIX1 , , , 268 343 280 45   ; Yscreen = Ylayer - 1
+    MC_CHECK_RETCODE ERR_VMIX_UPDATE_PARAMETERS
+    vmix_sscreen HDLVMIX1 0 , , 268 344 280 45   ; Mixer Scan Type != Layer Scan Type
+    MC_CHECK_RETCODE ERR_VMIX_UPDATE_PARAMETERS
+end
+  ; test ddts GNBvd0....
+    vmix_soffset HDLVMIX1 0 0
+    vmix_sscreen HDLVMIX1 ,,, 1000 666 279 45
+    api_quest "Is suzie ok on TV ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+  ; Screen parameter :
+  ; X = 268 to 1920 max (HD mode)
+  ; Y = 344 to 1080 max (HD mode)
+    vmix_sback HDLVMIX1 1 128 184 240
+    wait 2000
+if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")
+    for I 14 28
+        vmix_sscreen HDLVMIX1 ,,, (118*I)-1384 (53*I)-398 280 45
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        wait 200
+    end
+end
+else
+    for I 18 28
+        vmix_sscreen HDLVMIX1 ,,, (118*I)-1384 (53*I)-398 280 45
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        wait 200
+    end
+
+end
+    api_quest "Is background increased, GDP LAYER not changed, on TV ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+end
+
+
+define M_TEST_SCREEN_4
+   api_report " M_TEST_SCREEN_4 "
+     wait 1000
+  ; Offset :
+  ; XStart = 138 min to 830 max (HD mode)
+  ; !!!! XStart limitation to 511 (see ddts GNBvd06549)
+  ; YStart = 30 min to 170 max (HD mode)
+    vmix_sback HDLVMIX1 1 128 240 184
+    wait 1000
+
+ if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")
+    for I 0 140 10
+        vmix_sscreen HDLVMIX1 ,,, 300 400 ((26/10)*I)+138 I+30
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        wait 200
+    end
+end
+else
+    for I 0 140 10
+        vmix_sscreen HDLVMIX1 ,,, 720 480 ((26/10)*I)+138 I+30
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        wait 200
+    end
+
+end
+    api_quest "Is background and GDP LAYER increased on TV ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+end
+
+define M_TEST_SCREEN_5 P_LAYER_NAME
+    api_report " M_TEST_SCREEN_5 "
+    wait 1000
+    vmix_sscreen HDLVMIX2 ,,, 1920 1080 280 45   ; max screen
+
+    vmix_connect HDLVMIX2 P_LAYER_NAME
+    MC_CHECK_RETCODE ERR_NO_ERROR
+if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")
+    vmix_sscreen HDLVMIX2 , , , 352 240 138 45   ; screen = layer
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    vmix_sscreen HDLVMIX2 , , , 351 240 138 45   ; Xscreen = Xlayer - 1
+    MC_CHECK_RETCODE ERR_VMIX_UPDATE_PARAMETERS
+    vmix_sscreen HDLVMIX2 , , , 352 239 138 45   ; Yscreen = Ylayer - 1
+    MC_CHECK_RETCODE ERR_VMIX_UPDATE_PARAMETERS
+    vmix_sscreen HDLVMIX2 0 , , 352 240 138 45   ; Mixer Scan Type != Layer Scan Type
+    MC_CHECK_RETCODE ERR_VMIX_UPDATE_PARAMETERS
+end
+    api_quest "No change on SD ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+end
+
+define M_TEST_SCREEN_6
+  ; Offset :
+  ; XStart = 111 min to 309 max (SD mode)
+  ; YStart = 20 min to 80 max (SD mode)
+  api_report " M_TEST_SCREEN_6 "
+    wait 1000
+    for I 0 48 6
+        vmix_sscreen HDLVMIX2 ,,, 740 580 (10*I/3)+111 I+20
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        wait 200
+    end
+    api_quest "Is susie move on SD ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+end
+
+define M_TEST_SCREEN_XY HDLVMIX
+    api_report " M_TEST_SCREEN_XY "
+    layer_svppos HDLVPGDP2 0 0
+
+    T_STRMODE = layer_gvpiorect HDLVPGDP2
+    T_WIDTH = api_evalstr T_STRMODE 3
+    T_HEIGH = api_evalstr T_STRMODE 4
+    T_X0 = api_evalstr T_STRMODE 5
+    T_Y0 = api_evalstr T_STRMODE 6
+    layer_sparams HDLGDP2 ,, T_WIDTH+T_X0 T_HEIGH+T_Y0
+    vmix_sback HDLVMIX 0
+    vmix_connect HDLVMIX "GDP2"
+   for I 0 14
+        wait 300
+        vmix_sscreen HDLVMIX ,,, T_WIDTH+T_X0 T_HEIGH+T_Y0 I*40 I*20
+        MC_CHECK_RETCODE ERR_NO_ERROR
+   end
+    if HDLVMIX==HDLVMIX1
+        api_quest "Is merou moving on screen on mixer 1?"
+        ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    end
+    if HDLVMIX==HDLVMIX2
+        api_quest "Is merou moving on screen on mixer 2?"
+        ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    end
+end
+define M_TEST_SCREEN_WH HDLVMIX
+    api_report " M_TEST_SCREEN_WH "
+    layer_svppos HDLVPGDP3 0 0
+
+    T_STRMODE = layer_gvpiorect HDLVPGDP3
+    T_WIDTH = api_evalstr T_STRMODE 3
+    T_HEIGH = api_evalstr T_STRMODE 4
+    T_X0 = api_evalstr T_STRMODE 5
+    T_Y0 = api_evalstr T_STRMODE 6
+    layer_sparams HDLGDP3 ,, T_WIDTH+T_X0 T_HEIGH+T_Y0
+
+    T_OFFSET_X = (760-T_WIDTH+T_X0)/12
+    T_OFFSET_Y = (490-T_HEIGH+T_Y0)/12
+    vmix_sback HDLVMIX 1 250 220 250
+    vmix_connect HDLVMIX "GDP3"
+    for I 0 12
+        vmix_sscreen HDLVMIX ,,, (I*T_OFFSET_X)+T_WIDTH (T_OFFSET_Y*I)+T_HEIGH 132 23
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        wait 100
+    end
+    if HDLVMIX==HDLVMIX1
+        api_quest "Does screen size changed on mixer1?"
+        ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    end
+    if HDLVMIX==HDLVMIX2
+        api_quest "Does screen size changed on mixer2?"
+        ERRORCOUNT=ERRORCOUNT+ERRORCODE
+    end
+
+end
+
+define M_TEST_SCREEN_7 P_LAY1NAME P_LAY2NAME P_LAY1HDL P_LAY1VP P_LAY2HDL P_LAY2VP
+    api_report " M_TEST_SCREEN_7 "
+    vmix_sback HDLVMIX1 1 0 180 180
+    vmix_connect HDLVMIX1 P_LAY1NAME P_LAY2NAME
+
+    ; Set GFX2 to 1000x800 & GFX1 to 268x344,
+    ; GFX2 offset 600x500, GFX1 0x0
+    layer_sparam P_LAY1HDL 1 , 1000 800
+    layer_svppos P_LAY1VP 600 500
+    api_quest "Are susie & merou on HD ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Display on SD and expect error update parameters with mixer disable
+if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")
+    vmix_disable
+    M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1
+    MC_CHECK_RETCODE ERR_VMIX_UPDATE_PARAMETERS
+    wait 2000
+ end
+    ; Put back VTG1 with previous HD mode
+    vtg_set HDLVTGMAIN "MODE_1080I60000_74250"
+    vmix_enable HDLVMIX1
+    api_quest "Are always susie & merou on TV at the same place ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Invert graphics 1 & 2
+    vmix_sback HDLVMIX1 1 80 180 40
+    layer_svppos P_LAY1VP 0 0
+    layer_sparam P_LAY1HDL ,, 352 240
+    layer_sparam P_LAY2HDL ,, 1000 800
+    layer_svppos P_LAY2VP 500 400
+    api_quest "Are susie & merou on TV ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Display on SD and expect error update parameters without mixer disable
+if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")
+    M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1
+    MC_CHECK_RETCODE ERR_VMIX_UPDATE_PARAMETERS
+    wait 2000
+end
+    ; Put back VTG1 with previous HD mode
+    vtg_set HDLVTGMAIN "MODE_1080I60000_74250"
+    api_quest "Are always susie & merou on TV at the same place ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+end
+
+define M_TEST_SCREEN_8 P_LAY1NAME  P_LAY1HDL P_LAY1VP
+    api_report " M_TEST_SCREEN_8 "
+    vmix_sback HDLVMIX1 1 0 120 220
+
+    ; Change Video1 to 268x344 & offset 0x0
+
+    ; Change GFX2 to 1000x800 & offset 600x500
+    layer_sparam P_LAY1HDL ,, 1000 800
+    layer_svppos P_LAY1VP 600 500
+
+    ; WA video1
+    M_7015_LAYER "WA_SVPARAMS" h1
+
+    api_quest "Are video1 & merrou on TV ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Display on SD and expect error update parameters with mixer disable
+if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")
+    vmix_disable HDLVMIX1
+    M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1
+    MC_CHECK_RETCODE ERR_VMIX_UPDATE_PARAMETERS
+end
+    ; Put back VTG1 with previous HD mode
+    vtg_setmode HDLVTGMAIN "MODE_1080I60000_74250"
+    wait 2000
+    vmix_enable
+
+    api_quest "Are always Video1 & merrou on TV at the same place & same size ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+
+    ; Change background color
+    vmix_sback HDLVMIX1 1 40 80 180
+
+    ; Change GFX2 to fit vp & offset 0x0
+    layer_svppos P_LAY1VP 0 0
+    M_COMMON_LAYER_FIT P_LAY1HDL P_LAY1VP
+
+    api_quest "Are graphical merrou & Video1 displayed on TV ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+if (API_CHIPID!="7710")&&(API_CHIPID!="7100")&&(API_CHIPID!="7109")
+    ; Display on SD without mixer disable and expect no error (video only can be resized on 7015)
+    M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    api_quest "Are merrou & Video1 displayed correctly on SD ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+end
+
+    ; Back to previous HD mode (resize authorized only STVID_WIN_SIZE_DONT_CARE parameter allowed)
+    M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+
+    api_quest "Are displayed graphical merrou and Video1 on TV ?"
+    ERRORCOUNT=ERRORCOUNT+ERRORCODE
+end
+
+
+;*******************************************************************************
+;Name        : M_VMIX6_7015
+;Description : Dynamic resizing test for 7015 chip
+;*******************************************************************************
+define M_VMIX6_7015
+    api_report " M_VMIX6_7015: Dynamic resizing test"
+
+    ; Private variable
+    HDLDIGVOUT=0
+    HDLANAVOUT=0
+    HDLVTG119=0
+    HDLVOUT119=0
+    HDLDENC119=0
+    HDLVOUTRGB119=0
+
+    ; Init DENC, VOUT, VTG1
+    M_COMMON_BEIO "ON"
+
+    ; Init HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "ON"
+
+    ; Start layers VID1, VID2, GFX1, GFX2 & CURSOR
+    M_7015_LAYER "START" h1F 720 480
+
+    ; MIXER1 Init
+    vmix_init ,,, "" ,, "HDANA"
+    HDLVMIX1=vmix_open
+    vmix_stime
+
+    ; Set HD mode for VTG1, mixer1
+    M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+
+    ; MIXER2 Init
+    vmix_init "VMIX2" , hA800 "" ,, VOUT_NAME
+    HDLVMIX2=vmix_open "VMIX2"
+    vmix_stime , "VTG2"
+
+    ; Set NTSC mode for VTG2, mixer2 & internal denc
+    M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+    print ""
+    print "1) Test width & height screen parameter on mixer1"
+    print ""
+    nberrnull = vmix_tscreenp HDLVMIX1 0 1920 0 1080
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    print ""
+    print "2) Test width & height screen parameter on mixer2"
+    print ""
+    nberrnull = vmix_tscreenp HDLVMIX2 0 800 0 600
+    ;ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    print ""
+    print "3) Test XStart & YStart screen parameter on mixer1"
+    print ""
+    vmix_sscreen HDLVMIX1 ,,, 1920 1080 280 45
+    nberrnull = vmix_tstartp HDLVMIX1 138 511 30 170
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    print ""
+    print "4) Test XStart & YStart screen parameter on mixer2"
+    print ""
+    vmix_sscreen HDLVMIX1 ,,, 768 576 141 23
+    nberrnull = vmix_tstartp HDLVMIX2 111 141 20 40
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    ; test : GNBvd06549, malfunction of GAM_MX1_AV0 and GAM_MX2_AV0 register
+    M_TEST_06549
+
+    print ""
+    print "5) Test width & height screen parameter on mixer1 with layer"
+    print ""
+    vmix_enable HDLVMIX1
+
+    ; Move viewport GFX1&GFX2 to 0 0
+    layer_svppos HDLVPGFX1 0 0
+    layer_svppos HDLVPGFX2 0 0
+
+    ; Fit to bitmap GFX1 & GFX2
+    M_COMMON_LAYER_FIT HDLGFX1 HDLVPGFX1
+    M_COMMON_LAYER_FIT HDLGFX2 HDLVPGFX2
+
+    M_TEST_SCREEN_3 "GFX1"
+
+    print ""
+    print "6) Test XStart & YStart screen parameter on mixer1 with layer"
+    print ""
+    M_TEST_SCREEN_4
+
+    vmix_enable HDLVMIX2
+    print ""
+    print "7) Test width & height screen parameter on mixer2 with layer"
+    print ""
+
+
+    M_TEST_SCREEN_5 LAYER_NAME
+
+    print ""
+    print "8) Test XStart & YStart screen parameter on mixer2 with layer"
+    print ""
+    M_TEST_SCREEN_6
+
+    vmix_disable HDLVMIX1
+    vmix_disable HDLVMIX2
+    vmix_dconnect HDLVMIX1
+    vmix_dconnect HDLVMIX2
+
+    print ""
+    print "9) Test offset parameter on mixer1"
+    print ""
+    STRMODE=vmix_capa "VMIX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    T1_OFFHMIN=api_evalstr STRMODE 1
+    T1_OFFHMAX=api_evalstr STRMODE 2
+    T1_OFFVMIN=api_evalstr STRMODE 3
+    T1_OFFVMAX=api_evalstr STRMODE 4
+    nberrnull = vmix_toffsetp HDLVMIX1 T1_OFFHMIN T1_OFFHMAX T1_OFFVMIN T1_OFFVMAX
+
+    print ""
+    print "10) Test offset parameter on mixer2"
+    print ""
+    STRMODE=vmix_capa "VMIX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    T2_OFFHMIN=api_evalstr STRMODE 1
+    T2_OFFHMAX=api_evalstr STRMODE 2
+    T2_OFFVMIN=api_evalstr STRMODE 3
+    T2_OFFVMAX=api_evalstr STRMODE 4
+    nberrnull = vmix_toffsetp HDLVMIX2 T2_OFFHMIN T2_OFFHMAX T2_OFFVMIN T2_OFFVMAX
+
+    vmix_enable HDLVMIX1
+    vmix_sback HDLVMIX1 0
+    vmix_sscreen HDLVMIX1 ,,, 268 344 280 45
+    vmix_connect HDLVMIX1 "GFX1"
+
+    print ""
+    print "11) Test offset parameter on mixer1 with layer"
+    print ""
+    M_TEST_OFFSET_3 HDLVMIX1 T1_OFFHMIN T1_OFFHMAX T1_OFFVMIN T1_OFFVMAX
+    vmix_dconnect HDLVMIX1
+
+    vmix_enable HDLVMIX2
+    vmix_sscreen HDLVMIX2 ,,, 352 240 138 45
+    vmix_connect HDLVMIX2 LAYER_NAME
+
+    print ""
+    print "12) Test offset parameter on mixer2 with layer"
+    print ""
+    M_TEST_OFFSET_3 HDLVMIX2 T2_OFFHMIN T2_OFFHMAX T2_OFFVMIN T2_OFFVMAX
+    vmix_dconnect HDLVMIX2
+
+    ; Term mixers
+    vmix_close HDLVMIX1
+    vmix_close HDLVMIX2
+    vmix_term
+    vmix_term "VMIX2"
+
+    print ""
+    print "13) Test screen changes on mixer1 with graphics"
+    print ""
+
+    ; Init mixer1
+    vmix_init ,,,,,, "HDANA" VOUT_NAME
+    HDLVMIX1=vmix_open
+    vmix_enable HDLVMIX1
+
+    ; Set HD mode for VTG1, mixer1
+    M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN
+
+    M_TEST_SCREEN_7 LAYER_NAME "GFX1" HDLGFX2 HDLVPGFX2 HDLGFX1 HDLVPGFX1
+
+    vmix_connect HDLVMIX1 "LAYVID1"
+
+    print ""
+    print "14) Test screen changes on mixer1 with graphics & video"
+    print ""
+
+    ; WA video 1
+    M_7015_LAYER "WA_SVPARAMS" h1
+
+    M_TEST_SCREEN_8 LAYER_NAME HDLGFX2 HDLVPGFX2
+
+    vmix_dconnect HDLVMIX1
+
+    ; Set VTG1 bask to SD for STV0119
+    vtg_setmode HDLVTGMAIN "NTSC"
+
+    ; Stop layers VID1, VID2, GFX1, GFX2 & CURSOR
+    M_7015_LAYER "STOP" h1F
+
+    ; Term HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "OFF"
+
+    ; Term mixer1
+    vmix_close HDLVMIX1
+    vmix_term
+
+    ; Term DENC, VOUT, VTG1
+    M_COMMON_BEIO "OFF"
+
+    api_report " M_VMIX6_7015" ERRORCOUNT
+
+end  ;M_VMIX6_7015
+
+
+;*******************************************************************************
+;Name        : M_VMIX6_GX1
+;Description : Dynamic resizing test for GX1 chip
+;*******************************************************************************
+define M_VMIX6_GX1
+    api_report " M_VMIX6_GX1: Dynamic resizing test"
+
+    ; Private variable
+    LAYVPHDL = 0
+    T_GDP1HDL = 0
+    T_GDP1VPHDL = 0
+
+    M_COMMON_BEIO "ON"
+    T_GDP1HDL = M_GX1_GDP_ON "GDP1" h100 2 20 20
+    T_GDP1VPHDL = LAYVPHDL
+
+    vmix_init
+    HDLVMIX1 = vmix_open
+    HDLVMIX1 = HDLVMIX1
+    vmix_enable
+
+    M_COMMON_SETMODE "PAL"
+
+    print ""
+    print "1) Test width & height screen parameter"
+    print ""
+    nberrnull = vmix_tscreenp HDLVMIX1 0 768 0 576
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    M_COMMON_SETMODE "PAL" HDLVTGMAIN HDLVMIX1
+    vmix_connect , "GDP1"
+
+    print ""
+    print "2) Test XStart & YStart screen parameter"
+    print ""
+    nberrnull = vmix_tstartp HDLVMIX1 111 141 20 40
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    vmix_soffset , 0 0
+    vmix_sscreen HDLVMIX1 ,,, 720 576 132 23
+
+    ; define variable for SCREEN_3 macro
+    T_WIDTH=0
+    T_HEIGH=0
+    T_X0=0
+    T_Y0=0
+
+    M_COMMON_LAYER_FIT
+
+    print ""
+    print "3) Test width & height screen parameter with layer"
+    print ""
+    M_TEST_SCREEN_1  T_WIDTH+T_X0 T_HEIGH+T_Y0
+
+    print ""
+    print "4) Test XStart & YStart screen parameter with layer"
+    print ""
+    M_TEST_SCREEN_2
+
+    vmix_dconnect
+
+    print ""
+    print "5) Test offset parameter"
+    print ""
+
+    STRMODE=vmix_capa
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    T_OFFHMIN=api_evalstr STRMODE 1
+    T_OFFHMAX=api_evalstr STRMODE 2
+    T_OFFVMIN=api_evalstr STRMODE 3
+    T_OFFVMAX=api_evalstr STRMODE 4
+    nberrnull = vmix_toffsetp HDLVMIX1 T_OFFHMIN T_OFFHMAX T_OFFVMIN T_OFFVMAX
+
+    vmix_sscreen HDLVMIX1 ,,, 720 576 132 23
+    vmix_connect , "GDP1"
+
+    print ""
+    print "6) Test offset parameter with layer"
+    print ""
+    M_TEST_OFFSET_3 HDLVMIX1 T_OFFHMIN T_OFFHMAX T_OFFVMIN T_OFFVMAX
+
+    vmix_dconnect
+    vmix_close
+    vmix_term
+
+    M_GX1_GDP_OFF "GDP1" T_GDP1HDL T_GDP1VPHDL
+
+    M_COMMON_BEIO "OFF"
+
+    api_report " M_VMIX6_GX1" ERRORCOUNT
+
+end ;M_VMIX6_GX1
+
+;*******************************************************************************
+;Name        : M_VMIX6_7020
+;Description : Dynamic resizing test for 7020 /7710 chip
+;*******************************************************************************
+define M_VMIX6_7020
+    api_report " M_VMIX6_7020 : Dynamic resizing test"
+
+    ; Private variable
+    HDLDIGVOUT=0
+    HDLANAVOUT=0
+    HDLVTG119=0
+    HDLVOUT119=0
+    HDLDENC119=0
+    HDLVOUTRGB119=0
+
+    ; Init DENC, VOUT, VTG1
+    M_COMMON_BEIO "ON"
+
+    ; Init HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "ON"
+
+    ; Start layers VID1, VID2, GDP1, GDP2, ALPHA & CURSOR
+    M_GAMMA_LAYER "START" h6F 720 480
+
+    ; MIXER1 Init
+    if (API_CHIPID=="7710")
+        vmix_init "VMIX1" , h38215C00 "" ,, "HDANA"
+    end
+    else
+       vmix_init "VMIX1" , hAC00 "" ,, "HDANA"
+    end
+    HDLVMIX1=vmix_open "VMIX1"
+    vmix_stime
+
+    ; Set HD mode for VTG1, mixer1
+    M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+
+    ; MIXER2 Init
+    if (API_CHIPID=="7710")
+        vmix_init "VMIX2" , h38215D00 "" ,, VOUT_NAME
+    end
+    else
+       vmix_init "VMIX2" , hAD00 "" ,, VOUT_NAME
+    end
+    HDLVMIX2=vmix_open "VMIX2"
+    vmix_stime , "VTG2"
+
+    ; Set NTSC mode for VTG2, mixer2 & internal denc
+    M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+    print ""
+    print "1) Test width & height screen parameter on mixer1"
+    print ""
+    nberrnull = vmix_tscreenp HDLVMIX1 0 1920 0 1080
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    print ""
+    print "2) Test width & height screen parameter on mixer2"
+    print ""
+    nberrnull = vmix_tscreenp HDLVMIX2 0 800 0 600
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    print ""
+    print "3) Test XStart & YStart screen parameter on mixer1"
+    print ""
+    vmix_sscreen HDLVMIX1 ,,, 1920 1080 280 45
+    nberrnull = vmix_tstartp HDLVMIX1 138 511 30 170
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    print ""
+    print "4) Test XStart & YStart screen parameter on mixer2"
+    print ""
+    vmix_sscreen HDLVMIX1 ,,, 768 576 141 23
+    nberrnull = vmix_tstartp HDLVMIX2 111 141 20 40
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+    print ""
+    print "5) Test width & height screen parameter on mixer1 with layer"
+    print ""
+
+    ; reset to default values for VMIX1 & VMIX2
+    vmix_enable HDLVMIX1
+    M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+    M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+    ; Move viewport GDP1&GDP2 to 0 0
+    layer_svppos HDLVPGDP1 0 0
+    layer_svppos HDLVPGDP2 0 0
+
+    ; Fit to bitmap GDP1 & GDP2
+    M_COMMON_LAYER_FIT HDLGDP1 HDLVPGDP1
+    M_COMMON_LAYER_FIT HDLGDP2 HDLVPGDP2
+
+    M_TEST_SCREEN_3 "GDP1"
+
+    print ""
+    print "6) Test XStart & YStart screen parameter on mixer1 with layer"
+    print ""
+    M_TEST_SCREEN_4
+
+    vmix_enable HDLVMIX2
+    print ""
+    print "7) Test width & height screen parameter on mixer2 with layer"
+    print ""
+
+
+if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+         M_TEST_SCREEN_5 "GDP3"
+end
+else
+        M_TEST_SCREEN_5 "GDP2"
+end
+
+
+    print ""
+    print "8) Test XStart & YStart screen parameter on mixer2 with layer"
+    print ""
+    M_TEST_SCREEN_6
+
+    vmix_disable HDLVMIX1
+    vmix_disable HDLVMIX2
+    vmix_dconnect HDLVMIX1
+    vmix_dconnect HDLVMIX2
+
+    print ""
+    print "9) Test offset parameter on mixer1"
+    print ""
+    STRMODE=vmix_capa "VMIX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    T1_OFFHMIN=api_evalstr STRMODE 1
+    T1_OFFHMAX=api_evalstr STRMODE 2
+    T1_OFFVMIN=api_evalstr STRMODE 3
+    T1_OFFVMAX=api_evalstr STRMODE 4
+    nberrnull = vmix_toffsetp HDLVMIX1 T1_OFFHMIN T1_OFFHMAX T1_OFFVMIN T1_OFFVMAX
+
+    print ""
+    print "10) Test offset parameter on mixer2"
+    print ""
+    STRMODE=vmix_capa "VMIX2"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    T2_OFFHMIN=api_evalstr STRMODE 1
+    T2_OFFHMAX=api_evalstr STRMODE 2
+    T2_OFFVMIN=api_evalstr STRMODE 3
+    T2_OFFVMAX=api_evalstr STRMODE 4
+    nberrnull = vmix_toffsetp HDLVMIX2 T2_OFFHMIN T2_OFFHMAX T2_OFFVMIN T2_OFFVMAX
+
+    vmix_enable HDLVMIX1
+    vmix_sback HDLVMIX1 0
+    vmix_sscreen HDLVMIX1 ,,, 1920 1080 280 45
+
+    vmix_connect HDLVMIX1 "GDP1" "CURS"
+    ; Don't connect layer video type because  offset needs video driver to work
+
+    ; WA video 1 & 2
+    M_GAMMA_LAYER "WA_SVPARAMS" h3
+
+    print ""
+    print "11) Test offset parameter on mixer1 with all graphic types"
+    print ""
+    M_TEST_OFFSET_3 HDLVMIX1 T1_OFFHMIN T1_OFFHMAX T1_OFFVMIN T1_OFFVMAX
+    vmix_dconnect HDLVMIX1
+
+    vmix_enable HDLVMIX2
+    vmix_sscreen HDLVMIX2 ,,, 352 240 138 45
+    vmix_connect HDLVMIX2 "GDP2"
+
+    print ""
+    print "12) Test offset parameter on mixer2 with all graphic types"
+    print ""
+    M_TEST_OFFSET_3 HDLVMIX2 T2_OFFHMIN T2_OFFHMAX T2_OFFVMIN T2_OFFVMAX
+    vmix_dconnect HDLVMIX2
+
+    ; Term mixers
+    vmix_close HDLVMIX1
+    vmix_close HDLVMIX2
+    vmix_term "VMIX1"
+    vmix_term "VMIX2"
+
+    print ""
+    print "13) Test screen changes on mixer1 with graphics"
+    print ""
+
+    ; Init mixer1
+    vmix_init ,,,,,, "HDANA" VOUT_NAME
+    HDLVMIX1=vmix_open
+    vmix_enable HDLVMIX1
+
+    ; Set HD mode for VTG1, mixer1
+    M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN
+
+    M_TEST_SCREEN_7 "GDP1" "GDP2" HDLGDP1 HDLVPGDP1 HDLGDP2 HDLVPGDP2
+
+    vmix_connect HDLVMIX1 "LAYVID1" "GDP1"
+
+    ; WA video 1
+    M_GAMMA_LAYER "WA_SVPARAMS" h1
+
+    print ""
+    print "14) Test screen changes on mixer1 with graphics & video"
+    print ""
+
+    M_TEST_SCREEN_8 "GDP1" HDLGDP1 HDLVPGDP1
+
+    vmix_dconnect HDLVMIX1
+
+    ; Set VTG1 bask to SD for STV0119
+    vtg_setmode HDLVTGMAIN "NTSC"
+
+    ; Stop layers VID1, VID2, GDP1, GDP2, ALPHA& CURSOR
+    M_GAMMA_LAYER "STOP" h6F
+
+    ; Term HDDIG, HDANA, VTG2, STV0119
+    M_7015_BEIO "OFF"
+
+    ; Term mixer1
+    vmix_close HDLVMIX1
+    vmix_term
+
+    ; Term DENC, VOUT, VTG1
+    M_COMMON_BEIO "OFF"
+
+    api_report " M_VMIX6_7020" ERRORCOUNT
+
+end  ;M_VMIX6_7020
+
+;*******************************************************************************
+;Name        : M_VMIX6_7710
+;Description : Dynamic resizing test for 7710 chip
+;*******************************************************************************
+define M_VMIX6_7710
+ api_report " M_VMIX6_7710 : Dynamic resizing test"
+
+     MIX1_SD=1
+     MIX1_HD=0
+
+ for I 1 2
+  if (((API_CHIPID=="7200")&&(I==2))||(API_CHIPID!="7200"))
+    if (MIX1_HD==1)
+       api_report "TEST HD"
+    end
+    if (MIX1_SD==1)
+       api_report "TEST SD"
+    end
+
+
+    ; Private variable
+    HDLDIGVOUT=0
+    HDLANAVOUT=0
+
+    if (API_CHIPID=="7200")
+        ;vtg
+        vtg_init
+        HDLVTGMAIN = vtg_open
+        ;vtg_setmode HDLVTGMAIN "MODE_1080I60000_74250"
+
+        ;vout
+        vout_init "HDANA" , "HD_RGB"
+        HDLANAVOUT = vout_open "HDANA"
+        vout_enable
+    end
+    else
+    ; Init DENC, VOUT, VTG1
+    M_COMMON_BEIO "ON"
+    end
+    print ""
+    print "9) Dynamic resizing with mixer1"
+    print ""
+    if (MIX1_HD==1)
+
+       if (API_CHIPID=="7109")
+        VTG_EnableHVSync
+       end
+       if (API_CHIPID!="7200")
+        ; Init HDDIG, HDANA, VTG2, STV0119
+        M_7015_BEIO "ON"
+       end
+       ; MIXER1 Init
+       if (API_CHIPID=="7200")
+       vmix_init "VMIX1" , , , , , "HDANA"
+       end
+       else
+       vmix_init "VMIX1" , , "" ,, "HDANA"
+       end
+       HDLVMIX1=vmix_open "VMIX1"
+       ; Set HD mode for VTG1, mixer1
+       M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN HDLVMIX1
+   end
+
+   if (MIX1_SD==1)
+      vmix_init "VMIX1" , , , ,, VOUT_NAME
+      HDLVMIX1=vmix_open "VMIX1"
+      ; Set HD mode for VTG1, mixer1
+      M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1
+   end
+
+    if (API_CHIPID=="7200")
+    ; Start layers VID1, GDP1, GDP2 & CURSOR
+        M_GAMMA_LAYER "START" h2D
+    end
+    else
+        ; Start layers VID1, VID2, GDP1, GDP2, ALPHA & CURSOR
+        M_GAMMA_LAYER "START" h7F
+    end
+
+    vmix_stime
+    vmix_enable HDLVMIX1
+
+    print ""
+    print "1) Test width & height screen parameter on mixer1"
+    print ""
+    nberrnull = vmix_tscreenp HDLVMIX1 0 1920 0 1080
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+
+    print ""
+    print "3) Test XStart & YStart screen parameter on mixer1"
+    print ""
+    vmix_sscreen HDLVMIX1 ,,, 1920 1080 280 45
+    nberrnull = vmix_tstartp HDLVMIX1 138 511 30 170
+    ERRORCOUNT=ERRORCOUNT+nberrnull
+
+
+    print ""
+    print "5) Test width & height screen parameter on mixer1 with layer"
+    print ""
+
+
+
+    ; Move viewport GDP1&GDP2 to 0 0
+    layer_svppos HDLVPGDP1 0 0
+    layer_svppos HDLVPGDP2 0 0
+
+    ; Fit to bitmap GDP1 & GDP2
+    M_COMMON_LAYER_FIT HDLGDP1 HDLVPGDP1
+
+if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+    M_COMMON_LAYER_FIT HDLGDP3 HDLVPGDP3
+
+    M_TEST_SCREEN_3 "GDP3"
+end
+else
+    M_COMMON_LAYER_FIT HDLGDP2 HDLVPGDP2
+
+    M_TEST_SCREEN_3 "GDP2"
+end
+
+    print ""
+    print "6) Test XStart & YStart screen parameter on mixer1 with layer"
+    print ""
+    M_TEST_SCREEN_4
+
+
+    vmix_disable HDLVMIX1
+    vmix_dconnect HDLVMIX1
+
+
+    print ""
+    print "9) Test offset parameter on mixer1"
+    print ""
+    STRMODE=vmix_capa "VMIX1"
+    MC_CHECK_RETCODE ERR_NO_ERROR
+    T1_OFFHMIN=api_evalstr STRMODE 1
+    T1_OFFHMAX=api_evalstr STRMODE 2
+    T1_OFFVMIN=api_evalstr STRMODE 3
+    T1_OFFVMAX=api_evalstr STRMODE 4
+    nberrnull = vmix_toffsetp HDLVMIX1 T1_OFFHMIN T1_OFFHMAX T1_OFFVMIN T1_OFFVMAX
+
+
+    vmix_enable HDLVMIX1
+    vmix_sback HDLVMIX1 0
+    vmix_sscreen HDLVMIX1 ,,, 1920 1080 280 45
+
+if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+    vmix_connect HDLVMIX1 "GDP3" "CURS"
+end
+else
+    vmix_connect HDLVMIX1 "GDP2" "CURS"
+end
+
+
+
+    ; Don't connect layer video type because  offset needs video driver to work
+
+    ; WA video 1
+     if (API_CHIPID!="7100")&&(API_CHIPID!="7109")&&(API_CHIPID!="7710")&&(API_CHIPID!="7200")
+
+      M_GAMMA_LAYER "WA_SVPARAMS" h1
+    end
+
+    print ""
+    print "11) Test offset parameter on mixer1 with all graphic types"
+    print ""
+    M_TEST_OFFSET_3 HDLVMIX1 T1_OFFHMIN T1_OFFHMAX T1_OFFVMIN T1_OFFVMAX
+    vmix_dconnect HDLVMIX1
+
+
+    ; Term mixers
+    vmix_close HDLVMIX1
+    vmix_term "VMIX1"
+
+    if (API_CHIPID=="7200")
+        M_GAMMA_LAYER "STOP" h2D
+    end
+    else
+    ; Stop layers VID1, VID2, GDP1, GDP2, ALPHA& CURSOR
+    M_GAMMA_LAYER "STOP" h7F
+    end
+
+    if (MIX1_HD==1)
+        print ""
+        print "13) Test screen changes on mixer1 with graphics"
+        print ""
+
+        ; Init mixer1
+        if (API_CHIPID=="7200")
+                vmix_init ,,,,,, "HDANA"
+        end
+        else
+                vmix_init ,,,,,, "HDANA" VOUT_NAME
+        end
+        HDLVMIX1=vmix_open
+        vmix_enable HDLVMIX1
+        if (API_CHIPID!="7200")
+        ; Set HD mode for VTG1, mixer1
+        M_COMMON_SETMODE "MODE_1080I60000_74250" HDLVTGMAIN
+        end
+if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+        M_TEST_SCREEN_7 "GDP1" "GDP3" HDLGDP1 HDLVPGDP1 HDLGDP3 HDLVPGDP3
+end
+else
+        M_TEST_SCREEN_7 "GDP1" "GDP2" HDLGDP1 HDLVPGDP1 HDLGDP2 HDLVPGDP2
+end
+
+        vmix_connect HDLVMIX1 "LAYVID1" "GDP1"
+
+        ; WA video 1
+if (API_CHIPID!="7100")&&(API_CHIPID!="7109")&&(API_CHIPID!="7710")&&(API_CHIPID!="7200")
+        M_GAMMA_LAYER "WA_SVPARAMS" h1
+end
+        print ""
+        print "14) Test screen changes on mixer1 with graphics & video"
+        print ""
+
+        M_TEST_SCREEN_8 "GDP1" HDLGDP1 HDLVPGDP1
+        vmix_dconnect HDLVMIX1
+    end
+
+
+    ; Set VTG1 bask to SD for STV0119
+    ;;;;;;vtg_setmode HDLVTGMAIN "NTSC"
+
+
+
+    ; Term mixer1
+    vmix_close HDLVMIX1
+    vmix_term
+    ; Stop layers GDP1, GDP2, VID1, VID2
+
+
+
+    M_COMMON_BEIO "OFF"
+
+
+    if (MIX1_SD==1)
+        M_COMMON_BEIO "ON"
+        print ""
+        print "9) Dynamic resizing with mixer2"
+        print ""
+
+        ; VTG2 Inits
+        if (API_CHIPID=="7710")
+                if (CHIP_CUT=="STI7710_CUT2x")
+                        vtg_init "VTG2" , h20103034
+                end
+                else
+                        vtg_init "VTG2" , h20103C34
+                end
+        end
+        else
+                vtg_init "VTG2" , hB9005034
+        end
+        HDLVTGAUX=vtg_open "VTG2"
+
+        ; Start on 7710 layer Vid2 & GDP2 in NTSC mode
+        M_GAMMA_LAYER "START" h7f 720 480
+
+        ; MIXER2 Init
+        if (API_CHIPID=="7710")
+        vmix_init "VMIX2" , h38215D00 "" ,, VOUT_NAME
+        end
+        else
+        vmix_init "VMIX2" , hB920AD00 "" ,, VOUT_NAME
+        end
+        HDLVMIX2=vmix_open "VMIX2"
+        vmix_stime , "VTG2"
+        vmix_enable HDLVMIX2
+        ; Set NTSC mode for VTG2, mixer2 & internal denc
+        M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 HDLDENC
+
+        print ""
+        print "2) Test width & height screen parameter on mixer2"
+        print ""
+        nberrnull = vmix_tscreenp HDLVMIX2 0 800 0 600
+        ERRORCOUNT=ERRORCOUNT+nberrnull
+
+        print ""
+        print "4) Test XStart & YStart screen parameter on mixer2"
+        print ""
+        vmix_sscreen HDLVMIX1 ,,, 768 576 141 23
+        nberrnull = vmix_tstartp HDLVMIX2 111 141 20 40
+        ERRORCOUNT=ERRORCOUNT+nberrnull
+
+        print ""
+        print "2) Test width & height screen parameter on mixer2"
+        print ""
+        nberrnull = vmix_tscreenp HDLVMIX2 0 800 0 600
+        ERRORCOUNT=ERRORCOUNT+nberrnull
+
+        print ""
+        print "4) Test XStart & YStart screen parameter on mixer2"
+        print ""
+        vmix_sscreen HDLVMIX1 ,,, 768 576 141 23
+        nberrnull = vmix_tstartp HDLVMIX2 111 141 20 40
+        ERRORCOUNT=ERRORCOUNT+nberrnull
+
+
+        print ""
+        print "7) Test width & height screen parameter on mixer2 with layer"
+        print ""
+
+if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+         M_TEST_SCREEN_5 "GDP3"
+end
+else
+        M_TEST_SCREEN_5 "GDP2"
+end
+
+
+        print ""
+        print "8) Test XStart & YStart screen parameter on mixer2 with layer"
+        print ""
+        M_TEST_SCREEN_6
+        ;;vmix_disable HDLVMIX2
+
+        ;;;vmix_dconnect HDLVMIX2
+        print ""
+        print "10) Test offset parameter on mixer2"
+        print ""
+        STRMODE=vmix_capa "VMIX2"
+        MC_CHECK_RETCODE ERR_NO_ERROR
+        T2_OFFHMIN=api_evalstr STRMODE 1
+        T2_OFFHMAX=api_evalstr STRMODE 2
+        T2_OFFVMIN=api_evalstr STRMODE 3
+        T2_OFFVMAX=api_evalstr STRMODE 4
+        nberrnull = vmix_toffsetp HDLVMIX2 T2_OFFHMIN T2_OFFHMAX T2_OFFVMIN T2_OFFVMAX
+
+        vmix_enable HDLVMIX2
+        vmix_sscreen HDLVMIX2 ,,, 352 240 138 45
+        ;;vmix_connect HDLVMIX2 "GDP2"
+
+
+if (API_CHIPID!="7100")&&(API_CHIPID!="7109")&&(API_CHIPID!="7710")&&(API_CHIPID!="7200")
+        M_GAMMA_LAYER "WA_SVPARAMS" h2
+end
+
+        ;;vmix_connect HDLVMIX2 "LAYVID2"
+        print ""
+        print "12) Test offset parameter on mixer2 with all graphic types"
+        print ""
+        M_TEST_OFFSET_3 HDLVMIX2 T2_OFFHMIN T2_OFFHMAX T2_OFFVMIN T2_OFFVMAX
+        vmix_dconnect HDLVMIX2
+
+        vtg_close HDLVTGAUX
+        vtg_term "VTG2"
+        M_GAMMA_LAYER "STOP" h7F
+  if (MIX1_HD==1)
+        ; Term HDDIG, HDANA, VTG2, STV0119
+        M_7015_BEIO "OFF"
+        end
+        ; Term mixers
+        ;vmix_close HDLVMIX1
+        vmix_close HDLVMIX2
+        ;vmix_term "VMIX1"
+        vmix_term "VMIX2"
+
+        ; Term DENC, VOUT, VTG1
+        M_COMMON_BEIO "OFF"
+   end ;if (MIX1_HD==1)
+  end ;(((API_CHIPID=="7200")&&(I==2))||(API_CHIPID!="7200"))
+   if (MIX1_SD==1)
+        MIX1_SD=0
+        MIX1_HD=1
+   end
+ end ; for I 1 2
+
+
+    api_report " M_VMIX6_7710" ERRORCOUNT
+
+
+end  ;M_VMIX6_7710
+
+;*******************************************************************************
+;Name        : M_VMIX6_5528
+;Description : Submacro for M_VMIX6 targetting 5528 and 4629 chips
+;*******************************************************************************
+define M_VMIX6_5528 DEVICE_TYPE BASE_ADDRESS
+    api_report " M_VMIX6_5528: Dynamic resizing test"
+    HDLANAVOUT = 0
+    api_checkerr
+
+    ; Init DENC, VTG & VOUT
+    M_MB376_BEIO "ON" "BOTH"
+
+    ; Start GDP1, GDP2
+    ; WA Video 1 & 2
+   ; M_GAMMA_LAYER "WA_SVPARAMS" h3 720 576
+    M_GAMMA_LAYER "START" h18
+
+    print ""
+    print " Test Mix1: Back/GDP2/GDP3  & Mix2: Back/GDP2/GDP3 "
+    print
+
+   ; Init mixer1
+   vmix_init "VMIX1" , G_MIX1_BA VTG_NAME ,,  "MAIN_VOUT"
+   HDLVMIX1 = vmix_open "VMIX1"
+   vmix_enable HDLVMIX1
+
+   ; Set NTSC mode for MIX1 & internal denc
+   M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1 MAIN_DENC_HDL AUX_VOUT_HDL
+
+
+   ; Init mixer2
+   vmix_init "VMIX2" , G_MIX2_BA  VTG_NAME ,, "AUX_VOUT"
+   HDLVMIX2 = vmix_open "VMIX2"
+   vmix_enable HDLVMIX2
+
+   ; Set NTSC mode for MIX2 & external DENC
+   HDLVTGAUX= HDLVTGMAIN
+   M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 AUX_DENC_HDL AUX_VOUT_HDL "4629"
+
+  vmix_stime , VTG_NAME
+
+  print ""
+  print "1) Test width & height screen parameter on mixer1"
+  print ""
+  nberrnull = vmix_tscreenp HDLVMIX1 0 720 0 576
+  ERRORCOUNT=ERRORCOUNT+nberrnull
+
+
+  print ""
+  print "2) Test width & height screen parameter on mixer2"
+  print ""
+  nberrnull = vmix_tscreenp HDLVMIX2 0 720 0 576
+  ERRORCOUNT=ERRORCOUNT+nberrnull
+
+  print ""
+  print "3) Test XStart & YStart screen parameter on mixer1"
+  print ""
+  nberrnull = vmix_tstartp HDLVMIX1 111 141 20 40
+  ERRORCOUNT=ERRORCOUNT+nberrnull
+
+  print ""
+  print "4) Test XStart & YStart screen parameter on mixer2"
+  print ""
+  nberrnull = vmix_tstartp HDLVMIX2 111 141 20 40
+  ERRORCOUNT=ERRORCOUNT+nberrnull
+
+  vmix_soffset , 0 0
+  vmix_sscreen ,,,, 720 576 132 23
+
+  STRMODE=""
+  vmix_connect HDLVMIX1 "GDP2"
+  STRMODE=layer_gparam HDLGDP2
+
+  print ""
+  print "5) Test width & height screen parameter on mixer1 with all layer"
+  print ""
+   ; reset to default values for VMIX1 & VMIX2
+  vmix_enable HDLVMIX1
+  M_COMMON_SETMODE "NTSC" HDLVTGMAIN HDLVMIX1 MAIN_DENC_HDL AUX_VOUT_HDL
+  M_COMMON_SETMODE "NTSC" HDLVTGAUX HDLVMIX2 AUX_DENC_HDL AUX_VOUT_HDL
+  M_TEST_SCREEN_WH HDLVMIX1
+  vmix_dconnect HDLVMIX1
+
+  print ""
+  print "6) Test width & height screen parameter on mixer2 with layer"
+  print ""
+  vmix_enable HDLVMIX2
+  M_TEST_SCREEN_WH HDLVMIX2
+
+  print ""
+  print "7) Test XStart & YStart screen parameter on mixer1 with layer"
+  print ""
+  vmix_enable HDLVMIX1
+
+  M_TEST_SCREEN_XY HDLVMIX1
+  vmix_dconnect HDLVMIX1
+
+  print ""
+  print "8) Test XStart & YStart screen parameter on mixer2 with layer"
+  print ""
+  vmix_enable HDLVMIX2
+  M_TEST_SCREEN_XY HDLVMIX2
+  vmix_disable HDLVMIX1
+  vmix_disable HDLVMIX2
+  vmix_dconnect HDLVMIX1
+  vmix_dconnect HDLVMIX2
+
+  print ""
+  print "9) Test offset parameter on mixer1"
+  print ""
+
+  STRMODE=vmix_capa "VMIX1"
+
+  MC_CHECK_RETCODE ERR_NO_ERROR
+
+  T1_OFFHMIN=api_evalstr STRMODE 1
+  T1_OFFHMAX=api_evalstr STRMODE 2
+  T1_OFFVMIN=api_evalstr STRMODE 3
+  T1_OFFVMAX=api_evalstr STRMODE 4
+
+print "rrrxxxkkk"
+
+  nberrnull = vmix_toffsetp HDLVMIX1 T1_OFFHMIN T1_OFFHMAX T1_OFFVMIN T1_OFFVMAX
+  vmix_soff
+  vmix_disable HDLVMIX1
+  vmix_sback HDLVMIX1 0
+  print ""
+  print "10) Test offset parameter on mixer1 with all graphic types"
+  print ""
+  layer_svppos HDLVPGDP2 100 100
+  T_STRMODE = layer_gvpiorect HDLVPGDP2
+  T_WIDTH = api_evalstr T_STRMODE 3
+  T_HEIGH = api_evalstr T_STRMODE 4
+  T_X0 = api_evalstr T_STRMODE 5
+  T_Y0 = api_evalstr T_STRMODE 6
+  vmix_sback HDLVMIX1 0
+  vmix_enable HDLVMIX1
+
+
+if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+  vmix_connect HDLVMIX1 "GDP3"
+end
+else
+  vmix_connect HDLVMIX1 "GDP2"
+end
+
+  vmix_sscreen HDLVMIX1 ,,, T_WIDTH+T_X0+100 T_HEIGH+T_Y0+100 , ,
+  layer_sparams HDLGDP2 ,, T_WIDTH+100 T_HEIGH+100
+  T_OFFSET_X = (760-T_WIDTH+T_X0)/12
+  T_OFFSET_Y = (490-T_HEIGH+T_Y0)/12
+
+  M_TEST_OFFSET_3 HDLVMIX1 T1_OFFHMIN T1_OFFHMAX T1_OFFVMIN T1_OFFVMAX
+  vmix_dconnect HDLVMIX1
+  vmix_dconnect HDLVMIX2
+
+  print ""
+  print "11) Test offset parameter on mixer2"
+  print ""
+  STRMODE=vmix_capa "VMIX2"
+  MC_CHECK_RETCODE ERR_NO_ERROR
+  T2_OFFHMIN=api_evalstr STRMODE 1
+  T2_OFFHMAX=api_evalstr STRMODE 2
+  T2_OFFVMIN=api_evalstr STRMODE 3
+  T2_OFFVMAX=api_evalstr STRMODE 4
+  nberrnull = vmix_toffsetp HDLVMIX2 T2_OFFHMIN T2_OFFHMAX T2_OFFVMIN T2_OFFVMAX
+
+  vmix_sback HDLVMIX2 0
+
+  vmix_enable HDLVMIX2
+  vmix_sscreen HDLVMIX2 ,,, T_WIDTH+T_X0+100 T_HEIGH+T_Y0+100 , ,
+
+if (API_CHIPID=="7109")&&(CHIP_CUT!="STI7109_CUT2")
+  vmix_connect HDLVMIX2 "GDP3"
+end
+else
+  vmix_connect HDLVMIX2 "GDP2"
+end
+
+  print ""
+  print "12) Test offset parameter on mixer2 with all graphic types"
+  print ""
+  M_TEST_OFFSET_3 HDLVMIX2 T2_OFFHMIN T2_OFFHMAX T2_OFFVMIN T2_OFFVMAX
+  vmix_dconnect HDLVMIX2
+
+   ; Term mixers
+   vmix_close HDLVMIX1
+   vmix_close HDLVMIX2
+   vmix_term "VMIX1"
+   vmix_term "VMIX2"
+
+
+
+    ; Term all possible layer
+    M_GAMMA_LAYER "STOP" h18
+
+    ; Term DENC, VTG & VOUT
+    M_MB376_BEIO "OFF" "BOTH"
+
+    api_report " M_VMIX6_5528"  ERRORCOUNT
+
+end  ;M_VMIX6_5528
+
+
+;*******************************************************************************
+;Name        : M_VMIX6_MAIN
+;Description : Main function redirect to specific targetting sub macros
+;*******************************************************************************
+define M_VMIX6_MAIN
+    ERRORCOUNT = 0
+    print ""
+    print "Starting M_VMIX6..."
+
+    RET=MC_CHECK_TYPE
+    if RET&1
+        M_VMIX6_55XX
+    end
+    if RET&2
+        M_VMIX6_7015
+    end
+    if RET&4
+        M_VMIX6_GX1
+    end
+    if RET&8
+        if (API_CHIPID=="7710")||(API_CHIPID=="7100")||(API_CHIPID=="7109")||(API_CHIPID=="7200")
+              M_VMIX6_7710
+       end
+       else
+              M_VMIX6_7020
+       end
+    end
+    if RET&16
+        M_VMIX6_5528
+    end
+    if RET&32 ;5100/5105 /5301/5188/5107/5162
+        M_VMIX6_5100
+    end
+    MC_CHECK_ERROR
+    ERR_VMIX6=GLOBERR
+end  ;M_VMIX6_MAIN
+
+
+
+
+
+
