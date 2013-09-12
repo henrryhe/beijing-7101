@@ -93,6 +93,10 @@ Date               Modification                                     Name
 #define STVID_PREPROC0_IRQ_NAME             "stvid-pp0"     /* Length must not exceed INTERRUPT_NAME_LENGTH */
 #define STVID_PREPROC1_IRQ_NAME             "stvid-pp1"     /* Length must not exceed INTERRUPT_NAME_LENGTH */
 
+/*ZQ add at 2013/07/25 for TJ project */
+#define FIX_MOSIC_ISSUE
+
+
 static char InterruptName[H264PP_NB_PREPROCESSORS][INTERRUPT_NAME_LENGTH];
 
 static STOS_INTERRUPT_DECLARE(H264PreprocessorInterruptHandler, param);
@@ -400,6 +404,14 @@ static void PreprocessorTask(H264PreprocHardware_Data_t * H264PreprocHardware_Da
     U32                             PreprocNumber;
     H264Preproc_Context_t          *Preproc_Context_p;
     H264_CommandStatus_preproc_t   *CommandStatusPreproc_p;
+#ifdef FIX_MOSIC_ISSUE    //ZQ add at 2013/07/25 for TJ project 
+    //Start_Patch
+    void                           *SliceStatus_NCp;
+    U32                             SliceStatus;
+    U32                             SESB_entry;
+    BOOL                            lastSlice=FALSE;
+    //End_Patch
+#endif //<!-- ZQiang 2013/7/25 10:14:36 --!>
 
     STOS_TaskEnter(NULL);
 
@@ -428,6 +440,43 @@ static void PreprocessorTask(H264PreprocHardware_Data_t * H264PreprocHardware_Da
         }
         else
         {
+            
+#ifdef FIX_MOSIC_ISSUE    //ZQ add at 2013/07/25 for TJ project 
+            //Start_Patch
+
+                       if(((Preproc_Context_p->pp_its) & (MASK____PP_ITS__error_sc_detected) ) ==  MASK____PP_ITS__error_sc_detected)
+        	        	        	            {
+
+                                                         lastSlice=FALSE;
+                                                         SESB_entry=Preproc_Context_p->pp_isbg;
+                                                         do {
+        	                                                           SliceStatus_NCp = STOS_MapPhysToUncached((void *)(SESB_entry), 8);
+            	                                                       SliceStatus = PP_Read32(SliceStatus_NCp);
+            	                                                       if(((SliceStatus >> 6)&0x1) == 1)
+                                                                          lastSlice=TRUE;
+            	                                                       else
+            		                                                     {
+            		                                                        STOS_UnmapPhysToUncached(SliceStatus_NCp, 8);
+            		                                                        SESB_entry+=8;
+            		                                                      }
+                                                              }while(!lastSlice);
+
+                                                  if((((SliceStatus >> 24)&0xFF) | ((SliceStatus >> 8)&0xFF00)) == Preproc_Context_p->H264PreprocCommand_p->TransformerPreprocParam.nb_MB_in_picture_minus1)
+        	        	        		                 {
+        	        	        		                   	                  Preproc_Context_p->pp_its &= ~MASK____PP_ITS__error_sc_detected;
+        	        	        		                   	                  Preproc_Context_p->pp_its &= ~MASK____PP_ITS__bit_buffer_overflow;
+        	        	        		                   	                  SliceStatus &= ~0x80;
+        	        	        		                   	                  PP_Write32((SliceStatus_NCp),SliceStatus);
+        	        	        	                     }
+        	        	        		           STOS_UnmapPhysToUncached(SliceStatus_NCp, 8);
+
+        	        	        	             }
+
+            
+          //End_Patch
+#endif //<!-- ZQiang 2013/7/25 10:13:44 --!>
+            
+            
             Preproc_Context_p->IRQ_Occured = FALSE;
 #if defined TRACE_UART
             TraceBuffer(("PPTask%d ", Preproc_Context_p->H264PreprocCommand_p->CmdId));

@@ -152,7 +152,7 @@ Exported Types
 			#if defined MSPP_PARSER
 				#define		PES_BUFFER_SIZE		(1024 * 1024)
 			#else
-				#define		PES_BUFFER_SIZE		(8 * 1024)
+				#define		PES_BUFFER_SIZE		(128 * 1024)
 			#endif
 		#endif
 	#endif
