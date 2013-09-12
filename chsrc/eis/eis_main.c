@@ -838,7 +838,8 @@ int eis_entry (  )
 #ifdef SUMA_SECURITY
 	int KeyValueTemp;
 #endif
-	
+	sttbx_Print("eis_entry entern.........\n");
+	eis_report("eis_entry entering\n");
 	CH6_AVControl(VIDEO_BLACK, false, CONTROL_VIDEOANDAUDIO);
 	CH_AudioDelayControl(1);
 	if ( 1 == eis_api_enter_init () )
@@ -935,12 +936,13 @@ int eis_entry (  )
 			eis_report( "\n time=%d, eis key=%x",get_time_ms(),key);
 			if(key == KEY_F)
 			{
-                        	 ipanel_DisableDebugControl();/*开茁壮打印*/
+				eis_report("ipanel_DisableDebugControl\n");
+                ipanel_DisableDebugControl();/*开茁壮打印*/
 			}
 		
 			else if(key == KEY_E)/*切换卡模式*/
 			{
-
+				eis_report("ipanel_EnableDebugControl\n");
 				ipanel_EnableDebugControl();/*开茁壮打印*/
 
 		      }

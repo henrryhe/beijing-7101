@@ -5667,7 +5667,7 @@ BOOL GlobalInit(void)
 	gpu8_DecompressBuffer=memory_allocate(DecompressBuffer_partition,DecompressBuffer_SIZE);
 
 		/*CH_UnCompressPicFont((U32 *)FONTPIC_FLASHZIP_ADDR,(U32 *)gpu8_DecompressBuffer);*/
-		memset(DecompressBuffer,0,DecompressBuffer_SIZE);
+		memset(DecompressBuffer,0,DecompressBuffer_SIZE+3*1024);
 		CH_GraphicInitParams GDPParam;
 
 		GDPParam.FontStartAdr=(unsigned int)(&(*gpu8_DecompressBuffer));
@@ -5729,7 +5729,10 @@ BOOL GlobalInit(void)
 	{
 		STTBX_Print(("\nCH6_ShowViewPort(&CH6VPOSD) is not successful"));
 	}
-	else STTBX_Print(("\nCH6_ShowViewPort(&CH6VPOSD) is successful"));
+	else 
+	{
+		STTBX_Print(("\nCH6_ShowViewPort(&CH6VPOSD) is successful"));
+	}
 #endif
 	return FALSE;
 		

@@ -76,7 +76,6 @@ int main(int argc, char *argv[])
 #endif
 
 	task_priority_set(NULL, 0);
-
 	if (res==FALSE )
 	{
 		STTBX_Print(("\n==========CHANGHONG===================\n"));

@@ -180,7 +180,7 @@ BOOLEAN	DVBUsifInit ( void )
 	}
 	else
 	{
-	/*	STTBX_Print(("Successfully started USIF process\n"));*/
+		STTBX_Print(("Successfully started USIF process\n"));
 	}
 
 

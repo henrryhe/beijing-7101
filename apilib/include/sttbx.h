@@ -181,7 +181,7 @@ typedef struct STTBX_BuffersConfigParams_s
 
 /* Exported Variables ------------------------------------------------------- */
 
-#define STTBX_REPORT
+//#define STTBX_REPORT
 #define STTBX_PRINT
 
 /* Functions and variables NOT TO BE USED by users of the API --------------- */
