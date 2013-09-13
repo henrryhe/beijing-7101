@@ -85,6 +85,9 @@ int main(int argc, char *argv[])
 		STTBX_Print(("==============================================\n\n"));
 
 	}
+
+	//ipanel_nvram_erase_by_hand();
+		
 	#if 1
 	while(true)
 	{

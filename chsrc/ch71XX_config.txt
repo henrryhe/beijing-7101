@@ -1,0 +1,246 @@
+# -----------------------------------------------------------------
+#
+#   File name: ch71XX_config
+#   Description: Application MACRO define for CHANGHONG 7100 board
+#   Author: Yixiaoli
+#   Date:2006-08-07
+#   COPYRIGHT (C) 2006 changhong 
+#
+# -----------------------------------------------------------------------------
+# 
+#  Modified :
+#
+#	Date			Name		Description
+#	----			----		------------
+#
+# 
+#  -----------------------------------------------------------------------------
+
+
+#beijing dbase definition
+BEIJING_DBASE  = 0
+#beijing mosaic
+#epg
+CH_EPG = 0
+#
+NITCDT = 0
+#
+
+
+USE_OSD_COLOR_TYPE=0
+#1->RGB16 Amode,0 and other value ->RGB8888
+
+
+
+USE_RC6_REMOTE=1
+## 1->使用北京歌华RC6遥控盒，other value->不使用北京歌华RC6遥控盒
+USE_NEC_REMOTE=0
+## 1->使用NEC芯片的遥控盒，other value->不使用NEC芯片的遥控盒
+
+
+NEW_FLASH_UPDATE=1
+
+## add for NAGRA CA
+CARD_MODULE_TEST=0
+SIGNAL_SEARCH_TEST=0
+NAFR_KERNEL=1
+PAIR_CHECK=1
+NAGRA_PRODUCE_VERSION=1
+NAGA_TEST=0
+TRACE_CAINFO_ENABLE=0
+PLATFORM_16=1
+PLATFORM_18=0
+##20051117 add smt mail 
+SMT_MAIL = 0
+SOFT_MONITTOR_CDTSMT = 0
+##endu
+
+REMOVE_BEIJING_HANDLE = 1
+
+##YXL 2005-08-06 add macro CH_7710_PLATFORM  :0->DVBC 1->DVBT
+CH_7710_PLATFORM=0
+
+##YXL 2005-08-06 add macro CH_SUPORT_SCANSEARCH  :0->不支持扫频搜索 1->支持扫频搜索
+CH_SUPORT_SCANSEARCH=1
+
+
+##YXL 2005-08-13 add macro CH_USER_OF_7710 :0->澳大利亚DVBT, 1->中数传媒DVBC，2->歌华DVBC
+CH_USER_OF_7710=0
+
+
+## 20050918 add for AU logical number
+AU_LOGICAL=0
+
+####20051019 add
+FLASH_M58=0
+
+##yxl 2005-11-15 add macro TIMEMODE_ALL_HZ ,1->all 50hz and 60hz timeing mode are supported,
+##                                          0-> only  50hz timeing mode are supported 
+TIMEMODE_ALL_HZ=0
+
+
+##yxl 2005-11-17 add macro DVI_ONLY_ONE ,  1->only 720P@50hz DVI timeing mode are supported,
+##											0->both  720P@50hz and 1080I@50hz DVI timeing mode are supported	
+DVI_ONLY_ONE=0
+
+
+##yxl 2005-11-17 add macro VGA_ONLY_ONE,1->only 576P@50hz VGA timeing mode are supported, 
+##                                       0->all 50hz VGA timeing mode are supported
+VGA_ONLY_ONE=0
+
+##yxl 2005-11-25 add macro TO_ST_TEST ,  1->macro TO_ST_TEST VALID,
+##											0->
+TO_ST_TEST=0
+
+##yxl 2005-12-09 add macro CVBS_ALWAYS_ON ,  1->macro CVBS_ALWAYS_ON is valid and cvbs is always on even in non cvbs mode,
+##										 	 0-> cvbs is off in non cvbs mode,
+CVBS_ALWAYS_ON=0
+
+
+##yxl 2005-12-24 add macro CH_PROGRAM_LOCK_fUNC,  1->macro CH_PROGRAM_LOCK_fUNC is defineded and  应用程序具有节目LOCK 功能,
+##										 	 0-> CH_PROGRAM_LOCK_fUNC isn't is defineded and  应用程序不具有节目LOCK 功能,
+CH_PROGRAM_LOCK_fUNC=0
+
+## yxl 2005-12-29 add macro INTERFACE_BALL_TO_LEGEND,
+##1->macro INTERFACE_BALL_TO_LEGEND is defineded,该界面为LEGEND要求的水晶球界面 ，
+##0->通用的水晶球界面,
+## 2->macro INTERFACE_BALL_TO_DGTEC is defineded,该界面为DGTEC要求的水晶球界面，yxl 2006-03-15 add this macro
+INTERFACE_BALL_TO_LEGEND=2
+
+
+##yxl 2006-01-25 add macro AUS_SUMMERTIME_FUNC ,1->macro AUS_SUMMERTIME_FUNC is defineded and  应用程序具有夏令时功能,
+##0-> AUS_SUMMERTIME_FUNC isn't defineded and  应用程序不具有夏令时 功能,
+AUS_SUMMERTIME_FUNC=1
+
+
+##yxl 2006-03-16 add macro YXL_CC_TEST,1->macro YXL_CC_TEST is defineded and 应用程序具有CC TEST功能,
+##1-> YXL_CC_TEST isn't defineded and  应用程序不具有CC TEST功能
+YXL_CC_TEST=0
+
+
+##yxl 2006-03-17 add macro PIC_FREEZE_FUNCTION,1->macro PIC_FREEZE_FUNCTION is defineded and 应用程序具有图象静止功能,
+##1-> PIC_FREEZE_FUNCTION  isn't defineded and  应用程序不具有图象静止功能
+PIC_FREEZE_FUNCTION =0
+
+##yxl 2006-03-21 add macro FRONTKEY_TO_DGTEC,1->macro FRONTKEY_TO_DGTEC is defineded and 前面板按键按DGTEC漏印，
+##0-> FRONTKEY_TO_DGTEC  isn't defineded and  前面板按键按长虹方式漏印
+FRONTKEY_TO_DGTEC =1
+
+
+##yxl 2006-03-24 add macro OK_TO_CHANNEL,1->macro OK_TO_CHANNEL is defineded and 在编辑节目时按OK键则节目直接跳到相应频道，
+##0-> OK_TO_CHANNEL  isn't defineded and 在编辑节目时按OK键则节目不直接跳到相应频道，
+OK_TO_CHANNEL =0
+
+
+##yxl 2006-03-24 add RCU_TYPE,
+##3->macro RCU_NEC_BK3C is defineded ,使用 NEC BK3C 遥控盒
+##6->macro RCU_NEC_BK6A is defineded ,使用 NEC BK6AC13 遥控盒
+##9->macro RCU_NEC_BK9A is defineded ,使用 NEC BK9A 遥控盒
+##0->macro RCU_NEC_YK01 is defineded ,使用 NEC YK01 遥控盒 yxl 2006-04-23 add this macro for HOTPOINT customer
+RCU_TYPE =3
+
+
+##yxl 2006-03-26 add STARTUP_VIDEOFORMAT_SET_MODE,
+##0->macro STARTUP_VIDEOFORMAT_SET_BY_CHANGHONG is defineded ,启动时按长虹方式设置video format
+##1->macro STARTUP_VIDEOFORMAT_SET_BY_DIGICRYSTAL is defineded ,启动时按DIGICRYSTAL方式设置video format
+STARTUP_VIDEOFORMAT_SET_MODE =0
+
+##yxl 2006-04-22 add ENGLISH_FONT_MODE,
+##1->macro ENGLISH_FONT_MODE_EQUEALWIDTH is defineded ,english font is equeal font
+##0->macro ENGLISH_FONT_MODE_EQUEALWIDTH isn't defineded ,english font is not equeal font
+ENGLISH_FONT_MODE =1
+
+
+##yxl 2006-04-25 add macro DVI_FUNCTION,
+##1->macro DVI_FUNCTION is defineded and  应用程序具有DVI功能,
+##0-> DVI_FUNCTION isn't defineded and  应用程序不具有DVI 功能,
+DVI_FUNCTION =1
+
+##yxl 2006-04-25 add macro HDMI_FUNCTION,
+##1->macro HDMI_FUNCTION is defineded and  应用程序具有HDMI功能,
+##0-> HDMI_FUNCTION isn't defineded and  应用程序不具有HDMI 功能,
+HDMI_FUNCTION =1
+
+##yxl 2006-05-01 add LEDANDFRONTKEY_CONTROL_MODE,
+##0->macro LEDANDBUTTON_CONTROL_MODE_BY_ATMEL is defineded and  前面板按键和LED显示由ATMEL 单片机控制,
+##1-> macro LEDANDBUTTON_CONTROL_MODE_BY_PT6964 is defineded and  前面板按键和LED显示由PT6964 单片机控制,,
+##2-> macro LEDANDBUTTON_CONTROL_MODE_BY_PT6315 is defineded and  前面板按键和LED显示由PT6315 单片机控制,yxl 2007-05-21 add this macro
+
+LEDANDFRONTKEY_CONTROL_MODE = 2
+
+
+##yxl 2006-06-26 add MODEY_576I,
+##0->macro MODEY_576I isn't defineded and  应用程序不具有576I YUV功能,
+##1->macro MODEY_576I is defineded and  应用程序具有576I YUV功能
+MODEY_576I=1
+
+##yxl 2006-07-06 add AUDIO_PROGRAM_PLAYMODE,
+##0->macro AUDIO_PROGRAM_PLAYMODE_BY_CHANGHONG is defineded and  广播节目的播放模式按长虹方式确定,
+##1-> macro AUDIO_PROGRAM_PLAYMODE_BY_DIGICRYSTAL is DIGICRYSTAL and  广播节目的播放模式按DIGICRYSTAL方式确定,
+##2-> macro AUDIO_PROGRAM_PLAYMODE_BY_VOXSON is defineded and  广播节目的播放模式按VOXSON方式确定
+AUDIO_PROGRAM_PLAYMODE =0
+
+##yxl 2006-11-18 add ENABLE_STPRINT
+##0->macro DISABLE_STPRINT isn't defineded and  应用程序输出打印,
+##1->macro DISABLE_STPRINT is defineded and  应用程序不输出打印
+DISABLE_STPRINT=0
+
+##yxl 2006-12-12 add DEBUG_INFO_TO_DCU
+##0->macro DEBUG_INFO_TO_DCU isn't defineded and  调试信息默认输出到UART
+##1->macro DEBUG_INFO_TO_DCU is defineded and  调试信息输出到DCU
+DEBUG_INFO_TO_DCU=0
+
+##yxl 2006-12-19 add below line,30 or 27 according to hard
+##STCLKRV_EXT_CLK_MHZ := 30
+##STCLKRV_EXT_CLK_MHZ := 27
+STCLKRV_EXT_CLK_MHZ := 00
+
+##yxl 2007-03-03 add ST_DEMO_PLATFORM
+##0->macro ST_DEMO_PLATFORM isn't defineded and  应用程序 run on CHANGHONG Board
+##1->macro ST_DEMO_PLATFORM is defineded and  应用程序 run on ST  Board
+ST_DEMO_PLATFORM=0
+
+##20070811 add TCP/IP
+TCPIP_ENABLE=0
+##20071017 add USB
+USB_SUPPORT = 1
+##20071026 add LMI_SYS为128M BYTE 
+LMI_SYS128 = 1
+##20080111 add support 0297E
+CH_QAM0297E = 0
+
+OP_NANJING = 0
+
+
+SOFT_MONITTOR_CDTSMT = 0
+
+USE_ARGB1555 = 0
+
+
+NANJING_MOSAIC = 0
+
+ENABLE_USB = 1
+
+
+NET_ENABLE= 0
+
+USE_IPANEL = 1
+JIANGSHU_NOCM  = 1
+
+##增加IPANEL_MGCA控制
+CH_IPANEL_MGCA = 1
+STBID_FROM_E2PROM = 1
+#20090630 修改针对中间件产品_多分辨率适应技术porting修改*
+CH_MUTI_RESOLUTION_RATE=1
+                            
+#数码视讯的安全模块
+SUMA_SECURITY = 1
+                            
+
+USE_EIS_2D = 1
+
+IPANEL_AAC_FILE_PLAY = 0
+
+
+
+ 

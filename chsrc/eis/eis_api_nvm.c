@@ -832,6 +832,7 @@ INT32_T ipanel_porting_nvram_erase(UINT32_T flash_addr, INT32_T len)
 		return IPANEL_ERR;
 	
 #ifndef SKIN_FUNCTION
+	printf("len = [%d];EIS_FLASH_BLOCK_SIZE*8 = [%d]\n",len,EIS_FLASH_BLOCK_SIZE*8);
 	if(len>(EIS_FLASH_BLOCK_SIZE*8))
 		return IPANEL_ERR;
 #else
@@ -917,6 +918,32 @@ INT32_T ipanel_porting_nvram_status(UINT32_T flash_addr, INT32_T len)
     semaphore_signal ( gpsema_eis_nvm );
 		
     return i_status;
+}
+
+void ipanel_nvram_erase_by_hand(void)
+{
+	BYTE_T *pRaddr = NULL;
+	INT32_T s32Number = 0;
+	INT32_T s32Size = 0;
+	
+	ipanel_porting_nvram_info(&pRaddr,&s32Number,&s32Size,IPANEL_NVRAM_DATA_BASIC);
+
+	printf("pRaddr = [0x%08x]\n");
+	if(pRaddr != NULL)
+	{
+		INT32_T ret = 0;
+		//do flash erase
+		ret = ipanel_porting_nvram_erase(pRaddr,EIS_FLASH_BLOCK_SIZE*7);
+		if (IPANEL_OK == ret)
+		{
+			printf("ipanel_porting_nvram_erase ok\n");
+		}
+		else
+		{
+			printf("ipanel_porting_nvram_erase fail\n");
+		}
+	}
+	return;
 }
 
 
