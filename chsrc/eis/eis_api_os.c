@@ -318,7 +318,7 @@ UINT32_T ipanel_porting_task_create(CONST CHAR_T *name, IPANEL_TASK_PROC func, V
 	int		i, i_Error;
 	static tdesc_t				g_UsifTaskDesc;
 
-
+	eis_report ( "\n++>eis ipanel_porting_task_create taskname=%s, priority=%d,actpri=%d" ,name,priority,prio);
 	/* Ñ°ÕÒ¿ÕÏĞÎ´ÓÃµÄtask */
 	for ( i = 0; i < EIS_MAX_TASK_NUM; i ++ )
 	{

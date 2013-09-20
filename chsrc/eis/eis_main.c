@@ -838,8 +838,7 @@ int eis_entry (  )
 #ifdef SUMA_SECURITY
 	int KeyValueTemp;
 #endif
-	sttbx_Print("eis_entry entern.........\n");
-	eis_report("eis_entry entering\n");
+	eis_report("\n eis_entry entering..go..here\n");
 	CH6_AVControl(VIDEO_BLACK, false, CONTROL_VIDEOANDAUDIO);
 	CH_AudioDelayControl(1);
 	if ( 1 == eis_api_enter_init () )

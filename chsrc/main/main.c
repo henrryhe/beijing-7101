@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
 
 	}
 
+	/*erase ipanel data block */
 	//ipanel_nvram_erase_by_hand();
 		
 	#if 1
